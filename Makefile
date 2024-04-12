@@ -28,7 +28,6 @@ $(EXEC_CLI): $(SOURCES_CLI)
 	$(CC) $(CFLAGS) $(INC) $< -o $@
 
 $(EXEC_SRV): $(SOURCES_SRV)
-	mkdir -p $(BINDIR)
 	$(CC) $(CFLAGS) $(INC) $< -o $@
 
 # Nettoyer les fichiers générés

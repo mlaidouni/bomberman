@@ -6,7 +6,7 @@
 #include <net/if.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#include "message.c"
+#include "../lib/message.h"
 
 /**
  * @brief Crée une socket client et se connecte à un serveur
@@ -78,6 +78,7 @@ int main(int argc, char const *argv[])
     const int port = 7878;
     // Connexion en mode TCP au serveur
     int sock_client = connect_to_server(port);
+    printf("Connected to server\n");
 
     // Envoi du mode de jeu au serveur
 
