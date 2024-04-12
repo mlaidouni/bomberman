@@ -6,7 +6,7 @@
 #include <net/if.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#include "message.h"
+#include "message.c"
 
 /**
  * @brief Crée une socket client et se connecte à un serveur
