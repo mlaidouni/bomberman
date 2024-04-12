@@ -1,13 +1,12 @@
-# Compiler
+# Compilateur
 CC = gcc
-# Flags de compilation
+# Options de compilation
 CFLAGS = -Wall
-# Chemin d'inclusion pour les fichiers d'en-tête
-INC = -Ilib
 
 # Répertoire des sources
 SRCDIR_CLI = src-cli
 SRCDIR_SRV = src-srv
+LIBDIR = lib
 
 # Répertoires de sortie
 BINDIR = bin
@@ -19,16 +18,17 @@ EXEC_SRV = $(BINDIR)/srv
 # Fichiers sources
 SOURCES_CLI = $(SRCDIR_CLI)/client.c
 SOURCES_SRV = $(SRCDIR_SRV)/server.c
+SOURCES_MSG = $(LIBDIR)/message.c
 
 # Commandes pour la compilation des exécutables
 all: $(EXEC_CLI) $(EXEC_SRV)
 
-$(EXEC_CLI): $(SOURCES_CLI)
+$(EXEC_CLI): $(SOURCES_CLI) $(SOURCES_MSG)
 	mkdir -p $(BINDIR)
-	$(CC) $(CFLAGS) $(INC) $< -o $@
+	$(CC) $(CFLAGS) $(SOURCES_CLI) $(SOURCES_MSG) -o $@
 
 $(EXEC_SRV): $(SOURCES_SRV)
-	$(CC) $(CFLAGS) $(INC) $< -o $@
+	$(CC) $(CFLAGS) $(SOURCES_SRV) -o $@
 
 # Nettoyer les fichiers générés
 clean:
