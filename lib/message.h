@@ -53,18 +53,43 @@ typedef struct {
   uint8_t grille[]; // La grille.
 } msg_grid;
 
+// Structure représentant la grille temporaire
+typedef struct {
+  int game_type;    // Le type de partie.
+  int player_id;    // L'identifiant du joueur.
+  int team_id;      // Le numéro d'équipe du joueur.
+  int num;          // Le numéro du message.
+  int cases;        // Le nombre de cases transmises.
+  uint8_t grille[]; // La grille.
+} msg_grid_tmp;
+
+// Structure représentant la fin de partie
+typedef struct {
+  int game_type; // Le type de partie.
+  int player_id; // L'identifiant du joueur.
+  int team_id;   // Le numéro d'équipe du joueur.
+} msg_end_game;
+
 /* ****** Fonctions d'envoie ****** */
 
 uint16_t ms_join(msg_join_ready params);
 uint16_t ms_ready(msg_join_ready params);
 uint32_t ms_game(msg_game params);
+uint32_t ms_tchat_cli(msg_tchat params);
 uint16_t *ms_integrer(msg_integration params);
-uint32_t ms_tchat(msg_tchat params);
+uint8_t *ms_grid_tmp(msg_grid_tmp message);
+uint32_t ms_tchat_srv(msg_tchat params);
+uint16_t ms_end_game(msg_end_game params);
 
 /* ****** Fonctions de réception ****** */
 
 msg_join_ready mg_join(uint16_t message);
 msg_join_ready mg_ready(uint16_t message);
 msg_game mg_game(uint32_t message);
+msg_tchat mg_tchat(uint32_t message);
+msg_integration mg_integrer(uint16_t *message);
+msg_grid mg_game_grid(uint32_t message);
+msg_grid_tmp mg_grid_tmp(uint8_t *message);
+msg_end_game mg_end_game(uint16_t message);
 
 #endif

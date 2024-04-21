@@ -53,6 +53,30 @@ uint32_t ms_game(msg_game params) {
   return message;
 }
 
+// TODO : Implémenter la fonction suivante
+/**
+ * Créer un message pour transmettre un message au tchat.
+ * @param params Les paramètres du message.
+ * @return Le message créé.
+ */
+uint32_t ms_tchat_cli(msg_tchat params) {
+  // NOTE: Quel type est renvoyé, étant donnée que le message est de longueur
+  // variable ?
+  /* CODEREQ vaut 7 si le message est destiné à un joueur, 8 pour une équipe.
+   * ID est l'id du joueur qui envoie le message.
+   * EQ est l'id de l'équipe qui envoie le message, si cela a du sens.
+   * LEN est un entier représentant le nb de caractères du texte à transmettre.
+   * DATA est le texte à transmettre. */
+
+  /* uint32_t message = (params.dest << 12) | (params.player_id << 10) |
+                      (params.team_id << 9) | (params.len << 1);
+  // Ajout des données
+  for (int i = 0; i < params.len; i++)
+      message |= params.data[i] << (8 * i + 1); */
+
+  return 0;
+}
+
 // TODO: Fixer la fonction suivante
 /**
  * Créer un message pour intégrer une partie.
@@ -84,16 +108,28 @@ uint16_t *ms_integrer(msg_integration params) {
   return message;
 }
 
+// TODO: ms_game_grid(msg_grid params) {}
+
+// TODO: ms_log_grid(msg_log_grid params) {}
+uint8_t *ms_grid_tmp(msg_grid_tmp message) {
+  /* CODEREQ vaut 12.
+   * ID et EQ valent 0.
+   * NUM est le numéro du message modulo 2^16. Il numérote les msg multidiffusés
+   * toutes les freq ms.
+   * NB est le nombre de cases transmises.
+   * */
+}
+
 // TODO : Implémenter la fonction suivante
 /**
  * Créer un message pour transmettre un message au tchat.
  * @param params Les paramètres du message.
  * @return Le message créé.
  */
-uint32_t ms_tchat(msg_tchat params) {
+uint32_t ms_tchat_srv(msg_tchat params) {
   // NOTE: Quel type est renvoyé, étant donnée que le message est de longueur
   // variable ?
-  /* CODEREQ vaut 7 si le message est destiné à un joueur, 8 pour une équipe.
+  /* CODEREQ vaut 13 si le message est destiné à un joueur, 14 pour une équipe.
    * ID est l'id du joueur qui envoie le message.
    * EQ est l'id de l'équipe qui envoie le message, si cela a du sens.
    * LEN est un entier représentant le nb de caractères du texte à transmettre.
@@ -106,6 +142,20 @@ uint32_t ms_tchat(msg_tchat params) {
       message |= params.data[i] << (8 * i + 1); */
 
   return 0;
+}
+
+/**
+ * Créer un message pour indiquer la fin de la partie.
+ * @param params Les paramètres du message.
+ * @return Le message créé.
+ */
+uint16_t ms_end_game(msg_end_game params) {
+  /* CODEREQ vaut 15 si la partie est en mode 4 joueurs, 16 pour le mode équipe.
+   * ID est l'identifiant du joueur gagant si CODEREQ vaut 15, ignoré sinon.
+   * EQ est le numéro de l'équipe gagante si CODEREQ vaut 16, ignoré sinon. */
+  uint16_t message =
+      (params.game_type << 3) | (params.player_id << 1) | (params.team_id);
+  return message;
 }
 
 /* ************************ Fonctions de réception ************************ */
@@ -153,5 +203,27 @@ msg_game mg_game(uint32_t message) {
   return params;
 }
 
+// TODO : Implémenter la fonction suivante:
+msg_tchat mg_tchat(uint32_t message) {}
+
 // TODO : Implémenter la fonction suivante
-msg_integration mg_integrer(uint64_t message){};
+msg_integration mg_integrer(uint16_t *message) {}
+
+// TODO : Implémenter la fonction suivante
+msg_grid mg_game_grid(uint32_t message) {}
+
+// TODO : Implémenter la fonction suivante
+msg_grid_tmp mg_grid_tmp(uint8_t *message) {}
+
+/**
+ * Extraire toutes les informations d'un message de fin de partie.
+ * @param message Le message.
+ * @return Les informations extraites.
+ */
+msg_end_game mg_end_game(uint16_t message) {
+  msg_end_game params;
+  params.game_type = message >> 3;
+  params.player_id = (message >> 1) & 0x3;
+  params.team_id = message & 0x1;
+  return params;
+}
