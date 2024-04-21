@@ -77,13 +77,13 @@ uint32_t ms_tchat_cli(msg_tchat params) {
   return 0;
 }
 
-// TODO: Fixer la fonction suivante
 /**
  * Créer un message pour intégrer une partie.
  * @param params Les paramètres du message.
+ * @attention La fonction effectue un malloc, il faut penser à free.
  * @return Le message créé.
  */
-uint16_t *ms_integrer(msg_integration params) {
+uint8_t *ms_integrer(msg_integration params) {
   /*
    * - CODEREQ = 9 si la partie demandée est en mode 4 joueurs, 10 pour le mode
    * équipe.
@@ -97,13 +97,22 @@ uint16_t *ms_integrer(msg_integration params) {
    * les joueurs doivent s'abonner.
    */
 
-  uint16_t *message = malloc(sizeof(uint16_t) * 11);
-  message[0] =
-      (params.game_type << 3) | (params.player_id << 1) | (params.team_id);
-  message[1] = params.port_udp;
-  message[2] = params.port_mdiff;
-  // FIXME: Comment stocker une adresse (16 octets) dans un uint16_t ?
-  message[3] = params.adr_mdiff;
+  // Le message fait 22 octets
+  uint8_t *message = malloc(sizeof(uint8_t) * 22);
+  uint16_t header =
+      htons((params.game_type << 3) | (params.player_id << 1) | params.team_id);
+  memcpy(message, &header, 2); // On copie 2 octets
+
+  // On crée les 2 octets représentant le port UDP
+  uint16_t port_udp = htons(params.port_udp);
+  memcpy(message + 2, &port_udp, 2);
+
+  // On crée les 2 octets représentant le port de multidiffusion
+  uint16_t port_mdiff = htons(params.port_mdiff);
+  memcpy(message + 4, &port_mdiff, 2);
+
+  // On copie les 16 octets de l'adresse de multidiffusion
+  memcpy(message + 6, params.adr_mdiff, 16);
 
   return message;
 }
@@ -206,8 +215,37 @@ msg_game mg_game(uint32_t message) {
 // TODO : Implémenter la fonction suivante:
 msg_tchat mg_tchat(uint32_t message) {}
 
-// TODO : Implémenter la fonction suivante
-msg_integration mg_integrer(uint16_t *message) {}
+/**
+ * Extraire toutes les informations d'un message d'intégration.
+ * @param message Le message.
+ * @return Les informations extraites.
+ */
+msg_integration mg_integrer(uint8_t *message) {
+  msg_integration params;
+
+  uint16_t header;
+  // On copie les 2 premiers octets du message
+  memcpy(&header, message, 2);
+  // On convertit en Little Endian
+  header = ntohs(header);
+
+  params.game_type = header >> 3;
+  params.player_id = (header >> 1) & 3;
+  params.team_id = header & 1;
+
+  // On récupère le port UDP et le port de multidiffusion
+  uint16_t port;
+  memcpy(&port, message + 2, 2);
+  params.port_udp = ntohs(port);
+
+  memcpy(&port, message + 4, 2);
+  params.port_mdiff = ntohs(port);
+
+  // On copie les 16 octets de l'adresse de multidiffusion
+  memcpy(params.adr_mdiff, message + 6, 16);
+
+  return params;
+}
 
 // TODO : Implémenter la fonction suivante
 msg_grid mg_game_grid(uint32_t message) {}
