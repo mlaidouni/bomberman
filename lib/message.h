@@ -1,6 +1,12 @@
 #ifndef MESSAGE_H_
 #define MESSAGE_H_
 
+/* ********** Includes ********** */
+
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+
 /* - ms_ : fonction d'envoie (i.e "message_send_")
  * - mg_ : fonction de réception (i.e "message_mg_")
  * - msg_: structures pour les messages. */
@@ -41,7 +47,7 @@ typedef struct {
   int port_mdiff; // Le port sur lequel le serveur multidiffuse ses messages.
   uint8_t adr_mdiff[16]; // L'adresse IPv6 de multicast (16 octets).
 
-} msg_integration;
+} msg_game_data;
 
 // Structure représentant la grille complète
 typedef struct {
@@ -78,7 +84,7 @@ typedef struct {
 uint16_t ms_join(msg_join_ready params);
 uint16_t ms_ready(msg_join_ready params);
 uint32_t ms_game(msg_game params);
-uint8_t *ms_integrer(msg_integration params);
+uint8_t *ms_game_data(msg_game_data params);
 uint8_t *ms_game_grid(msg_grid params);
 uint8_t *ms_grid_tmp(msg_grid_tmp message);
 uint16_t ms_end_game(msg_end_game params);
@@ -90,7 +96,7 @@ uint32_t ms_tchat_srv(msg_tchat params);
 msg_join_ready mg_join(uint16_t message);
 msg_join_ready mg_ready(uint16_t message);
 msg_game mg_game(uint32_t message);
-msg_integration mg_integrer(uint8_t *message);
+msg_game_data mg_game_data(uint8_t *message);
 msg_grid mg_game_grid(uint8_t *message);
 msg_grid_tmp mg_grid_tmp(uint8_t *message);
 msg_end_game mg_end_game(uint16_t message);

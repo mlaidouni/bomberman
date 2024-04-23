@@ -1,7 +1,4 @@
 #include "message.h"
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
 
 /* ************************ Fonctions d'envoie ************************ */
 
@@ -84,7 +81,7 @@ uint32_t ms_game(msg_game params) {
 }
 
 /**
- * Créer un message pour intégrer une partie.
+ * Créer un message contenant les informations d'une partie.
  * @param params Les paramètres du message.
  * @param game_type Le type de partie (9 pour le mode 4 joueurs, 10 pour
  * équipe).
@@ -95,9 +92,9 @@ uint32_t ms_game(msg_game params) {
  * messages.
  * @param adr_mdiff L'adresse IPv6 de multicast.
  * @attention La fonction effectue un malloc, il faut penser à free !
- * @return Le message créé,
+ * @return Le message créé.
  */
-uint8_t *ms_integrer(msg_integration params) {
+uint8_t *ms_game_data(msg_game_data params) {
   /*
    * - CODEREQ = 9 si la partie demandée est en mode 4 joueurs, 10 pour le mode
    * équipe.
@@ -372,8 +369,8 @@ msg_game mg_game(uint32_t message) {
  * @param message Le message.
  * @return Les informations extraites.
  */
-msg_integration mg_integrer(uint8_t *message) {
-  msg_integration params;
+msg_game_data mg_game_data(uint8_t *message) {
+  msg_game_data params;
 
   uint16_t header;
   // On copie les 2 premiers octets du message

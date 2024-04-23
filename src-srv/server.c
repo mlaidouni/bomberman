@@ -19,54 +19,57 @@ void affiche_connexion(struct sockaddr_in6 adrclient) {
 }
 
 int main(int argc, char **args) {
+  // NOTE: Le port devra être passé en argument
+  const int port = 8080;
 
-  //*** creation de la socket serveur ***
-  int sock = socket(PF_INET6, SOCK_STREAM, 0);
-  if (sock < 0) {
-    perror("creation socket");
+  // Création de la socket serveur
+  int sock_srv = socket(PF_INET6, SOCK_STREAM, 0);
+  if (sock_srv < 0) {
+    perror("server.c: socket(): création de la socket échouée");
     exit(1);
   }
 
-  //*** creation de l'adresse du destinataire (serveur) ***
-  struct sockaddr_in6 address_sock; //= {AF_INET6,  htons(atoi(args[1])), 0,
-                                    //IN6ADDR_ANY_INIT, 0};
-  memset(&address_sock, 0, sizeof(address_sock));
-  address_sock.sin6_family = AF_INET6;
-  address_sock.sin6_port = htons(7878);
-  address_sock.sin6_addr = in6addr_any;
+  // Création de l'adresse du destinataire (serveur)
+  struct sockaddr_in6 addr;
+  memset(&addr, 0, sizeof(addr));
+  addr.sin6_family = AF_INET6;
+  addr.sin6_port = htons(port);
+  addr.sin6_addr = in6addr_any;
 
-  //*** on lie la socket au port PORT ***
-  int r = bind(sock, (struct sockaddr *)&address_sock, sizeof(address_sock));
+  // On lie la socket au port
+  int r = bind(sock_srv, (struct sockaddr *)&addr, sizeof(addr));
+  // Gestions des erreurs
   if (r < 0) {
-    perror("erreur bind");
-    exit(2);
+    perror("server.c: bind(): bind échoué");
+    exit(1);
   }
 
-  //*** Le serveur est pret a ecouter les connexions sur le port PORT ***
-  r = listen(sock, 0);
+  // Le serveur est prêt à écouter les connexions sur le port
+  r = listen(sock_srv, 0);
+  // Gestions des erreurs
   if (r < 0) {
-    perror("erreur listen");
-    exit(2);
+    perror("server.c: listen(): listen échoué");
+    exit(1);
   }
 
-  //*** le serveur accepte une connexion et cree la socket de communication avec
-  //le client ***
+  /* Le serveur accepte une connexion et crée la socket de communication avec le
+   * client */
   struct sockaddr_in6 adrclient;
   memset(&adrclient, 0, sizeof(adrclient));
   socklen_t size = sizeof(adrclient);
-  int sockclient = accept(sock, (struct sockaddr *)&adrclient, &size);
+  int sockclient = accept(sock_srv, (struct sockaddr *)&adrclient, &size);
+  // Gestions des erreurs
   if (sockclient == -1) {
-    perror("probleme socket client");
+    perror("server.c: accept(): problème avec la socket client");
     exit(1);
   }
 
+  // Affichage de l'adresse du client
   affiche_connexion(adrclient);
 
-  //*** fermeture socket client ***
+  // Fermeture des sockets client et serveur
   close(sockclient);
-
-  //*** fermeture socket serveur ***
-  close(sock);
+  close(sock_srv);
 
   return 0;
 }
