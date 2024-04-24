@@ -1,13 +1,8 @@
-#include <arpa/inet.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <unistd.h>
+#include "server.h"
 
 #define SIZE_MESS 100
-#define NOM "Cerise"
+
+int compteur = 0;
 
 void affiche_connexion(struct sockaddr_in6 adrclient) {
   char adr_buf[INET6_ADDRSTRLEN];
@@ -64,8 +59,26 @@ int main(int argc, char **args) {
     exit(1);
   }
 
-  // Affichage de l'adresse du client
-  affiche_connexion(adrclient);
+  // Création d'un struct joueur
+  struct joueur j;
+  j.id = compteur; compteur++;
+  j.adr = adrclient;
+  tab_joueur[0] = j;
+
+  bool end = false;
+
+  void start_game(struct joueur joueurs[]) {
+      while(!end){
+          // Si un client se connecte au server et que le nombre de joueur est inférieur à 4, on l'ajoute au tableau de joueur
+          if (accept(sock_srv, (struct sockaddr *)&adrclient, &size) > 0 && (compteur < 4)){
+            // Création d'un nouveau joueur
+            struct joueur j;
+            j.id = compteur; compteur++;
+            j.adr = adrclient;
+            tab_joueur[compteur] = j;
+          }
+      }
+  }
 
   // Fermeture des sockets client et serveur
   close(sockclient);
