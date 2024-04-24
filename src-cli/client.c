@@ -88,7 +88,7 @@ int recv_message(int sock_client, void *message, size_t msg_size, char *type) {
  */
 int join_game(int sock_client, int game_type) {
   // Création de la structure du message et du message
-  msg_join_ready params;
+  msg_join_ready_t params;
   params.game_type = game_type;
   uint16_t message = ms_join(params);
 
@@ -113,7 +113,7 @@ int join_game(int sock_client, int game_type) {
  */
 int ready(int sock_client, int game_type, int player_id, int team_id) {
   // Création de la structure du message
-  msg_join_ready params;
+  msg_join_ready_t params;
   params.game_type = game_type;
   params.player_id = player_id;
   params.team_id = team_id;
@@ -138,7 +138,7 @@ int ready(int sock_client, int game_type, int player_id, int team_id) {
 int action(int sock_client, int game_type, int player_id, int team_id, int num,
            int action) {
   // Création de la structure du message
-  msg_game params;
+  msg_game_t params;
   params.game_type = game_type;
   params.player_id = player_id;
   params.team_id = team_id;
@@ -159,95 +159,6 @@ int action(int sock_client, int game_type, int player_id, int team_id, int num,
   return 0;
 }
 
-// IDEA: Doit-on abstraire les fonctions suivantes ?
-
-/**
- * Récupère les données de la partie envoyées par le serveur.
- * @param sock_client La socket client.
- * @param data Un pointeur vers la structure où stocker les données de la
- * partie.
- * @return 0 si tout s'est bien passé, -1 sinon.
- */
-int get_game_data(int sock_client, msg_game_data *data) {
-  // Réception des données de la partie
-  uint8_t *message;
-  int bytes =
-      recv_message(sock_client, message, sizeof(message), "get_game_data");
-  // Gestion des erreurs (en partie gérée par recv_message())
-  if (bytes == -1)
-    return -1;
-
-  // TODO: Gestion du nb d'octets reçus (voir s'ils ont tous été reçus)
-
-  // On récupère les données de la partie
-  *data = mg_game_data(message);
-
-  return 0;
-}
-
-/**
- * Récupère la grille envoyée par le serveur.
- * @param sock_client La socket client.
- * @param grid Un pointeur vers la structure où stocker la grille.
- * @return 0 si tout s'est bien passé, -1 sinon.
- */
-int get_grid(int sock_client, msg_grid *grid) {
-  // Réception de la grille
-  uint8_t *message;
-  int bytes = recv_message(sock_client, message, sizeof(message), "get_grid");
-  // Gestion des erreurs (en partie gérée par recv_message())
-  if (bytes == -1)
-    return -1;
-
-  // TODO: Gestion du nb d'octets reçus (voir s'ils ont tous été reçus)
-
-  // On récupère la grille
-  *grid = mg_game_grid(message);
-
-  return 0;
-}
-
-// Réception de la grille temporaire
-int get_grid_tmp(int sock_client, msg_grid_tmp *grid) {
-  // Réception de la grille temporaire
-  uint8_t *message;
-  int bytes =
-      recv_message(sock_client, message, sizeof(message), "get_grid_tmp");
-  // Gestion des erreurs (en partie gérée par recv_message())
-  if (bytes == -1)
-    return -1;
-
-  // TODO: Gestion du nb d'octets reçus (voir s'ils ont tous été reçus)
-
-  // On récupère la grille temporaire
-  *grid = mg_grid_tmp(message);
-
-  return 0;
-}
-
-/**
- * Récupère la fin de partie envoyée par le serveur.
- * @param sock_client La socket client.
- * @param end_game Un pointeur vers la structure où stocker la fin de partie.
- * @return 0 si tout s'est bien passé, -1 sinon.
- */
-int get_end_game(int sock_client, msg_end_game *end_game) {
-  // Réception de la fin de partie
-  uint16_t message;
-  int bytes =
-      recv_message(sock_client, &message, sizeof(message), "get_end_game");
-  // Gestion des erreurs (en partie gérée par recv_message())
-  if (bytes == -1)
-    return -1;
-
-  // TODO: Gestion du nb d'octets reçus (voir s'ils ont tous été reçus)
-
-  // On récupère la fin de partie
-  *end_game = mg_end_game(message);
-
-  return 0;
-}
-
 int main(int argc, char const *argv[]) {
   // NOTE: Le port devra être passé en argument
   const int port = 8080;
@@ -261,6 +172,12 @@ int main(int argc, char const *argv[]) {
   printf("Connected to server\n");
 
   // Envoi du mode de jeu au serveur
+  int r = join_game(sock_client, 1);
+  // Gestion des erreurs
+  if (r == -1) {
+    puts("main: could not join game");
+    exit(EXIT_FAILURE);
+  }
 
   // On attend la réception des données de la partie
 

@@ -22,10 +22,10 @@ int ready(int sock_client, int game_type, int player_id, int team_id);
 int action(int sock_client, int game_type, int player_id, int team_id, int num,
            int action);
 
-int get_game_data(int sock_client, msg_game_data *game_data);
-int get_grid(int sock_client, msg_grid *grid);
-int get_grid_tmp(int sock_client, msg_grid_tmp *grid);
-int get_end_game(int sock_client, msg_end_game *end_game);
+int get_game_data(int sock_client, msg_game_data_t *game_data);
+int get_grid(int sock_client, msg_grid_t *grid);
+int get_grid_tmp(int sock_client, msg_grid_tmp_t *grid);
+int get_end_game(int sock_client, msg_end_game_t *end_game);
 
 /* ********** Fonctions utilitaires ********** */
 

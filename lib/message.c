@@ -10,7 +10,7 @@
  * @param team_id Le numéro de l'équipe du joueur (valeur ignorée).
  * @return Le message créé, au format Big Endian.
  */
-uint16_t ms_join(msg_join_ready params) {
+uint16_t ms_join(msg_join_ready_t params) {
   /* CODEREQ = 1 si la partie est en mode 4 joueurs, 2 pour le mode équipe.
    * ID et EQ sont ignorés. */
   uint16_t message = (params.game_type << 3) | (0 << 1) | 0;
@@ -27,7 +27,7 @@ uint16_t ms_join(msg_join_ready params) {
  * @param team_id Le numéro de l'équipe du joueur (0 ou 1).
  * @return Le message créé, au format Big Endian.
  */
-uint16_t ms_ready(msg_join_ready params) {
+uint16_t ms_ready(msg_join_ready_t params) {
   /* CODEREQ = 3 si la partie est en mode 4 joueurs, 4 pour le mode équipe.
    * ID est une valeur entre 0 et 3 correspondant à l'identifiant du joueur.
    * EQ vaut 0 ou 1 et correspond au numéro de l'équipe du joueur si CODEREQ
@@ -50,7 +50,7 @@ uint16_t ms_ready(msg_join_ready params) {
  * @return Le message créé, où les deux pairs d'octets sont au format Big
  * Endian.
  */
-uint32_t ms_game(msg_game params) {
+uint32_t ms_game(msg_game_t params) {
   /* - CODEREQ = 5 si la partie est en mode 4 joueurs, 6 pour le mode équipe.
    * - ID est l'identifiant du joueur.
    * - EQ est le numéro d'équipe si CODEREQ vaut 6. Ignoré sinon.
@@ -94,7 +94,7 @@ uint32_t ms_game(msg_game params) {
  * @attention La fonction effectue un malloc, il faut penser à free !
  * @return Le message créé.
  */
-uint8_t *ms_game_data(msg_game_data params) {
+uint8_t *ms_game_data(msg_game_data_t params) {
   /*
    * - CODEREQ = 9 si la partie demandée est en mode 4 joueurs, 10 pour le mode
    * équipe.
@@ -143,7 +143,7 @@ uint8_t *ms_game_data(msg_game_data params) {
  * @param largeur La largeur de la grille.
  * @param grille Les cases de la grille de jeu.
  */
-uint8_t *ms_game_grid(msg_grid params) {
+uint8_t *ms_game_grid(msg_grid_t params) {
   /*
    * - CODEREQ vaut 11.
    * - ID et EQ valent 0
@@ -195,7 +195,7 @@ uint8_t *ms_game_grid(msg_grid params) {
  * @param grille Les cases de la grille temporaire.
  * @return Le message créé.
  */
-uint8_t *ms_grid_tmp(msg_grid_tmp params) {
+uint8_t *ms_grid_tmp(msg_grid_tmp_t params) {
   /*
    * - CODEREQ vaut 12.
    * - ID et EQ valent 0.
@@ -236,7 +236,7 @@ uint8_t *ms_grid_tmp(msg_grid_tmp params) {
  * @param params Les paramètres du message.
  * @return Le message créé.
  */
-uint16_t ms_end_game(msg_end_game params) {
+uint16_t ms_end_game(msg_end_game_t params) {
   /* CODEREQ vaut 15 si la partie est en mode 4 joueurs, 16 pour le mode équipe.
    * ID est l'identifiant du joueur gagant si CODEREQ vaut 15, ignoré sinon.
    * EQ est le numéro de l'équipe gagante si CODEREQ vaut 16, ignoré sinon. */
@@ -251,7 +251,7 @@ uint16_t ms_end_game(msg_end_game params) {
  * @param params Les paramètres du message.
  * @return Le message créé.
  */
-uint32_t ms_tchat_srv(msg_tchat params) {
+uint32_t ms_tchat_srv(msg_tchat_t params) {
   // NOTE: Quel type est renvoyé, étant donnée que le message est de longueur
   // variable ?
   /* CODEREQ vaut 13 si le message est destiné à un joueur, 14 pour une équipe.
@@ -275,7 +275,7 @@ uint32_t ms_tchat_srv(msg_tchat params) {
  * @param params Les paramètres du message.
  * @return Le message créé.
  */
-uint32_t ms_tchat_cli(msg_tchat params) {
+uint32_t ms_tchat_cli(msg_tchat_t params) {
   // NOTE: Quel type est renvoyé, étant donnée que le message est de longueur
   // variable ?
   /* CODEREQ vaut 7 si le message est destiné à un joueur, 8 pour une équipe.
@@ -300,9 +300,9 @@ uint32_t ms_tchat_cli(msg_tchat params) {
  * @param message Le message.
  * @return Le type de partie.
  */
-msg_join_ready mg_join(uint16_t message) {
+msg_join_ready_t mg_join(uint16_t message) {
   // NOTE: Est-ce qu'on en renverrait pas plutôt juste le type de partie ?
-  msg_join_ready params;
+  msg_join_ready_t params;
 
   // On récupère le message au format Little Endian
   message = ntohs(message);
@@ -320,8 +320,8 @@ msg_join_ready mg_join(uint16_t message) {
  * @param message Le message.
  * @return Les informations extraites.
  */
-msg_join_ready mg_ready(uint16_t message) {
-  msg_join_ready params;
+msg_join_ready_t mg_ready(uint16_t message) {
+  msg_join_ready_t params;
 
   // On récupère le message au format Little Endian
   message = ntohs(message);
@@ -339,8 +339,8 @@ msg_join_ready mg_ready(uint16_t message) {
  * @param message Le message.
  * @return Les informations extraites.
  */
-msg_game mg_game(uint32_t message) {
-  msg_game params;
+msg_game_t mg_game(uint32_t message) {
+  msg_game_t params;
 
   // On récupère le header du message
   uint16_t header = message >> 16;
@@ -369,8 +369,8 @@ msg_game mg_game(uint32_t message) {
  * @param message Le message.
  * @return Les informations extraites.
  */
-msg_game_data mg_game_data(uint8_t *message) {
-  msg_game_data params;
+msg_game_data_t mg_game_data(uint8_t *message) {
+  msg_game_data_t params;
 
   uint16_t header;
   // On copie les 2 premiers octets du message
@@ -403,8 +403,8 @@ msg_game_data mg_game_data(uint8_t *message) {
  * @param message Le message.
  * @return Les informations extraites.
  */
-msg_grid mg_game_grid(uint8_t *message) {
-  msg_grid params;
+msg_grid_t mg_game_grid(uint8_t *message) {
+  msg_grid_t params;
 
   uint16_t header;
   // On copie les 2 premiers octets du message
@@ -441,8 +441,8 @@ msg_grid mg_game_grid(uint8_t *message) {
  * @param message Le message.
  * @return Les informations extraites.
  */
-msg_grid_tmp mg_grid_tmp(uint8_t *message) {
-  msg_grid_tmp params;
+msg_grid_tmp_t mg_grid_tmp(uint8_t *message) {
+  msg_grid_tmp_t params;
 
   uint16_t header;
   // On copie les 2 premiers octets du message
@@ -477,8 +477,8 @@ msg_grid_tmp mg_grid_tmp(uint8_t *message) {
  * @param message Le message.
  * @return Les informations extraites.
  */
-msg_end_game mg_end_game(uint16_t message) {
-  msg_end_game params;
+msg_end_game_t mg_end_game(uint16_t message) {
+  msg_end_game_t params;
 
   params.game_type = message >> 3;
   // On masque tous les bits, sauf les deux de poids faible
@@ -490,4 +490,4 @@ msg_end_game mg_end_game(uint16_t message) {
 }
 
 // TODO : Implémenter la fonction suivante:
-msg_tchat mg_tchat(uint32_t message) {}
+msg_tchat_t mg_tchat(uint32_t message) {}
