@@ -246,37 +246,12 @@ uint16_t ms_end_game(msg_end_game_t params) {
   return message;
 }
 
-// TODO : Implémenter la fonction suivante
 /**
  * Créer un message pour transmettre un message au tchat.
  * @param params Les paramètres du message.
  * @return Le message créé.
  */
-uint32_t ms_tchat_srv(msg_tchat_t params) {
-  // NOTE: Quel type est renvoyé, étant donnée que le message est de longueur
-  // variable ?
-  /* CODEREQ vaut 13 si le message est destiné à un joueur, 14 pour une équipe.
-   * ID est l'id du joueur qui envoie le message.
-   * EQ est l'id de l'équipe qui envoie le message, si cela a du sens.
-   * LEN est un entier représentant le nb de caractères du texte à transmettre.
-   * DATA est le texte à transmettre. */
-
-  /* uint32_t message = (params.dest << 12) | (params.player_id << 10) |
-                      (params.team_id << 9) | (params.len << 1);
-  // Ajout des données
-  for (int i = 0; i < params.len; i++)
-      message |= params.data[i] << (8 * i + 1); */
-
-  return 0;
-}
-
-// TODO : Implémenter la fonction suivante
-/**
- * Créer un message pour transmettre un message au tchat.
- * @param params Les paramètres du message.
- * @return Le message créé.
- */
-uint32_t ms_tchat_cli(msg_tchat_t params) {
+uint8_t *ms_tchat(msg_tchat_t params) {
   // NOTE: Quel type est renvoyé, étant donnée que le message est de longueur
   // variable ?
   /* CODEREQ vaut 7 si le message est destiné à un joueur, 8 pour une équipe.
@@ -285,13 +260,13 @@ uint32_t ms_tchat_cli(msg_tchat_t params) {
    * LEN est un entier représentant le nb de caractères du texte à transmettre.
    * DATA est le texte à transmettre. */
 
-  /* uint32_t message = (params.dest << 12) | (params.player_id << 10) |
-                      (params.team_id << 9) | (params.len << 1);
-  // Ajout des données
-  for (int i = 0; i < params.len; i++)
-      message |= params.data[i] << (8 * i + 1); */
+	uint8_t *msg = malloc(3 + params.length);
 
-  return 0;
+	*((uint16_t *) msg) = htons(params.dest << 3 | params.player_id << 1 | params.team_id);
+	msg[2] = (uint8_t) params.len;
+	memcpy(&(msg[3]), params.data, params.len);
+
+  return msg;
 }
 
 /* ************************ Fonctions de réception ************************ */
@@ -490,5 +465,18 @@ msg_end_game_t mg_end_game(uint16_t message) {
   return params;
 }
 
-// TODO : Implémenter la fonction suivante:
-//msg_tchat_t mg_tchat(uint32_t message) {}
+msg_tchat_t mg_tchat(uint8_t *message) {
+	msg_tchat_t acc;
+	uint16_t head = ntohs(*((uint16_t *) message));
+
+	acc.player_id = head & 0b110;
+	acc.team_id = head & 0b1;
+	acc.len = message[3];
+	acc.data = malloc(acc.len + 1);
+	memcpy(acc.data, message[4], acc.len);
+	acc.data[acc.len] = 0;
+
+	return acc;
+}
+
+
