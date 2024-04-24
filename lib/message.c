@@ -1,4 +1,5 @@
 #include "message.h"
+#include <arpa/inet.h>
 
 /* ************************ Fonctions d'envoie ************************ */
 
@@ -490,4 +491,4 @@ msg_end_game_t mg_end_game(uint16_t message) {
 }
 
 // TODO : Implémenter la fonction suivante:
-msg_tchat_t mg_tchat(uint32_t message) {}
+//msg_tchat_t mg_tchat(uint32_t message) {}
