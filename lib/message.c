@@ -172,15 +172,16 @@ uint8_t *ms_game_grid(msg_grid_t params) {
 
   // On crée le numéro du message modulo 2^16
   uint16_t num = htons(params.num);
+  memcpy(message + 2, &num, 2);
 
   // On crée les 2 octets représentant la hauteur/largueur de la grille
   uint8_t hauteur = htons(params.hauteur);
   uint8_t largeur = htons(params.largeur);
-  memcpy(message + 2, &hauteur, 1);
-  memcpy(message + 3, &largeur, 1);
+  memcpy(message + 4, &hauteur, 1);
+  memcpy(message + 5, &largeur, 1);
 
   // On copie la grille (où chaque case est déjà au format Big Endian).
-  memcpy(message + 4, params.grille, params.hauteur * params.largeur);
+  memcpy(message + 6, params.grille, params.hauteur * params.largeur);
 
   return message;
 }
