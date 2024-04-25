@@ -1,5 +1,6 @@
 #include "server.h"
 #include "../lib/message.h"
+#include "partie.h"
 
 // DEFINES
 #define SIZE_MESS 100
@@ -30,6 +31,8 @@ int main(int argc, char **args) {
     srv.nb_clients++;
 
   // TODO: Gérer la recep des msg TCP, et la détection du client qui l'a envoyé
+  // Pour codereq de 1 à 4 -> uint16
+  // Pour les autres c'est chat
   // uint16_t message; recv(&message);
   // client_t client;
 
@@ -164,26 +167,7 @@ int accept_client(client_t *client) {
  * @param partie La partie à lancer.
  * @ret
  */
-int start_game(partie_t partie) {
-  // TODO: Gérer le type de partie et les parties en attente
 
-  while (partie.nb_joueurs < 4)
-    // Si le nombre de joueurs est inférieur à 4, on attend des connexions
-    ;
-
-  // Si le nombre de joueurs est égal à 4, on lance et gère le jeu
-  // Tant que la partie n'est pas terminée
-  while (partie.end) {
-
-    // TODO: Le jeu
-    // ...
-
-    // TODO: Penser à gérer la fermeture des sockets des clients
-    // ...
-  }
-
-  return 0;
-}
 
 /**
  * Crée une partie.
@@ -191,35 +175,7 @@ int start_game(partie_t partie) {
  * @param params Les paramètres de la partie.
  * @return La partie créée.
  */
-partie_t create_partie(client_t client, msg_join_ready_t params) {
-  // Création de la structure partie
-  partie_t partie = {0};
-  partie.end = 1;
-  partie.type = params.game_type;
-  partie.nb_joueurs = 1;
 
-  // Création d'un joueur
-  joueur_t j = {0};
-  j.client = client;
-  j.id = partie.nb_joueurs;
-
-  // On ajoute le joueur à la partie
-  partie.joueurs[partie.nb_joueurs] = j;
-
-  // On incrémente le nombre de joueurs
-  partie.nb_joueurs++;
-
-  // Si la partie est en mode 2 équipes, on répartit les joueurs
-  if (partie.type == 1)
-    /* NOTE: On choisit de les répartir en fonction de leur ordre
-     * d'arrivée (i.e, de ordre de connexion) */
-    j.team = partie.nb_joueurs % 2;
-
-  // On ajoute la partie à la liste des parties
-  srv.parties.parties[srv.parties.nb_parties] = partie;
-  srv.parties.nb_parties++;
-  return partie;
-}
 
 // FIXME: Fonction générée par copilot
 int add_joueur(partie_t partie, client_t client) {
@@ -241,4 +197,36 @@ int add_joueur(partie_t partie, client_t client) {
     j.team = partie.nb_joueurs % 2;
 
   return 0;
+}
+
+void receive_request(int sock) {
+    uint16_t buffer;
+    ssize_t bytes_received = 0;
+    while (bytes_received < sizeof(buffer)) {
+        ssize_t result = recv(sock, ((char*)&buffer) + bytes_received, sizeof(buffer) - bytes_received, 0);
+        if (result == -1) {
+            perror("recv");
+            // Gérer l'erreur
+        } else if (result == 0) {
+            printf("La connexion a été fermée par le serveur.\n");
+            // Gérer la fermeture de la connexion
+        } else {
+            bytes_received += result;
+        }
+    }
+
+    // Convertir les octets reçus en big endian en valeurs host
+    buffer = ntohs(buffer);
+    uint16_t copie = buffer;
+    // Extraire les bits
+    int req = buffer >> 3; // Les 13 premiers bits
+    if (req == 1 || req ==2){
+      msg_join_ready_t msg = mg_join(copie);
+    }
+    else if (req == 3 || req == 4){
+      msg_game_t msg = mg_game(copie);
+    }
+    else{
+      // TODO tchat
+    }
 }

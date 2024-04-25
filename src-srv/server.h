@@ -9,6 +9,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include "../lib/message.h"
 
 /* ********** Structures ********** */
 
@@ -57,7 +58,7 @@ struct server_t {
 void affiche_connexion(struct sockaddr_in6 adrclient);
 int create_TCP_connection(int port);
 int accept_client(client_t *client);
-int start_game(partie_t partie);
+void receive_request(int sock);
 
 /* ********** Fonctions utilitaires ********** */
 

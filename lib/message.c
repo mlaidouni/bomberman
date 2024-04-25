@@ -261,7 +261,7 @@ uint8_t *ms_tchat(msg_tchat_t params) {
    * LEN est un entier représentant le nb de caractères du texte à transmettre.
    * DATA est le texte à transmettre. */
 
-	uint8_t *msg = malloc(3 + params.length);
+	uint8_t *msg = malloc(3 + params.len);
 
 	*((uint16_t *) msg) = htons(params.dest << 3 | params.player_id << 1 | params.team_id);
 	msg[2] = (uint8_t) params.len;
@@ -474,7 +474,7 @@ msg_tchat_t mg_tchat(uint8_t *message) {
 	acc.team_id = head & 0b1;
 	acc.len = message[3];
 	acc.data = malloc(acc.len + 1);
-	memcpy(acc.data, message[4], acc.len);
+	memcpy(acc.data, &(message[4]), acc.len);
 	acc.data[acc.len] = 0;
 
 	return acc;
