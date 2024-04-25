@@ -2,6 +2,7 @@
 #define SERVER_H_
 
 /* ********** Includes ********** */
+#include "../lib/message.h"
 #include <arpa/inet.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,7 +10,6 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include "../lib/message.h"
 
 /* ********** Structures ********** */
 

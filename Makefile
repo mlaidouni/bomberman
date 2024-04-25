@@ -16,16 +16,17 @@ EXEC_CLI = $(BINDIR)/cli
 EXEC_SRV = $(BINDIR)/srv
 
 # Fichiers sources
-SOURCES_CLI = $(SRCDIR_CLI)/client.c
-SOURCES_SRV = $(SRCDIR_SRV)/server.c
-SOURCES_MSG = $(LIBDIR)/message.c
+# On exclut le fichier ncurses.c pour éviter les erreurs de compilation
+SOURCES_CLI = $(filter-out $(SRCDIR_CLI)/ncurses.c, $(wildcard $(SRCDIR_CLI)/*.c))
+SOURCES_SRV = $(wildcard $(SRCDIR_SRV)/*.c)
+SOURCES_LIB = $(wildcard $(LIBDIR)/*.c)
 
 # Commandes pour la compilation des exécutables
 all: $(EXEC_CLI) $(EXEC_SRV)
 
-$(EXEC_CLI): $(SOURCES_CLI) $(SOURCES_MSG)
+$(EXEC_CLI): $(SOURCES_CLI) $(SOURCES_LIB)
 	mkdir -p $(BINDIR)
-	$(CC) $(CFLAGS) $(SOURCES_CLI) $(SOURCES_MSG) -o $@
+	$(CC) $(CFLAGS) $(SOURCES_CLI) $(SOURCES_LIB) -o $@
 
 $(EXEC_SRV): $(SOURCES_SRV)
 	$(CC) $(CFLAGS) $(SOURCES_SRV) -o $@
@@ -36,4 +37,3 @@ clean:
 
 # Cibles factices
 .PHONY: all clean
-

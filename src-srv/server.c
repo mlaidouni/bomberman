@@ -22,36 +22,35 @@ int main(int argc, char **args) {
   if (create_TCP_connection(port) < 0)
     exit(EXIT_FAILURE);
 
-  while(1){
-  // A chaque connexion, on crée et ajoute un nouveau client
-  if (accept_client(&srv.clients[srv.nb_clients]))
-    exit(EXIT_FAILURE);
-  else
-    // Le client a été ajouté, on incrémente le nombre de clients
-    srv.nb_clients++;
+  while (1) {
+    // A chaque connexion, on crée et ajoute un nouveau client
+    if (accept_client(&srv.clients[srv.nb_clients]))
+      exit(EXIT_FAILURE);
+    else
+      // Le client a été ajouté, on incrémente le nombre de clients
+      srv.nb_clients++;
 
-  // TODO: Gérer la recep des msg TCP, et la détection du client qui l'a envoyé
-  // Pour codereq de 1 à 4 -> uint16
-  // Pour les autres c'est chat
-  // uint16_t message; recv(&message);
-  // client_t client;
+    // TODO: Gérer la recep des msg TCP, et la détection du client qui l'a
+    // envoyé Pour codereq de 1 à 4 -> uint16 Pour les autres c'est chat
+    // uint16_t message; recv(&message);
+    // client_t client;
 
-  // TODO: Gérer le type de la partie (lire le message)
-  // msg_join_ready_t demande = mg_join(message),
+    // TODO: Gérer le type de la partie (lire le message)
+    // msg_join_ready_t demande = mg_join(message),
 
-  // TODO: Gérer la création de la partie
-  // if (demande.type is not in srv.parties) {
+    // TODO: Gérer la création de la partie
+    // if (demande.type is not in srv.parties) {
 
-  /* NOTE: A chaque fois qu'on a un type de partie qui n'est pas dans la liste,
-   * on realloc la liste et on ajoute la nouvelle partie. */
+    /* NOTE: A chaque fois qu'on a un type de partie qui n'est pas dans la
+     * liste, on realloc la liste et on ajoute la nouvelle partie. */
 
-  // partie_t partie = create_partie(client, demande);
-  // Puis on lance start_game, et on la laisse gérer le lancement de la partie
-  // start_game(partie);
-  // } else {
-  // partie_t partie = find_partie(demande.type);
-  // add_joueur(partie, client);
-  // }
+    // partie_t partie = create_partie(client, demande);
+    // Puis on lance start_game, et on la laisse gérer le lancement de la partie
+    // start_game(partie);
+    // } else {
+    // partie_t partie = find_partie(demande.type);
+    // add_joueur(partie, client);
+    // }
   }
   /* TEST TO DELETE: On va supposer que c'est le premier client qui a créé la
    * partie */
@@ -168,14 +167,12 @@ int accept_client(client_t *client) {
  * @ret
  */
 
-
 /**
  * Crée une partie.
  * @param client Le client qui a demandé la partie.
  * @param params Les paramètres de la partie.
  * @return La partie créée.
  */
-
 
 // FIXME: Fonction générée par copilot
 int add_joueur(partie_t partie, client_t client) {
@@ -200,33 +197,32 @@ int add_joueur(partie_t partie, client_t client) {
 }
 
 void receive_request(int sock) {
-    uint16_t buffer;
-    ssize_t bytes_received = 0;
-    while (bytes_received < sizeof(buffer)) {
-        ssize_t result = recv(sock, ((char*)&buffer) + bytes_received, sizeof(buffer) - bytes_received, 0);
-        if (result == -1) {
-            perror("recv");
-            // Gérer l'erreur
-        } else if (result == 0) {
-            printf("La connexion a été fermée par le serveur.\n");
-            // Gérer la fermeture de la connexion
-        } else {
-            bytes_received += result;
-        }
+  uint16_t buffer;
+  ssize_t bytes_received = 0;
+  while (bytes_received < sizeof(buffer)) {
+    ssize_t result = recv(sock, ((char *)&buffer) + bytes_received,
+                          sizeof(buffer) - bytes_received, 0);
+    if (result == -1) {
+      perror("recv");
+      // Gérer l'erreur
+    } else if (result == 0) {
+      printf("La connexion a été fermée par le serveur.\n");
+      // Gérer la fermeture de la connexion
+    } else {
+      bytes_received += result;
     }
+  }
 
-    // Convertir les octets reçus en big endian en valeurs host
-    buffer = ntohs(buffer);
-    uint16_t copie = buffer;
-    // Extraire les bits
-    int req = buffer >> 3; // Les 13 premiers bits
-    if (req == 1 || req ==2){
-      msg_join_ready_t msg = mg_join(copie);
-    }
-    else if (req == 3 || req == 4){
-      msg_game_t msg = mg_game(copie);
-    }
-    else{
-      // TODO tchat
-    }
+  // Convertir les octets reçus en big endian en valeurs host
+  buffer = ntohs(buffer);
+  uint16_t copie = buffer;
+  // Extraire les bits
+  int req = buffer >> 3; // Les 13 premiers bits
+  if (req == 1 || req == 2) {
+    msg_join_ready_t msg = mg_join(copie);
+  } else if (req == 3 || req == 4) {
+    msg_game_t msg = mg_game(copie);
+  } else {
+    // TODO tchat
+  }
 }
