@@ -21,7 +21,7 @@ int main(int argc, char **args) {
   if (create_TCP_connection(port) < 0)
     exit(EXIT_FAILURE);
 
-  // while ...
+  while(1){
   // A chaque connexion, on crée et ajoute un nouveau client
   if (accept_client(&srv.clients[srv.nb_clients]))
     exit(EXIT_FAILURE);
@@ -49,7 +49,7 @@ int main(int argc, char **args) {
   // partie_t partie = find_partie(demande.type);
   // add_joueur(partie, client);
   // }
-
+  }
   /* TEST TO DELETE: On va supposer que c'est le premier client qui a créé la
    * partie */
   msg_join_ready_t demande = {0};
