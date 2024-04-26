@@ -215,13 +215,13 @@ void receive_request(int sock) {
 
   // Convertir les octets reçus en big endian en valeurs host
   buffer = ntohs(buffer);
-  uint16_t copie = buffer;
+  // uint16_t copie = buffer;
   // Extraire les bits
   int req = buffer >> 3; // Les 13 premiers bits
   if (req == 1 || req == 2) {
-    msg_join_ready_t msg = mg_join(copie);
+    // msg_join_ready_t msg = mg_join(copie);
   } else if (req == 3 || req == 4) {
-    msg_game_t msg = mg_game(copie);
+    // msg_game_t msg = mg_game(copie);
   } else {
     // TODO tchat
   }

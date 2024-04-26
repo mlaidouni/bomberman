@@ -1,5 +1,5 @@
-#ifndef SERVER_H_
-#define SERVER_H_
+#ifndef SERVER_H
+#define SERVER_H
 
 /* ********** Includes ********** */
 #include "../lib/message.h"
@@ -53,6 +53,8 @@ struct server_t {
   client_t *clients;       // Les clients connectés au serveur.
   int nb_clients;          // Le nombre de clients connectés au serveur.
 } typedef server_t;
+
+extern server_t srv;
 
 /* ********** Fonctions server ********** */
 void affiche_connexion(struct sockaddr_in6 adrclient);

@@ -1,7 +1,7 @@
 # Compilateur
 CC = gcc
 # Options de compilation
-CFLAGS = -Wall
+CFLAGS = -Wall -lncurses
 
 # Répertoire des sources
 SRCDIR_CLI = src-cli
