@@ -27,6 +27,32 @@ int start_game(partie_t partie) {
 }
 
 /**
+ * Crée une nouvelle partie avec le client donné, ou ajoute celui-ci à une
+ * partie déjà existente.
+ * @param client Le client qui a créé la partie.
+ * @param params Les paramètres de la partie.
+ * @return La partie créée, ou la partie trouvée si elle existe déjà.
+ */
+partie_t init_partie(msg_join_ready_t params, client_t client) {
+  // On récupère la liste des parties de ce type
+  int finded_partie = find_partie(params.game_type);
+
+  partie_t partie = {0};
+
+  // On cherche une partie du type demandé qui n'est pas pleine
+  // Si on n'en trouve pas, on crée une nouvelle partie
+  if (finded_partie == -1 || srv.parties.parties[finded_partie].nb_joueurs == 4)
+    partie = create_partie(client, params);
+  else {
+    // Sinon, on ajoute le joueur à la partie trouvée
+    partie = srv.parties.parties[finded_partie];
+    add_joueur(partie, client);
+  }
+
+  return partie;
+}
+
+/**
  * Crée une partie.
  * @param client Le client qui a demandé la partie.
  * @param params Les paramètres de la partie.
@@ -36,6 +62,7 @@ partie_t create_partie(client_t client, msg_join_ready_t params) {
   // Création de la structure partie
   partie_t partie = {0};
   partie.end = 1;
+  // FIXME: gérer le fait que le type demandé soit invalide
   partie.type = params.game_type;
   partie.nb_joueurs = 1;
 
@@ -75,6 +102,23 @@ partie_t create_partie(client_t client, msg_join_ready_t params) {
     /* NOTE: On choisit de les répartir en fonction de leur ordre
      * d'arrivée (i.e, de ordre de connexion) */
     j.team = partie.nb_joueurs % 2;
+
+  // Si aucune partie n'est en cours, on alloue la mémoire
+  if (srv.parties.nb_parties == 0)
+    srv.parties.parties = malloc(sizeof(partie_t));
+  else {
+    // Si la liste est déjà allouée, on réalloue la mémoire
+    partie_t *tmp = realloc(srv.parties.parties,
+                            (srv.parties.nb_parties + 1) * sizeof(partie_t));
+
+    // FIXME: faire une vraie gestion des erreurs
+    if (tmp == NULL) {
+      perror("partie.c: create_partie(): realloc()");
+      exit(EXIT_FAILURE);
+    }
+    // On met à jour la liste des parties
+    srv.parties.parties = tmp;
+  }
 
   // On ajoute la partie à la liste des parties
   srv.parties.parties[srv.parties.nb_parties] = partie;

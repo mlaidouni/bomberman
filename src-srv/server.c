@@ -10,25 +10,17 @@ server_t srv = {0};
 
 int main(int argc, char **args) {
   // NOTE: Le port devra être passé en argument
-  const int port = 8080;
-  // On initialise le port de la connexion TCP du serveur
-  srv.tcp_port = port;
-  // FIXME: On dit que la liste est toujours mallocée
-  srv.parties.parties = malloc(sizeof(partie_t));
-  // On dit que la liste des clients est toujours mallocée
-  srv.clients = malloc(sizeof(client_t));
+  const int tcp_port = 8080;
 
+  // NOTE: Les variables du serveur sont initialisées dans cette fonction
   // Création de la connexion TCP
-  if (create_TCP_connection(port) < 0)
+  if (create_TCP_connection(tcp_port) < 0)
     exit(EXIT_FAILURE);
 
   while (1) {
     // A chaque connexion, on crée et ajoute un nouveau client
     if (accept_client(&srv.clients[srv.nb_clients]))
       exit(EXIT_FAILURE);
-    else
-      // Le client a été ajouté, on incrémente le nombre de clients
-      srv.nb_clients++;
 
     // TODO: Gérer la recep des msg TCP, et la détection du client qui l'a
     // envoyé Pour codereq de 1 à 4 -> uint16 Pour les autres c'est chat
@@ -43,34 +35,32 @@ int main(int argc, char **args) {
 
     /* NOTE: A chaque fois qu'on a un type de partie qui n'est pas dans la
      * liste, on realloc la liste et on ajoute la nouvelle partie. */
-
-    // partie_t partie = create_partie(client, demande);
-    // Puis on lance start_game, et on la laisse gérer le lancement de la partie
-    // start_game(partie);
-    // } else {
-    // partie_t partie = find_partie(demande.type);
-    // add_joueur(partie, client);
-    // }
   }
-  /* TEST TO DELETE: On va supposer que c'est le premier client qui a créé la
-   * partie */
+
+  // TEST TO DELETE:
   msg_join_ready_t demande = {0};
   demande.game_type = 1;
   uint16_t message = ms_join(demande);
   msg_join_ready_t params = mg_join(message);
 
-  int finded_partie = find_partie(params.game_type);
-  partie_t partie;
-  // On cherche une partie de ce type
-  if (finded_partie == -1)
-    // Si on n'en trouve pas, on crée une nouvelle partie
-    partie = create_partie(srv.clients[0], params);
-  else {
-    // Sinon, on ajoute le joueur à la partie trouvée
-    partie = srv.parties.parties[finded_partie];
-    add_joueur(partie, srv.clients[0]);
+  // TODO: Vérifier la validité du message, e.g que le type de partie est valide
+  if (params.game_type != 0 && params.game_type != 1) {
+    fprintf(stderr, "server.c: main(): type de partie invalide\n");
+    exit(EXIT_FAILURE);
   }
 
+  // On va supposer que c'est le premier client qui a créé la partie
+  partie_t partie = init_partie(params, srv.clients[0]);
+
+  // On convertit les données de la partie en message
+  msg_game_data_t game_data = {0};
+  init_msg_game_data(partie, game_data);
+
+  // On envoie les données de la partie au client
+  // uint8_t *msg = ms_game_data(game_data);
+  // sendto(client, msg);
+
+  // TODO: Vérifier si la partie à laquelle on l'a ajouté
   // On lance le jeu
   start_game(partie);
 
@@ -140,7 +130,8 @@ int create_TCP_connection(int port) {
 }
 
 /**
- * Accepte un client sur la socket TCP du serveur.
+ * Accepte un client sur la socket TCP du serveur et met à jour la liste des
+ * clients.
  * @param client La structure client_t où stocker les informations du client.
  * @return 0 si tout s'est bien passé, -1 sinon.
  */
@@ -167,9 +158,33 @@ int accept_client(client_t *client) {
   // On affiche les informations de connexion
   affiche_connexion(client->adr);
 
+  // Si la liste des clients n'est pas allouée, on l'alloue
+  if (srv.nb_clients == 0)
+    srv.clients = malloc(sizeof(client_t));
+  else {
+    // Si la liste est déjà allouée, on réalloue la mémoire
+    client_t *tmp =
+        realloc(srv.clients, (srv.nb_clients + 1) * sizeof(client_t));
+
+    // FIXME: faire une vraie gestion des erreurs
+    if (tmp == NULL) {
+      perror("server.c: accept(): realloc()");
+      exit(EXIT_FAILURE);
+    }
+
+    // On met à jour la liste des parties
+    srv.clients = tmp;
+  }
+
+  // On ajoute le client à la liste des clients
+  srv.clients[srv.nb_clients] = *client;
+  // Si le client a été ajouté, on incrémente le nombre de clients
+  srv.nb_clients++;
+
   return 0;
 }
 
+// TODO: que quelqu'un jette un oeil à cette fonction, jsp à quoi elle sert
 /**
  * Reçoit une requête sur la socket donnée.
  * @param sock La socket sur laquelle recevoir la requête.
@@ -224,4 +239,21 @@ int receive_request() {
   free(buffer);
 
   return 0;
+}
+
+/* ********** Fonctions utilitaires ********** */
+
+/**
+ * Initialise une structure msg_game_data_t avec les données de la partie.
+ * @param partie La partie dont on veut récupérer les données.
+ * @param game_data La structure msg_game_data_t à initialiser.
+ */
+void init_msg_game_data(partie_t partie, msg_game_data_t game_data) {
+  memcpy(&game_data.adr_mdiff, &partie.adr_mdiff, sizeof(partie.adr_mdiff));
+  game_data.port_mdiff = partie.port_mdiff;
+  game_data.port_udp = partie.port_udp;
+  game_data.game_type = partie.type;
+  joueur_t added_player = partie.joueurs[partie.nb_joueurs - 1];
+  game_data.player_id = added_player.id;
+  game_data.team_id = added_player.team;
 }

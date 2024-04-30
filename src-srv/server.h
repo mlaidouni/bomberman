@@ -69,4 +69,6 @@ int receive_request();
 
 /* ********** Fonctions utilitaires ********** */
 
+void init_msg_game_data(partie_t partie, msg_game_data_t game_data);
+
 #endif
