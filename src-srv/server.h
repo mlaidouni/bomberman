@@ -13,7 +13,7 @@
 
 /* ********** Structures ********** */
 
-//  Structure représentant un client.
+// Structure représentant un client.
 struct client_t {
   struct sockaddr_in6 adr; // L'adresse du client.
   socklen_t size;          // La taille de l'adresse du client.
@@ -33,13 +33,17 @@ struct partie_t {
   joueur_t joueurs[4]; // Les joueurs de la partie.
   int nb_joueurs;      // Le nombre de joueurs dans la partie.
   int end;             // 0 si la partie est terminée, 1 sinon
+  struct sockaddr_in6 g_adr; // L'adresse multicast du groupe.
+  struct sockaddr_in6 r_adr; // L'adresse de réception des messages du groupe.
+  int port_udp;   // Le port sur lequel le serveur reçoit les messages.
+  int port_mdiff; // Le port sur lequel le serveur envoie les messages.
+  char adr_mdiff[INET6_ADDRSTRLEN]; // L'adresse de multicastt.
 } typedef partie_t;
 
 // TODO: gestion des différentes parties
 // Structure pour stocker les informations des différentes parties gérées par le
 // serveur.
 struct parties_t {
-  // FIXME: Choisir entre tableau (avec limite de parties) ou pointeur
   partie_t *parties; // Les parties gérées par le serveur.
   int nb_parties;    // Le nombre de parties gérées par le serveur.
 } typedef parties_t;
@@ -57,10 +61,11 @@ struct server_t {
 extern server_t srv;
 
 /* ********** Fonctions server ********** */
+
 void affiche_connexion(struct sockaddr_in6 adrclient);
 int create_TCP_connection(int port);
 int accept_client(client_t *client);
-void receive_request(int sock);
+int receive_request();
 
 /* ********** Fonctions utilitaires ********** */
 

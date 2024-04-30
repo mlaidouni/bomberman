@@ -59,8 +59,17 @@ int main(int argc, char **args) {
   uint16_t message = ms_join(demande);
   msg_join_ready_t params = mg_join(message);
 
-  // On crée une partie
-  partie_t partie = create_partie(srv.clients[0], params);
+  int finded_partie = find_partie(params.game_type);
+  partie_t partie;
+  // On cherche une partie de ce type
+  if (finded_partie == -1)
+    // Si on n'en trouve pas, on crée une nouvelle partie
+    partie = create_partie(srv.clients[0], params);
+  else {
+    // Sinon, on ajoute le joueur à la partie trouvée
+    partie = srv.parties.parties[finded_partie];
+    add_joueur(partie, srv.clients[0]);
+  }
 
   // On lance le jeu
   start_game(partie);
@@ -162,67 +171,57 @@ int accept_client(client_t *client) {
 }
 
 /**
- * Lance le jeu.
- * @param partie La partie à lancer.
- * @ret
+ * Reçoit une requête sur la socket donnée.
+ * @param sock La socket sur laquelle recevoir la requête.
+ * @return La requête reçue.
  */
+int receive_request() {
+  // On crée un buffer pour stocker les octets reçus
+  uint16_t *buffer = malloc(sizeof(uint16_t));
+  // Le nombre d'octets reçus
+  ssize_t bytes_received = 0;
 
-/**
- * Crée une partie.
- * @param client Le client qui a demandé la partie.
- * @param params Les paramètres de la partie.
- * @return La partie créée.
- */
+  // On boucle tant qu'on n'a pas reçu les 2 octets
+  while (bytes_received < sizeof(buffer)) {
+    // On reçoit les octets
+    ssize_t received = recv(srv.tcp_sock, buffer + bytes_received,
+                            sizeof(uint16_t) - bytes_received, 0);
 
-// FIXME: Fonction générée par copilot
-int add_joueur(partie_t partie, client_t client) {
-  // On crée un joueur
-  joueur_t j = {0};
-  j.client = client;
-  j.id = partie.nb_joueurs;
+    // Gérer l'erreur
+    if (received == -1)
+      perror("server.c: receive_request(): recv");
+    else if (!received) {
+      fprintf(stderr, "server.c: receive_request(): connexion fermée\n");
+      return -1;
+    } else
+      bytes_received += received;
+  }
 
-  // On ajoute le joueur à la partie
-  partie.joueurs[partie.nb_joueurs] = j;
+  // Convertir les octets reçus en Little Endian
+  *buffer = ntohs(*buffer);
 
-  // On incrémente le nombre de joueurs
-  partie.nb_joueurs++;
+  // On sauvegarde une copie du buffer
+  // uint16_t buffer_copie = *buffer; // WARNING: NE PAS TOUCHER CE BUFFER
 
-  // Si la partie est en mode 2 équipes, on répartit les joueurs
-  if (partie.type == 1)
-    /* NOTE: On choisit de les répartir en fonction de leur ordre
-     * d'arrivée (i.e, de ordre de connexion) */
-    j.team = partie.nb_joueurs % 2;
+  // On lit le code de requête (13 premiers bits)
+  int codereq = *buffer >> 3;
+
+  // TODOFIXME: Comment gérer les messages, que doit renvoyer cette fonction
+  // ???? Si le codereq vaut 1 ou 2, c'est une requête de type 'join'
+  if (codereq == 1 || codereq == 2) {
+    // msg_join_ready_t msg = mg_join(buffer_copie);
+  } else if (codereq == 3 || codereq == 4) {
+    // Si le codereq vaut 3 ou 4, c'est une requête de type 'ready'
+
+    // msg_ready_t msg = mg_ready(buffer_copie);
+  } else {
+    // Sinon, c'est un message de tchat
+    /* TODO: lire les octets restants si c'est un message de tchat en bouclant
+     * de nouveaux sur le recv */
+  }
+
+  // On libère le buffer
+  free(buffer);
 
   return 0;
-}
-
-void receive_request(int sock) {
-  uint16_t buffer;
-  ssize_t bytes_received = 0;
-  while (bytes_received < sizeof(buffer)) {
-    ssize_t result = recv(sock, ((char *)&buffer) + bytes_received,
-                          sizeof(buffer) - bytes_received, 0);
-    if (result == -1) {
-      perror("recv");
-      // Gérer l'erreur
-    } else if (result == 0) {
-      printf("La connexion a été fermée par le serveur.\n");
-      // Gérer la fermeture de la connexion
-    } else {
-      bytes_received += result;
-    }
-  }
-
-  // Convertir les octets reçus en big endian en valeurs host
-  buffer = ntohs(buffer);
-  // uint16_t copie = buffer;
-  // Extraire les bits
-  int req = buffer >> 3; // Les 13 premiers bits
-  if (req == 1 || req == 2) {
-    // msg_join_ready_t msg = mg_join(copie);
-  } else if (req == 3 || req == 4) {
-    // msg_game_t msg = mg_game(copie);
-  } else {
-    // TODO tchat
-  }
 }
