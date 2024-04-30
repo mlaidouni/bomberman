@@ -35,5 +35,12 @@ $(EXEC_SRV): $(SOURCES_SRV)
 clean:
 	rm -rf $(BINDIR)
 
+# Vérifier les fuites de mémoire
+leak-cli:
+	valgrind --leak-check=full --show-leak-kinds=all ./$(EXEC_CLI)
+
+leak-srv:
+	valgrind --leak-check=full --show-leak-kinds=all ./$(EXEC_SRV)
+
 # Cibles factices
 .PHONY: all clean
