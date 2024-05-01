@@ -19,7 +19,7 @@ int main(int argc, char **args) {
 
   while (1) {
     // A chaque connexion, on crée et ajoute un nouveau client
-    if (accept_client(&srv.clients[srv.nb_clients]))
+    if (&srv.clients[srv.nb_clients]!= NULL && accept_client(&srv.clients[srv.nb_clients]))
       exit(EXIT_FAILURE);
 
     // TODO: Gérer la recep des msg TCP, et la détection du client qui l'a
