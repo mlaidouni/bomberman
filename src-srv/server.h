@@ -10,6 +10,8 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
 
 /* ********** Structures ********** */
 
@@ -57,6 +59,13 @@ struct server_t {
   client_t *clients;       // Les clients connectés au serveur.
   int nb_clients;          // Le nombre de clients connectés au serveur.
 } typedef server_t;
+
+// Structure du multicast
+struct msg_multicast_info_t {
+  int port_udp;   // Le port UDP sur lequel le serveur attend les messages.
+  int port; // Le port sur lequel le serveur multidiffuse ses messages.
+  char addr[12]; // L'adresse IPv6 de multicast (16 octets).
+} typedef msg_multicast_info_t;
 
 extern server_t srv;
 

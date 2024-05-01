@@ -179,15 +179,53 @@ int main(int argc, char const *argv[]) {
     exit(EXIT_FAILURE);
   }
 
-  // On attend la réception des données de la partie
+  char ip_multicast[12];
+  char port_multicast[6];
 
-  // On s'abonne à l'adresse de multicast (connexion UDP)
+  ssize_t bytes_received = recvfrom(sock_client, ip_multicast, sizeof(ip_multicast), 0, NULL, NULL);
 
-  // On s'annonce prêt au serveur
+  // Gestion des erreurs
+  if (bytes_received == -1) {
+    perror("main: recvfrom()");
+    close(sock_client);
+    exit(EXIT_FAILURE);
+  }
+  printf("ip multicast: %s\n", ip_multicast);
+    
+  bytes_received = recvfrom(sock_client, port_multicast, sizeof(port_multicast), 0, NULL, NULL);
+  
+  // Gestion des erreurs
+  if (bytes_received == -1) {
+    perror("main: recvfrom()");
+    close(sock_client);
+    exit(EXIT_FAILURE);
+  }
+  printf("port multicast: %s\n", port_multicast);
+ 
 
-  // ...
+  while (1) {
+    // On attend la réception des données de la partie
+    
 
-  // Fermeture de la socket client: à la fin de la partie seulement
+    
+
+    // On s'abonne à l'adresse de multicast (connexion UDP)
+    /*
+    struct sockaddr_in6 multicast_info;
+    memset(&multicast_info, 0, sizeof(multicast_info));
+    multicast_info.sin6_family = AF_INET6;
+    multicast_info.sin6_port = htons(MULTICAST_PORT);
+    inet_pton(AF_INET6, MULTICAST_ADDRESS, &multicast_info.sin6_addr);
+    */
+  }
+
+
+    // On s'annonce prêt au serveur
+    // ...
+    // Autres traitements à effectuer
+    // ...
+
+    // Fermeture de la socket client: à la fin de la partie seulement
   close(sock_client);
   return 0;
 }

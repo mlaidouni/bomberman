@@ -12,16 +12,49 @@ int main(int argc, char **args) {
   // NOTE: Le port devra être passé en argument
   const int tcp_port = 8080;
 
+  // Création de l'adresse IPv6 et du numéro de port de multidiffusion
+  struct sockaddr_in6 mcast_addr;
+  memset(&mcast_addr, 0, sizeof(mcast_addr));
+  mcast_addr.sin6_family = AF_INET6;
+  mcast_addr.sin6_port = htons(12345); // Replace 12345 with the desired multicast port
+  inet_pton(AF_INET6, "ff12::1:2:3", &(mcast_addr.sin6_addr)); // Replace "ff02::1" with the desired multicast address
+
+  // TODO: Subscribe players to the multicast address and port
+
   // NOTE: Les variables du serveur sont initialisées dans cette fonction
   // Création de la connexion TCP
   if (create_TCP_connection(tcp_port) < 0)
     exit(EXIT_FAILURE);
 
-  while (1) {
-    // A chaque connexion, on crée et ajoute un nouveau client
-    if (&srv.clients[srv.nb_clients]!= NULL && accept_client(&srv.clients[srv.nb_clients]))
+  while (srv.nb_clients < 4) {
+    // A chaque connexion, on réalloue la mémoire pour un nouveau client
+    srv.clients = realloc(srv.clients, (srv.nb_clients + 1) * sizeof(client_t));
+    if (srv.clients == NULL) {
+      perror("server.c: realloc()");
       exit(EXIT_FAILURE);
+    }
 
+    // On crée et ajoute un nouveau client
+    accept_client(&srv.clients[srv.nb_clients]);
+}
+
+
+
+  // Envoi de la string "ff12::1:2:3" aux 4 clients
+  char multicast_addr[] = "ff12::1:2:3";
+  char multicast_port[] = "12345";
+  for (int i = 0; i < srv.nb_clients; i++) {
+    sendto(srv.clients[i].sock, multicast_addr, strlen(multicast_addr), 0,
+           (struct sockaddr *)&(srv.clients[i].adr), sizeof(srv.clients[i].adr));
+
+    sendto(srv.clients[i].sock, multicast_port, strlen(multicast_port), 0,
+           (struct sockaddr *)&(srv.clients[i].adr), sizeof(srv.clients[i].adr));
+  }
+
+  
+
+  while (1) {
+    
     // TODO: Gérer la recep des msg TCP, et la détection du client qui l'a
     // envoyé Pour codereq de 1 à 4 -> uint16 Pour les autres c'est chat
     // uint16_t message; recv(&message);
@@ -142,6 +175,7 @@ int accept_client(client_t *client) {
   client->size = sizeof(client->adr);
 
   // TODO: Gérer le fait que accept() est bloquant
+
   // On accepte la connexion
   int sock_client =
       accept(srv.tcp_sock, (struct sockaddr *)&client->adr, &client->size);
@@ -181,6 +215,8 @@ int accept_client(client_t *client) {
   // Si le client a été ajouté, on incrémente le nombre de clients
   srv.nb_clients++;
 
+  // Afficher le nombre de clients connectés
+  //printf("Nombre de clients connectés : %d\n", srv.nb_clients);
   return 0;
 }
 
