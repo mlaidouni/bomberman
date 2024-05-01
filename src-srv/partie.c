@@ -33,9 +33,9 @@ int start_game(partie_t partie) {
  * @param params Les paramètres de la partie.
  * @return La partie créée, ou la partie trouvée si elle existe déjà.
  */
-partie_t init_partie(msg_join_ready_t params, client_t client) {
+partie_t init_partie(int type, client_t client) {
   // On récupère la liste des parties de ce type
-  int finded_partie = find_partie(params.game_type);
+  /*int finded_partie = find_partie(params.game_type);
 
   partie_t partie = {0};
 
@@ -49,7 +49,7 @@ partie_t init_partie(msg_join_ready_t params, client_t client) {
     add_joueur(partie, client);
   }
 
-  return partie;
+  return partie;*/
 }
 
 /**

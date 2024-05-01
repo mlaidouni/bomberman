@@ -20,6 +20,7 @@ struct client_t {
   struct sockaddr_in6 adr; // L'adresse du client.
   socklen_t size;          // La taille de l'adresse du client.
   int sock;                // La socket du client.
+  int type;                // Le type de partie recherchée par le client (0: 4 joueurs, 1: 2 équipes).
 } typedef client_t;
 
 // Structure représentant un joueur.
@@ -31,7 +32,7 @@ struct joueur_t {
 
 // Structure représentant une partie.
 struct partie_t {
-  int type;            // Le type de la partie (0: 3 joueurs, 1: 2 équipes).
+  int type;            // Le type de la partie (0: 4 joueurs, 1: 2 équipes).
   joueur_t joueurs[4]; // Les joueurs de la partie.
   int nb_joueurs;      // Le nombre de joueurs dans la partie.
   int end;             // 0 si la partie est terminée, 1 sinon

@@ -171,37 +171,12 @@ int main(int argc, char const *argv[]) {
 
   printf("Connected to server\n");
 
-  // Envoi du mode de jeu au serveur
-  int r = join_game(sock_client, 1);
-  // Gestion des erreurs
-  if (r == -1) {
-    puts("main: could not join game");
-    exit(EXIT_FAILURE);
-  }
-
-  char ip_multicast[12];
-  char port_multicast[6];
-
-  ssize_t bytes_received = recvfrom(sock_client, ip_multicast, sizeof(ip_multicast), 0, NULL, NULL);
-
-  // Gestion des erreurs
-  if (bytes_received == -1) {
-    perror("main: recvfrom()");
-    close(sock_client);
-    exit(EXIT_FAILURE);
-  }
-  printf("ip multicast: %s\n", ip_multicast);
-    
-  bytes_received = recvfrom(sock_client, port_multicast, sizeof(port_multicast), 0, NULL, NULL);
-  
-  // Gestion des erreurs
-  if (bytes_received == -1) {
-    perror("main: recvfrom()");
-    close(sock_client);
-    exit(EXIT_FAILURE);
-  }
-  printf("port multicast: %s\n", port_multicast);
- 
+  // Si on entre 0, on veut jouer à 4 joueurs, si on entre 1 on veut jouer à 2 équipes, envoyer le chiffre entré au serveur
+  //Demander à l'utilisateur d'entrer 0 ou 1
+  int game_type;
+  printf("Entrer 0 pour jouer à 4 joueurs, 1 pour jouer en équipes: ");
+  scanf("%d", &game_type);
+  join_game(sock_client, game_type);
 
   while (1) {
     // On attend la réception des données de la partie

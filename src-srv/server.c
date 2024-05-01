@@ -5,6 +5,8 @@
 // DEFINES
 #define SIZE_MESS 100
 
+parties_t parties = {0};
+
 // VARIABLES
 server_t srv = {0};
 
@@ -12,62 +14,44 @@ int main(int argc, char **args) {
   // NOTE: Le port devra être passé en argument
   const int tcp_port = 8080;
 
-  // Création de l'adresse IPv6 et du numéro de port de multidiffusion
-  struct sockaddr_in6 mcast_addr;
-  memset(&mcast_addr, 0, sizeof(mcast_addr));
-  mcast_addr.sin6_family = AF_INET6;
-  mcast_addr.sin6_port = htons(12345); // Replace 12345 with the desired multicast port
-  inet_pton(AF_INET6, "ff12::1:2:3", &(mcast_addr.sin6_addr)); // Replace "ff02::1" with the desired multicast address
-
-  // TODO: Subscribe players to the multicast address and port
-
   // NOTE: Les variables du serveur sont initialisées dans cette fonction
   // Création de la connexion TCP
   if (create_TCP_connection(tcp_port) < 0)
     exit(EXIT_FAILURE);
 
-  while (srv.nb_clients < 4) {
-    // A chaque connexion, on réalloue la mémoire pour un nouveau client
-    srv.clients = realloc(srv.clients, (srv.nb_clients + 1) * sizeof(client_t));
-    if (srv.clients == NULL) {
-      perror("server.c: realloc()");
-      exit(EXIT_FAILURE);
-    }
-
-    // On crée et ajoute un nouveau client
-    accept_client(&srv.clients[srv.nb_clients]);
-}
-
-
-
-  // Envoi de la string "ff12::1:2:3" aux 4 clients
-  char multicast_addr[] = "ff12::1:2:3";
-  char multicast_port[] = "12345";
-  for (int i = 0; i < srv.nb_clients; i++) {
-    sendto(srv.clients[i].sock, multicast_addr, strlen(multicast_addr), 0,
-           (struct sockaddr *)&(srv.clients[i].adr), sizeof(srv.clients[i].adr));
-
-    sendto(srv.clients[i].sock, multicast_port, strlen(multicast_port), 0,
-           (struct sockaddr *)&(srv.clients[i].adr), sizeof(srv.clients[i].adr));
-  }
-
-  
-
   while (1) {
+    // On accepete un client
+    client_t client = {0};
+    if (accept_client(&client) < 0)
+      exit(EXIT_FAILURE);
+
+    int i;
+    // Boucler sur toutes les parties
+    for (i = 0; i < parties.nb_parties; i++) {
+      partie_t partie = parties.parties[i];
+      // Vérifier si la partie a le même type que le client et s'il reste de la place
+      if (partie.type == client.type && partie.nb_joueurs < 4) {
+      
+        // Créer un joueur à partir du client
+        joueur_t joueur = {0};
+        joueur.client = client;
+        joueur.id = partie.nb_joueurs;
+        // Ajouter le joueur à la partie
+        partie.joueurs[partie.nb_joueurs] = joueur;
+        partie.nb_joueurs++;
+        // Mettre à jour la partie dans la liste des parties
+        parties.parties[i] = partie;
+        break;
+      }
+    }
+    // Si aucune partie n'a été trouvée, créer une nouvelle partie
+    if (i == parties.nb_parties) {
+      partie_t nouvelle_partie = init_partie(client.type, client);
+      parties.parties[parties.nb_parties] = nouvelle_partie;
+      parties.nb_parties++;
+    }
     
-    // TODO: Gérer la recep des msg TCP, et la détection du client qui l'a
-    // envoyé Pour codereq de 1 à 4 -> uint16 Pour les autres c'est chat
-    // uint16_t message; recv(&message);
-    // client_t client;
-
-    // TODO: Gérer le type de la partie (lire le message)
-    // msg_join_ready_t demande = mg_join(message),
-
-    // TODO: Gérer la création de la partie
-    // if (demande.type is not in srv.parties) {
-
-    /* NOTE: A chaque fois qu'on a un type de partie qui n'est pas dans la
-     * liste, on realloc la liste et on ajoute la nouvelle partie. */
+  
   }
 
   // TEST TO DELETE:
@@ -113,7 +97,7 @@ void affiche_connexion(struct sockaddr_in6 adrclient) {
   memset(adr_buf, 0, sizeof(adr_buf));
 
   inet_ntop(AF_INET6, &(adrclient.sin6_addr), adr_buf, sizeof(adr_buf));
-  printf("adresse client : IP: %s port: %d\n", adr_buf,
+  printf("adresse client : IP: %s port: %d\n ", adr_buf,
          ntohs(adrclient.sin6_port));
 }
 
@@ -189,9 +173,6 @@ int accept_client(client_t *client) {
   // Si tout s'est bien passé, on stocke la socket du client
   client->sock = sock_client;
 
-  // On affiche les informations de connexion
-  affiche_connexion(client->adr);
-
   // Si la liste des clients n'est pas allouée, on l'alloue
   if (srv.nb_clients == 0)
     srv.clients = malloc(sizeof(client_t));
@@ -200,14 +181,14 @@ int accept_client(client_t *client) {
     client_t *tmp =
         realloc(srv.clients, (srv.nb_clients + 1) * sizeof(client_t));
 
-    // FIXME: faire une vraie gestion des erreurs
-    if (tmp == NULL) {
-      perror("server.c: accept(): realloc()");
-      exit(EXIT_FAILURE);
-    }
-
-    // On met à jour la liste des parties
+    
     srv.clients = tmp;
+
+    //Demander au client le type de partie qu'il veut
+    recv(client->sock, &client->type, sizeof(client->type), 0);
+
+    // On affiche les informations de connexion
+    affiche_connexion(client->adr);
   }
 
   // On ajoute le client à la liste des clients
