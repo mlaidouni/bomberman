@@ -5,14 +5,14 @@
 // DEFINES
 #define SIZE_MESS 100
 
-parties_t parties = {0};
+parties_t parties = {.nb_parties = 0};
 
 // VARIABLES
-server_t srv = {0};
+server_t srv = {.nb_clients = 0};
 
 int main(int argc, char **args) {
   // NOTE: Le port devra être passé en argument
-  const int tcp_port = 8080;
+  const int tcp_port = 8081;
 
   // NOTE: Les variables du serveur sont initialisées dans cette fonction
   // Création de la connexion TCP
@@ -20,72 +20,53 @@ int main(int argc, char **args) {
     exit(EXIT_FAILURE);
 
   while (1) {
-    // On accepete un client
-    client_t client = {0};
-    if (accept_client(&client) < 0)
-      exit(EXIT_FAILURE);
+    printf("Nombre de parties : %d\n", parties.nb_parties);
+    printf("Nombre de clients : %d\n\n", srv.nb_clients);
 
-    int i;
-    // Boucler sur toutes les parties
-    for (i = 0; i < parties.nb_parties; i++) {
-      partie_t partie = parties.parties[i];
-      // Vérifier si la partie a le même type que le client et s'il reste de la place
-      if (partie.type == client.type && partie.nb_joueurs < 4) {
-      
-        // Créer un joueur à partir du client
-        joueur_t joueur = {0};
-        joueur.client = client;
-        joueur.id = partie.nb_joueurs;
-        // Ajouter le joueur à la partie
-        partie.joueurs[partie.nb_joueurs] = joueur;
-        partie.nb_joueurs++;
-        // Mettre à jour la partie dans la liste des parties
-        parties.parties[i] = partie;
-        break;
+    // On accepte un client
+    client_t client = {0};
+    if (accept_client(&client) == 0){
+      int i;
+      // Boucler sur toutes les parties
+      if (parties.nb_parties > 0) {
+        for (i = 0; i < parties.nb_parties; i++) {
+          partie_t partie = parties.parties[i];
+          // Vérifier si la partie a le même type que le client et s'il reste de la place
+          if (partie.type == client.type && partie.nb_joueurs < 4) {
+            printf("Ajout du client à une partie existante\n");
+            // Créer un joueur à partir du client
+            joueur_t joueur = {0};
+            joueur.client = client;
+            joueur.id = partie.nb_joueurs;
+            // Ajouter le joueur à la partie
+            partie.joueurs[partie.nb_joueurs] = joueur;
+            partie.nb_joueurs++;
+            // Mettre à jour la partie dans la liste des parties
+            parties.parties[i] = partie;
+            break;
+          }
+        }
+      }
+      // Si aucune partie n'a été trouvée, créer une nouvelle partie
+      if (parties.nb_parties == 0 || i == parties.nb_parties) {
+        printf("Création d'une nouvelle partie\n");
+        
+        partie_t nouvelle_partie = init_partie(client.type, client);
+        // A chaque création de partie, on réalloue la mémoire pour une nouvelle partie
+        parties.parties = realloc(parties.parties, (parties.nb_parties + 1) * sizeof(partie_t));
+        if (parties.parties == NULL) {
+          perror("server.c: realloc()");
+          exit(EXIT_FAILURE);
+        }
+
+        // On ajoute la nouvelle partie
+        parties.parties[parties.nb_parties] = nouvelle_partie;
+        parties.nb_parties++;
       }
     }
-    // Si aucune partie n'a été trouvée, créer une nouvelle partie
-    if (i == parties.nb_parties) {
-      partie_t nouvelle_partie = init_partie(client.type, client);
-      parties.parties[parties.nb_parties] = nouvelle_partie;
-      parties.nb_parties++;
-    }
-    
-  
   }
 
-  // TEST TO DELETE:
-  msg_join_ready_t demande = {0};
-  demande.game_type = 1;
-  uint16_t message = ms_join(demande);
-  msg_join_ready_t params = mg_join(message);
-
-  // TODO: Vérifier la validité du message, e.g que le type de partie est valide
-  if (params.game_type != 0 && params.game_type != 1) {
-    fprintf(stderr, "server.c: main(): type de partie invalide\n");
-    exit(EXIT_FAILURE);
-  }
-
-  // On va supposer que c'est le premier client qui a créé la partie
-  partie_t partie = init_partie(params, srv.clients[0]);
-
-  // On convertit les données de la partie en message
-  msg_game_data_t game_data = {0};
-  init_msg_game_data(partie, game_data);
-
-  // On envoie les données de la partie au client
-  // uint8_t *msg = ms_game_data(game_data);
-  // sendto(client, msg);
-
-  // TODO: Vérifier si la partie à laquelle on l'a ajouté
-  // On lance le jeu
-  start_game(partie);
-
-  // TEST TO DELETE: fin
-
-  // Fermeture des sockets client et serveur
   close(srv.tcp_sock);
-
   return 0;
 }
 
@@ -97,7 +78,7 @@ void affiche_connexion(struct sockaddr_in6 adrclient) {
   memset(adr_buf, 0, sizeof(adr_buf));
 
   inet_ntop(AF_INET6, &(adrclient.sin6_addr), adr_buf, sizeof(adr_buf));
-  printf("adresse client : IP: %s port: %d\n ", adr_buf,
+  printf("adresse client : IP: %s port: %d\n", adr_buf,
          ntohs(adrclient.sin6_port));
 }
 
@@ -183,21 +164,20 @@ int accept_client(client_t *client) {
 
     
     srv.clients = tmp;
-
-    //Demander au client le type de partie qu'il veut
-    recv(client->sock, &client->type, sizeof(client->type), 0);
-
-    // On affiche les informations de connexion
-    affiche_connexion(client->adr);
   }
+
+  //Demander au client le type de partie qu'il veut
+  recv(client->sock, &client->type, sizeof(client->type), 0);
+
+  // On affiche les informations de connexion
+  affiche_connexion(client->adr);
 
   // On ajoute le client à la liste des clients
   srv.clients[srv.nb_clients] = *client;
-  // Si le client a été ajouté, on incrémente le nombre de clients
+
+  // On incrémente le nombre de clients
   srv.nb_clients++;
 
-  // Afficher le nombre de clients connectés
-  //printf("Nombre de clients connectés : %d\n", srv.nb_clients);
   return 0;
 }
 

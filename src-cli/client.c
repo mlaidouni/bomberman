@@ -161,7 +161,7 @@ int action(int sock_client, int game_type, int player_id, int team_id, int num,
 
 int main(int argc, char const *argv[]) {
   // NOTE: Le port devra être passé en argument
-  const int port = 8080;
+  const int port = 8081;
 
   // Connexion en mode TCP au serveur
   int sock_client = connect_to_server(port);
