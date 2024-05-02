@@ -171,8 +171,9 @@ int main(int argc, char const *argv[]) {
 
   printf("Connected to server\n");
 
-  // Si on entre 0, on veut jouer à 4 joueurs, si on entre 1 on veut jouer à 2 équipes, envoyer le chiffre entré au serveur
-  //Demander à l'utilisateur d'entrer 0 ou 1
+  // Si on entre 0, on veut jouer à 4 joueurs, si on entre 1 on veut jouer à 2
+  // équipes, envoyer le chiffre entré au serveur
+  // Demander à l'utilisateur d'entrer 0 ou 1
   int game_type;
   printf("Entrer 0 pour jouer à 4 joueurs, 1 pour jouer en équipes: ");
   scanf("%d", &game_type);
@@ -180,9 +181,6 @@ int main(int argc, char const *argv[]) {
 
   while (1) {
     // On attend la réception des données de la partie
-    
-
-    
 
     // On s'abonne à l'adresse de multicast (connexion UDP)
     /*
@@ -194,13 +192,12 @@ int main(int argc, char const *argv[]) {
     */
   }
 
+  // On s'annonce prêt au serveur
+  // ...
+  // Autres traitements à effectuer
+  // ...
 
-    // On s'annonce prêt au serveur
-    // ...
-    // Autres traitements à effectuer
-    // ...
-
-    // Fermeture de la socket client: à la fin de la partie seulement
+  // Fermeture de la socket client: à la fin de la partie seulement
   close(sock_client);
   return 0;
 }

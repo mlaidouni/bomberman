@@ -38,7 +38,7 @@ partie_t init_partie(int type, client_t client) {
   // On récupère la liste des parties de ce type
   /*int finded_partie = find_partie(params.game_type);
 
-  
+
 
   // On cherche une partie du type demandé qui n'est pas pleine
   // Si on n'en trouve pas, on crée une nouvelle partie
@@ -62,7 +62,7 @@ partie_t init_partie(int type, client_t client) {
  */
 partie_t create_partie(client_t client, msg_join_ready_t params) {
   // Création de la structure partie
-  partie_t partie = {0};
+  partie_t partie = {.nb_joueurs = 0, .end = 1, .type = params.game_type};
   partie.end = 1;
   // FIXME: gérer le fait que le type demandé soit invalide
   partie.type = params.game_type;
@@ -163,10 +163,12 @@ int add_joueur(partie_t partie, client_t client) {
  */
 int find_partie(int type) {
   // On cherche la partie correspondant au type
-  for (int i = 0; i < srv.parties.nb_parties; i++)
-    if (srv.parties.parties[i].type == type)
+  for (int i = 0; i < srv.parties.nb_parties; i++) {
+    printf("srv.parties.partie.type: %d\n", srv.parties.parties[i].nb_joueurs);
+    if (srv.parties.parties[i].type == type &&
+        srv.parties.parties[i].nb_joueurs < 4)
       return i;
-
+  }
   return -1;
 }
 

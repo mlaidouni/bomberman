@@ -5,8 +5,6 @@
 // DEFINES
 #define SIZE_MESS 100
 
-parties_t parties = {.nb_parties = 0};
-
 // VARIABLES
 server_t srv = {.nb_clients = 0};
 
@@ -20,48 +18,53 @@ int main(int argc, char **args) {
     exit(EXIT_FAILURE);
 
   while (1) {
-    printf("Nombre de parties : %d\n", parties.nb_parties);
+    printf("Nombre de parties : %d\n", srv.parties.nb_parties);
     printf("Nombre de clients : %d\n\n", srv.nb_clients);
 
     // On accepte un client
     client_t client = {0};
-    if (accept_client(&client) == 0){
-      int i;
-      // Boucler sur toutes les parties
-      if (parties.nb_parties > 0) {
-        for (i = 0; i < parties.nb_parties; i++) {
-          partie_t partie = parties.parties[i];
-          // Vérifier si la partie a le même type que le client et s'il reste de la place
-          if (partie.type == client.type && partie.nb_joueurs < 4) {
-            printf("Ajout du client à une partie existante\n");
-            // Créer un joueur à partir du client
-            joueur_t joueur = {0};
-            joueur.client = client;
-            joueur.id = partie.nb_joueurs;
-            // Ajouter le joueur à la partie
-            partie.joueurs[partie.nb_joueurs] = joueur;
-            partie.nb_joueurs++;
-            // Mettre à jour la partie dans la liste des parties
-            parties.parties[i] = partie;
-            break;
-          }
-        }
+    if (accept_client(&client) == 0) {
+
+      uint8_t message;
+      // On récupère le message du client
+      recv(client.sock, &message, sizeof(message), 0);
+      // On décode son message
+      msg_join_ready_t params = mg_join(message);
+      client.type = params.game_type;
+
+      int f = find_partie(client.type);
+      printf("-----------> %d\n", f);
+      if (f != -1) {
+        printf("Ajout du client à une partie existante\n");
+        // Créer un joueur à partir du client
+        joueur_t joueur = {0};
+        joueur.client = client;
+        joueur.id = srv.parties.parties[f].nb_joueurs;
+        // Ajouter le joueur à la partie
+        srv.parties.parties[f].joueurs[srv.parties.parties[f].nb_joueurs] =
+            joueur;
+        srv.parties.parties[f].nb_joueurs++;
+        // Mettre à jour la partie dans la liste des parties
+        srv.parties.parties[f] = srv.parties.parties[f];
       }
       // Si aucune partie n'a été trouvée, créer une nouvelle partie
-      if (parties.nb_parties == 0 || i == parties.nb_parties) {
+      else {
         printf("Création d'une nouvelle partie\n");
-        
-        partie_t nouvelle_partie = init_partie(client.type, client);
-        // A chaque création de partie, on réalloue la mémoire pour une nouvelle partie
-        parties.parties = realloc(parties.parties, (parties.nb_parties + 1) * sizeof(partie_t));
-        if (parties.parties == NULL) {
+
+        partie_t nouvelle_partie = create_partie(client, params);
+        // A chaque création de partie, on réalloue la mémoire pour une nouvelle
+        // partie
+        srv.parties.parties =
+            realloc(srv.parties.parties,
+                    (srv.parties.nb_parties + 1) * sizeof(partie_t));
+        if (srv.parties.parties == NULL) {
           perror("server.c: realloc()");
           exit(EXIT_FAILURE);
         }
 
         // On ajoute la nouvelle partie
-        parties.parties[parties.nb_parties] = nouvelle_partie;
-        parties.nb_parties++;
+        srv.parties.parties[srv.parties.nb_parties] = nouvelle_partie;
+        srv.parties.nb_parties++;
       }
     }
   }
@@ -162,12 +165,8 @@ int accept_client(client_t *client) {
     client_t *tmp =
         realloc(srv.clients, (srv.nb_clients + 1) * sizeof(client_t));
 
-    
     srv.clients = tmp;
   }
-
-  //Demander au client le type de partie qu'il veut
-  recv(client->sock, &client->type, sizeof(client->type), 0);
 
   // On affiche les informations de connexion
   affiche_connexion(client->adr);
