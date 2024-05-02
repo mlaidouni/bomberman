@@ -28,8 +28,8 @@ $(EXEC_CLI): $(SOURCES_CLI) $(SOURCES_LIB)
 	mkdir -p $(BINDIR)
 	$(CC) $(CFLAGS) $(SOURCES_CLI) $(SOURCES_LIB) -o $@
 
-$(EXEC_SRV): $(SOURCES_SRV)
-	$(CC) $(CFLAGS) $(SOURCES_SRV) -o $@
+$(EXEC_SRV): $(SOURCES_SRV) $(SOURCES_LIB)
+	$(CC) $(CFLAGS) $(SOURCES_SRV) $(SOURCES_LIB) -o $@
 
 # Nettoyer les fichiers générés
 clean:

@@ -35,36 +35,14 @@ int main(int argc, char **args) {
       int f = find_partie(client.type);
       printf("-----------> %d\n", f);
       if (f != -1) {
-        printf("Ajout du client à une partie existante\n");
-        // Créer un joueur à partir du client
-        joueur_t joueur = {0};
-        joueur.client = client;
-        joueur.id = srv.parties.parties[f].nb_joueurs;
-        // Ajouter le joueur à la partie
-        srv.parties.parties[f].joueurs[srv.parties.parties[f].nb_joueurs] =
-            joueur;
-        srv.parties.parties[f].nb_joueurs++;
-        // Mettre à jour la partie dans la liste des parties
-        srv.parties.parties[f] = srv.parties.parties[f];
+        printf("Ajout du client à une partie existante avec %d joueurs\n",
+               srv.parties.parties[f].nb_joueurs);
+        add_joueur(srv.parties.parties[f], client);
       }
       // Si aucune partie n'a été trouvée, créer une nouvelle partie
       else {
         printf("Création d'une nouvelle partie\n");
-
-        partie_t nouvelle_partie = create_partie(client, params);
-        // A chaque création de partie, on réalloue la mémoire pour une nouvelle
-        // partie
-        srv.parties.parties =
-            realloc(srv.parties.parties,
-                    (srv.parties.nb_parties + 1) * sizeof(partie_t));
-        if (srv.parties.parties == NULL) {
-          perror("server.c: realloc()");
-          exit(EXIT_FAILURE);
-        }
-
-        // On ajoute la nouvelle partie
-        srv.parties.parties[srv.parties.nb_parties] = nouvelle_partie;
-        srv.parties.nb_parties++;
+        create_partie(client, params);
       }
     }
   }
