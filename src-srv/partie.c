@@ -34,7 +34,7 @@ int start_game(partie_t partie) {
  * @return La partie créée, ou la partie trouvée si elle existe déjà.
  */
 partie_t init_partie(int type, client_t client) {
-  partie_t partie = {0};
+  partie_t partie = {.nb_joueurs = 0, .end = 1, .type = type};
   // On récupère la liste des parties de ce type
   /*int finded_partie = find_partie(params.game_type);
 
