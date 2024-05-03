@@ -3,17 +3,10 @@
 #include "partie.h"
 
 // DEFINES
+#define SIZE_MESS 100
 
 // VARIABLES
-server_t srv = {0};
-
-void affiche_parties() {
-  // Pour chaque partie du serveur, on affiche index type et nb de joueurs
-  for (int i = 0; i < srv.parties.nb_parties; i++) {
-    printf("\033[33m server.c: while(1): Partie %d: %d, %d \033[0m \n", i,
-           srv.parties.parties[i].type, srv.parties.parties[i].nb_joueurs);
-  }
-}
+server_t srv = {.nb_clients = 0};
 
 int main(int argc, char **args) {
   // NOTE: Le port devra être passé en argument
@@ -25,8 +18,11 @@ int main(int argc, char **args) {
     exit(EXIT_FAILURE);
 
   while (1) {
-
-    affiche_parties(); // CACA: On affiche les parties
+    // Pour chaque partie du serveur, on affiche index type et nb de joueurs
+    for (int i = 0; i < srv.parties.nb_parties; i++) {
+      printf("\033[33m server.c: while(1): Partie %d: %d, %d \033[0m \n", i,
+             srv.parties.parties[i].type, srv.parties.parties[i].nb_joueurs);
+    }
 
     // On accepte un client
     client_t client = {0};
@@ -155,21 +151,59 @@ int accept_client(client_t *client) {
   return 0;
 }
 
-int gestion_connexion_tcp() {
-  // On accepte un client
-  client_t client = {0};
-  if (accept_client(&client) == 0) {
-    // Si le client est accepté, on récupère le message du client
-    uint8_t message;
-    recv(client.sock, &message, sizeof(message), 0);
+// TODO: que quelqu'un jette un oeil à cette fonction, jsp à quoi elle sert
+/**
+ * Reçoit une requête sur la socket donnée.
+ * @param sock La socket sur laquelle recevoir la requête.
+ * @return La requête reçue.
+ */
+int receive_request() {
+  // On crée un buffer pour stocker les octets reçus
+  uint16_t *buffer = malloc(sizeof(uint16_t));
+  // Le nombre d'octets reçus
+  ssize_t bytes_received = 0;
 
-    // On décode son message
-    msg_join_ready_t params = mg_join(message);
+  // On boucle tant qu'on n'a pas reçu les 2 octets
+  while (bytes_received < sizeof(buffer)) {
+    // On reçoit les octets
+    ssize_t received = recv(srv.tcp_sock, buffer + bytes_received,
+                            sizeof(uint16_t) - bytes_received, 0);
 
-    // On gère la création ou l'ajout du joueur à une partie
-    if (init_partie(params, client))
-      return -1; // Si ça passe mal, on retourne -1
+    // Gérer l'erreur
+    if (received == -1)
+      perror("server.c: receive_request(): recv");
+    else if (!received) {
+      fprintf(stderr, "server.c: receive_request(): connexion fermée\n");
+      return -1;
+    } else
+      bytes_received += received;
   }
+
+  // Convertir les octets reçus en Little Endian
+  *buffer = ntohs(*buffer);
+
+  // On sauvegarde une copie du buffer
+  // uint16_t buffer_copie = *buffer; // WARNING: NE PAS TOUCHER CE BUFFER
+
+  // On lit le code de requête (13 premiers bits)
+  int codereq = *buffer >> 3;
+
+  // TODOFIXME: Comment gérer les messages, que doit renvoyer cette fonction
+  // ???? Si le codereq vaut 1 ou 2, c'est une requête de type 'join'
+  if (codereq == 1 || codereq == 2) {
+    // msg_join_ready_t msg = mg_join(buffer_copie);
+  } else if (codereq == 3 || codereq == 4) {
+    // Si le codereq vaut 3 ou 4, c'est une requête de type 'ready'
+
+    // msg_ready_t msg = mg_ready(buffer_copie);
+  } else {
+    // Sinon, c'est un message de tchat
+    /* TODO: lire les octets restants si c'est un message de tchat en bouclant
+     * de nouveaux sur le recv */
+  }
+
+  // On libère le buffer
+  free(buffer);
 
   return 0;
 }

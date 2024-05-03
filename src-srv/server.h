@@ -6,7 +6,6 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -51,12 +50,6 @@ struct parties_t {
   int nb_parties;    // Le nombre de parties gérées par le serveur.
 } typedef parties_t;
 
-// Structure pour gérer le poll des sockets
-struct poll_t {
-  struct pollfd *fds; // Les sockets à surveiller.
-  int nfds;           // Le nombre de sockets à surveiller.
-} typedef poll_t;
-
 // Structure pour stocker les informations du serveur.
 struct server_t {
   int tcp_sock;            // La socket TCP.
@@ -65,7 +58,6 @@ struct server_t {
   parties_t parties;       // Les parties gérées par le serveur.
   client_t *clients;       // Les clients connectés au serveur.
   int nb_clients;          // Le nombre de clients connectés au serveur.
-  poll_t poll;             // Le poll des sockets.
 } typedef server_t;
 
 // Structure du multicast
@@ -82,6 +74,7 @@ extern server_t srv;
 void affiche_connexion(struct sockaddr_in6 adrclient);
 int create_TCP_connection(int port);
 int accept_client(client_t *client);
+int receive_request();
 
 /* ********** Fonctions utilitaires ********** */
 
