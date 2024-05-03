@@ -22,7 +22,7 @@ int init_partie(msg_join_ready_t params, client_t client) {
   // Si on n'en trouve pas, on crée une nouvelle partie
   if (finded_partie == -1) {
     // On crée et ajoute la partie à la liste des parties
-    if (create_partie(client, params))
+    if (create_partie(client, params) < 0)
       return -1;
   } else
     // Sinon, on ajoute le joueur à la partie trouvée
@@ -35,7 +35,8 @@ int init_partie(msg_join_ready_t params, client_t client) {
  * Crée une partie et l'ajoute à la liste des parties du serveur.
  * @param client Le client qui a demandé la partie.
  * @param params Les paramètres de la partie.
- * @return L'id de la partie créée (ie un nombre >= 0). un nombre negatif si il y a une erreur
+ * @return L'id de la partie créée (ie un nombre >= 0). un nombre negatif si il
+ * y a une erreur
  */
 int create_partie(client_t client, msg_join_ready_t params) {
   // Création de la structure partie
