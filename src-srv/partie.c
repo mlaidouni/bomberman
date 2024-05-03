@@ -58,9 +58,9 @@ partie_t init_partie(int type, client_t client) {
  * Crée une partie.
  * @param client Le client qui a demandé la partie.
  * @param params Les paramètres de la partie.
- * @return La partie créée.
+ * @return L'id de la partie créée (ie un nombre >= 0). un nombre negatif si il y a une erreur
  */
-partie_t create_partie(client_t client, msg_join_ready_t params) {
+int create_partie(client_t client, msg_join_ready_t params) {
   // Création de la structure partie
   partie_t partie = {.nb_joueurs = 0, .end = 1, .type = params.game_type};
   partie.end = 1;
@@ -116,7 +116,7 @@ partie_t create_partie(client_t client, msg_join_ready_t params) {
     // FIXME: faire une vraie gestion des erreurs
     if (tmp == NULL) {
       perror("partie.c: create_partie(): realloc()");
-      exit(EXIT_FAILURE);
+      return -1;
     }
     // On met à jour la liste des parties
     srv.parties.parties = tmp;
@@ -125,7 +125,7 @@ partie_t create_partie(client_t client, msg_join_ready_t params) {
   // On ajoute la partie à la liste des parties
   srv.parties.parties[srv.parties.nb_parties] = partie;
   srv.parties.nb_parties++;
-  return partie;
+  return srv.parties.nb_parties;
 }
 
 /**

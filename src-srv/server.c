@@ -223,7 +223,9 @@ int receive_request() {
  * @param game_data La structure msg_game_data_t à initialiser.
  */
 void init_msg_game_data(partie_t partie, msg_game_data_t game_data) {
-  memcpy(&game_data.adr_mdiff, &partie.adr_mdiff, sizeof(partie.adr_mdiff));
+  uint8_t buf[16];
+  inet_pton(AF_INET6, partie.adr_mdiff, &buf);
+  memcpy(&game_data.adr_mdiff, buf, sizeof(buf));
   game_data.port_mdiff = partie.port_mdiff;
   game_data.port_udp = partie.port_udp;
   game_data.game_type = partie.type;
