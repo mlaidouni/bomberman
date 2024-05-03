@@ -4,14 +4,14 @@
 /* ********** Includes ********** */
 #include "../lib/message.h"
 #include <arpa/inet.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <fcntl.h>
-#include <errno.h>
 
 /* ********** Structures ********** */
 
@@ -20,7 +20,6 @@ struct client_t {
   struct sockaddr_in6 adr; // L'adresse du client.
   socklen_t size;          // La taille de l'adresse du client.
   int sock;                // La socket du client.
-  int type;                // Le type de partie recherchée par le client (0: 4 joueurs, 1: 2 équipes).
 } typedef client_t;
 
 // Structure représentant un joueur.
@@ -63,8 +62,8 @@ struct server_t {
 
 // Structure du multicast
 struct msg_multicast_info_t {
-  int port_udp;   // Le port UDP sur lequel le serveur attend les messages.
-  int port; // Le port sur lequel le serveur multidiffuse ses messages.
+  int port_udp;  // Le port UDP sur lequel le serveur attend les messages.
+  int port;      // Le port sur lequel le serveur multidiffuse ses messages.
   char addr[12]; // L'adresse IPv6 de multicast (16 octets).
 } typedef msg_multicast_info_t;
 

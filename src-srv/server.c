@@ -18,32 +18,25 @@ int main(int argc, char **args) {
     exit(EXIT_FAILURE);
 
   while (1) {
-    printf("Nombre de parties : %d\n", srv.parties.nb_parties);
-    printf("Nombre de clients : %d\n\n", srv.nb_clients);
+    // Pour chaque partie du serveur, on affiche index type et nb de joueurs
+    for (int i = 0; i < srv.parties.nb_parties; i++) {
+      printf("\033[33m server.c: while(1): Partie %d: %d, %d \033[0m \n", i,
+             srv.parties.parties[i].type, srv.parties.parties[i].nb_joueurs);
+    }
 
     // On accepte un client
     client_t client = {0};
     if (accept_client(&client) == 0) {
-
+      // Si le client est accepté, on récupère le message du client
       uint8_t message;
-      // On récupère le message du client
       recv(client.sock, &message, sizeof(message), 0);
+
       // On décode son message
       msg_join_ready_t params = mg_join(message);
-      client.type = params.game_type;
 
-      int f = find_partie(client.type);
-      printf("-----------> %d\n", f);
-      if (f != -1) {
-        printf("Ajout du client à une partie existante avec %d joueurs\n",
-               srv.parties.parties[f].nb_joueurs);
-        add_joueur(srv.parties.parties[f], client);
-      }
-      // Si aucune partie n'a été trouvée, créer une nouvelle partie
-      else {
-        printf("Création d'une nouvelle partie\n");
-        create_partie(client, params);
-      }
+      // On gère la création ou l'ajout du joueur à une partie
+      if (init_partie(params, client))
+        exit(EXIT_FAILURE); // Si ça passe mal, on exit
     }
   }
 

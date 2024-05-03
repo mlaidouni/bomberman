@@ -1,72 +1,45 @@
 #include "partie.h"
 
 /**
- * Lance le jeu.
- * @param partie La partie à lancer.
+ * Crée une nouvelle partie avec le client donné, ou ajoute celui-ci à une
+ * partie déjà existante.
+ * @param client Le client qui a créé la partie.
+ * @param params Les paramètres de la partie.
  * @return 0 si tout s'est bien passé, -1 sinon.
  */
-int start_game(partie_t partie) {
-  // TODO: Gérer le type de partie et les parties en attente
-
-  while (partie.nb_joueurs < 4)
-    // Si le nombre de joueurs est inférieur à 4, on attend des connexions
-    ;
-
-  // Si le nombre de joueurs est égal à 4, on lance et gère le jeu
-  // Tant que la partie n'est pas terminée
-  while (partie.end) {
-
-    // TODO: Le jeu
-    // ...
-
-    // TODO: Penser à gérer la fermeture des sockets des clients
-    // ...
+int init_partie(msg_join_ready_t params, client_t client) {
+  /* On vérifie la validité du message, e.g que le type de partie est
+  valide */
+  if (params.game_type != 0 && params.game_type != 1) {
+    fprintf(stderr, "partie.c: init_partie(): type de partie invalide\n");
+    return -1;
   }
+
+  // On récupère la liste des parties de ce type
+  int finded_partie = find_partie(params.game_type);
+
+  // On cherche une partie du type demandé qui n'est pas pleine
+  // Si on n'en trouve pas, on crée une nouvelle partie
+  if (finded_partie == -1) {
+    // On crée et ajoute la partie à la liste des parties
+    if (create_partie(client, params))
+      return -1;
+  } else
+    // Sinon, on ajoute le joueur à la partie trouvée
+    add_joueur(&srv.parties.parties[finded_partie], client);
 
   return 0;
 }
 
 /**
- * Crée une nouvelle partie avec le client donné, ou ajoute celui-ci à une
- * partie déjà existente.
- * @param client Le client qui a créé la partie.
- * @param params Les paramètres de la partie.
- * @return La partie créée, ou la partie trouvée si elle existe déjà.
- */
-partie_t init_partie(int type, client_t client) {
-  partie_t partie = {.nb_joueurs = 0, .end = 1, .type = type};
-  // On récupère la liste des parties de ce type
-  /*int finded_partie = find_partie(params.game_type);
-
-
-
-  // On cherche une partie du type demandé qui n'est pas pleine
-  // Si on n'en trouve pas, on crée une nouvelle partie
-  if (finded_partie == -1 || srv.parties.parties[finded_partie].nb_joueurs == 4)
-    partie = create_partie(client, params);
-  else {
-    // Sinon, on ajoute le joueur à la partie trouvée
-    partie = srv.parties.parties[finded_partie];
-    add_joueur(partie, client);
-  }
-
-  return partie;*/
-  return partie;
-}
-
-/**
- * Crée une partie.
+ * Crée une partie et l'ajoute à la liste des parties du serveur.
  * @param client Le client qui a demandé la partie.
  * @param params Les paramètres de la partie.
- * @return La partie créée.
+ * @return 0 si tout s'est bien passé, -1 sinon.
  */
-partie_t create_partie(client_t client, msg_join_ready_t params) {
+int create_partie(client_t client, msg_join_ready_t params) {
   // Création de la structure partie
   partie_t partie = {.nb_joueurs = 0, .end = 1, .type = params.game_type};
-  partie.end = 1;
-  // FIXME: gérer le fait que le type demandé soit invalide
-  partie.type = params.game_type;
-  partie.nb_joueurs = 1;
 
   // Création de l'adresse multicast
   memset(&partie.g_adr, 0, sizeof(partie.g_adr));
@@ -125,7 +98,8 @@ partie_t create_partie(client_t client, msg_join_ready_t params) {
   // On ajoute la partie à la liste des parties
   srv.parties.parties[srv.parties.nb_parties] = partie;
   srv.parties.nb_parties++;
-  return partie;
+
+  return 0;
 }
 
 /**
@@ -134,37 +108,36 @@ partie_t create_partie(client_t client, msg_join_ready_t params) {
  * @param client Le client à ajouter.
  * @return 0 si tout s'est bien passé, -1 sinon.
  */
-int add_joueur(partie_t partie, client_t client) {
+int add_joueur(partie_t *partie, client_t client) {
   // Création d'un joueur
   joueur_t j = {0};
   j.client = client;
-  j.id = partie.nb_joueurs;
+  j.id = partie->nb_joueurs;
 
   // On ajoute le joueur à la partie
-  partie.joueurs[partie.nb_joueurs] = j;
+  partie->joueurs[partie->nb_joueurs] = j;
 
   // On incrémente le nombre de joueurs
-  partie.nb_joueurs++;
+  partie->nb_joueurs++;
 
   // Si la partie est en mode 2 équipes, on répartit les joueurs
-  if (partie.type == 1)
+  if (partie->type == 1)
     /* NOTE: On choisit de les répartir en fonction de leur ordre
      * d'arrivée (i.e, de ordre de connexion) */
-    j.team = partie.nb_joueurs % 2;
+    j.team = partie->nb_joueurs % 2;
 
   return 0;
 }
 
 /**
- * Trouve une partie en fonction de son type.
+ * Trouve une partie disponible en fonction de son type.
  * @param type Le type de la partie à trouver.
  * @return L'indice de la partie trouvée dans la liste des parties du serveur,
  * -1 sinon.
  */
 int find_partie(int type) {
-  // On cherche la partie correspondant au type
+  // On cherche la partie correspondant au type et qui n'est pas pleine
   for (int i = 0; i < srv.parties.nb_parties; i++) {
-    printf("srv.parties.partie.type: %d\n", srv.parties.parties[i].nb_joueurs);
     if (srv.parties.parties[i].type == type &&
         srv.parties.parties[i].nb_joueurs < 4)
       return i;
@@ -195,4 +168,30 @@ void generate_multicast_ports(int *port_mdiff, int *port_udp) {
   // On génère les ports
   *port_mdiff = 5000 + srv.parties.nb_parties;
   *port_udp = 7000 + srv.parties.nb_parties;
+}
+
+/**
+ * Lance le jeu.
+ * @param partie La partie à lancer.
+ * @return 0 si tout s'est bien passé, -1 sinon.
+ */
+int start_game(partie_t partie) {
+  // TODO: Gérer le type de partie et les parties en attente
+
+  while (partie.nb_joueurs < 4)
+    // Si le nombre de joueurs est inférieur à 4, on attend des connexions
+    ;
+
+  // Si le nombre de joueurs est égal à 4, on lance et gère le jeu
+  // Tant que la partie n'est pas terminée
+  while (partie.end) {
+
+    // TODO: Le jeu
+    // ...
+
+    // TODO: Penser à gérer la fermeture des sockets des clients
+    // ...
+  }
+
+  return 0;
 }
