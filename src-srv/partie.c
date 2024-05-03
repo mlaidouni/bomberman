@@ -35,7 +35,7 @@ int init_partie(msg_join_ready_t params, client_t client) {
  * Crée une partie et l'ajoute à la liste des parties du serveur.
  * @param client Le client qui a demandé la partie.
  * @param params Les paramètres de la partie.
- * @return 0 si tout s'est bien passé, -1 sinon.
+ * @return L'id de la partie créée (ie un nombre >= 0). un nombre negatif si il y a une erreur
  */
 int create_partie(client_t client, msg_join_ready_t params) {
   // Création de la structure partie
@@ -89,7 +89,7 @@ int create_partie(client_t client, msg_join_ready_t params) {
     // FIXME: faire une vraie gestion des erreurs
     if (tmp == NULL) {
       perror("partie.c: create_partie(): realloc()");
-      exit(EXIT_FAILURE);
+      return -1;
     }
     // On met à jour la liste des parties
     srv.parties.parties = tmp;
@@ -98,8 +98,7 @@ int create_partie(client_t client, msg_join_ready_t params) {
   // On ajoute la partie à la liste des parties
   srv.parties.parties[srv.parties.nb_parties] = partie;
   srv.parties.nb_parties++;
-
-  return 0;
+  return srv.parties.nb_parties;
 }
 
 /**
