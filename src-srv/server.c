@@ -38,8 +38,24 @@ int main(int argc, char **args) {
       if (init_partie(params, client))
         exit(EXIT_FAILURE); // Si ça passe mal, on exit
     }
-  }
 
+    // Si une partie est pleine, on la lance
+    for (int i = 0; i < srv.parties.nb_parties; i++) {
+      if (srv.parties.parties[i].nb_joueurs == 4) {
+        // On envoie les infos de la partie à tous les joueurs
+        msg_game_data_t game_data;
+        init_msg_game_data(srv.parties.parties[i], game_data);
+
+        for (int j = 0; j < srv.parties.parties[i].nb_joueurs; j++) {
+          send(srv.parties.parties[i].joueurs[j].client.sock, &game_data,
+               sizeof(game_data), 0);
+        }
+
+        // On lance la partie
+        start_game(srv.parties.parties[i]);
+      }
+    }
+  }
   close(srv.tcp_sock);
   return 0;
 }
@@ -59,7 +75,8 @@ void affiche_connexion(struct sockaddr_in6 adrclient) {
 /**
  * Crée une connexion TCP sur le port donné.
  * @param port Le port sur lequel le serveur doit écouter.
- * @param srv La structure server_t où stocker les informations de connexion.
+ * @param srv La structure server_t où stocker les informations de
+ * connexion.
  * @return 0 si tout s'est bien passé, -1 sinon.
  */
 int create_TCP_connection(int port) {
@@ -104,12 +121,13 @@ int create_TCP_connection(int port) {
 /**
  * Accepte un client sur la socket TCP du serveur et met à jour la liste des
  * clients.
- * @param client La structure client_t où stocker les informations du client.
+ * @param client La structure client_t où stocker les informations du
+ * client.
  * @return 0 si tout s'est bien passé, -1 sinon.
  */
 int accept_client(client_t *client) {
-  /* Le serveur accepte une connexion et crée la socket de communication avec le
-   * client */
+  /* Le serveur accepte une connexion et crée la socket de communication
+   * avec le client */
   memset(&client->adr, 0, sizeof(client->adr));
   client->size = sizeof(client->adr);
 
@@ -198,8 +216,8 @@ int receive_request() {
     // msg_ready_t msg = mg_ready(buffer_copie);
   } else {
     // Sinon, c'est un message de tchat
-    /* TODO: lire les octets restants si c'est un message de tchat en bouclant
-     * de nouveaux sur le recv */
+    /* TODO: lire les octets restants si c'est un message de tchat en
+     * bouclant de nouveaux sur le recv */
   }
 
   // On libère le buffer
