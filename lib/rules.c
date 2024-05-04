@@ -121,3 +121,27 @@ int explode_bomb(board board, pos bomb_pos) {
 
 	return 0;
 }
+
+
+/*
+	Renvoie -1 si la partie n'est pas terminée
+	Renvoie le numéro de l'équipe gagnante sinon
+*/
+int winner(board board) {
+	int nb_alive = 0;
+	int last_team = -1;
+	for(int i = 0; i < NB_PLAYERS; i++) {
+		if(board.players[i].status == ALIVE) {
+			nb_alive++;
+			if(last_team == -1) {
+				last_team = board.players[i].team;
+			} else if(last_team != board.players[i].team) {
+				return -1;
+			}
+		}
+	}
+	if(nb_alive >= 1) {
+		return last_team;
+	}
+	return -1;
+}
