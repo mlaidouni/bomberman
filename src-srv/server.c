@@ -32,7 +32,7 @@ int main(int argc, char **args) {
     client_t client = {0};
     if (accept_client(&client) == 0) {
       // Si le client est accepté, on récupère le message du client
-      uint8_t message;
+      uint16_t message;
       recv(client.sock, &message, sizeof(message), 0);
 
       // On décode son message
