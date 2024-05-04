@@ -8,7 +8,8 @@
 
 typedef enum TYPE { SOLO, TEAM } TYPE;
 typedef enum TILE { EMPTY, BOMB, DEST_WALL, INDEST_WALL } TILE;
-typedef enum ACTION { UP, DOWN, LEFT, RIGHT, BOMB } ACTION;
+typedef enum ACTION { A_UP, A_DOWN, A_LEFT, A_RIGHT, A_BOMB } ACTION;
+typedef enum PLAYER_STATUS { ALIVE, DEAD } PLAYER_STATUS;
 
 typedef struct pos {
     int x;
@@ -21,6 +22,7 @@ typedef struct pos {
 */
 typedef struct player {
     int team;
+    PLAYER_STATUS status;
     pos pos;
 } player;
 

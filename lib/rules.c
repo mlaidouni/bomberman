@@ -7,10 +7,10 @@ int init_board(board board, TYPE type) {
 	for(int i = 0; i < WIDTH * HEIGHT; i++) {
 		board.grid[i] = EMPTY;
 	}
-	board.players[0] = {0, {0, 0}};
-	board.players[1] = {0, {WIDTH - 1, HEIGHT - 1}};
-	board.players[2] = {1, {0, HEIGHT - 1}};
-	board.players[3] = {1, {WIDTH - 1, 0}};
+	board.players[0] = (player) {0, ALIVE, {0, 0}};
+	board.players[1] = (player) {0, ALIVE, {WIDTH - 1, HEIGHT - 1}};
+	board.players[2] = (player) {1, ALIVE, {0, HEIGHT - 1}};
+	board.players[3] = (player) {1, ALIVE, {WIDTH - 1, 0}};
 	return 0;
 }
 
@@ -21,11 +21,11 @@ int valid_pos(board board, pos p) {
 int action_player(board board, int player, ACTION action) {
 	// Rappel: x <= BOMB signifie x est EMPTY ou x est BOMB
 
-	assert(player >= 0 && player < board.nb_players);
+	assert(player >= 0 && player < NB_PLAYERS);
 
 	pos p = board.players[player].pos;
 	switch (action) {
-		case UP:
+		case A_UP:
 			if (p.y > 0) {
 				if(board.grid[p.x + (p.y - 1) * WIDTH] <= BOMB) {
 					p.y--;
@@ -33,7 +33,7 @@ int action_player(board board, int player, ACTION action) {
 				}
 			}
 			return -1;
-		case DOWN:
+		case A_DOWN:
 			if (p.y < HEIGHT - 1) {
 				if(board.grid[p.x + (p.y + 1) * WIDTH] <= BOMB) {
 					p.y++;
@@ -41,7 +41,7 @@ int action_player(board board, int player, ACTION action) {
 				}
 			}
 			return -1;
-		case LEFT:
+		case A_LEFT:
 			if (p.x > 0) {
 				if(board.grid[(p.x - 1) + p.y * WIDTH] <= BOMB) {
 					p.x--;
@@ -49,7 +49,7 @@ int action_player(board board, int player, ACTION action) {
 				}
 			}
 			return -1;
-		case RIGHT:
+		case A_RIGHT:
 			if (p.x < WIDTH - 1) {
 				if(board.grid[(p.x + 1) + p.y * WIDTH] <= BOMB){
 					p.x++;
@@ -57,7 +57,7 @@ int action_player(board board, int player, ACTION action) {
 				}
 			}
 			return -1;
-		case BOMB:
+		case A_BOMB:
 			if(valid_pos(board, p) && board.grid[p.x + p.y * WIDTH] == EMPTY)
 				board.grid[p.x + p.y * WIDTH] = 'B';
 			else
@@ -70,12 +70,54 @@ int action_player(board board, int player, ACTION action) {
 	return 0;
 }
 
+int damage_pos(board board, pos p) {
+	if(!valid_pos(board, p)) {
+		return -1;
+	}
+	if(board.grid[p.x + p.y * WIDTH] == BOMB) {
+		explode_bomb(board, p);
+		return 0;
+	}
+	if(board.grid[p.x + p.y * WIDTH] == DEST_WALL) {
+		board.grid[p.x + p.y * WIDTH] = EMPTY;
+		return 1;
+	}
+	if(board.grid[p.x + p.y * WIDTH] == INDEST_WALL) {
+		return 2;
+	}
+	for(int i = 0; i < NB_PLAYERS; i++) {
+		if(board.players[i].pos.x == p.x && board.players[i].pos.y == p.y) {
+			board.players[i].status = DEAD;
+		}
+	}
+	return 0;
+}
+
 int explode_bomb(board board, pos bomb_pos) {
 	if(!valid_pos(board, bomb_pos) || board.grid[bomb_pos.x + bomb_pos.y * WIDTH] != BOMB)
 		return -1;
 	board.grid[bomb_pos.x + bomb_pos.y * WIDTH] = EMPTY;
-	// TODO: Explode the bomb
 
+	if(!damage_pos(board, (pos) {bomb_pos.x - 1, bomb_pos.y})) {
+		damage_pos(board, (pos) {bomb_pos.x - 2, bomb_pos.y});
+	}
+
+	if(!damage_pos(board, (pos) {bomb_pos.x + 1, bomb_pos.y})) {
+		damage_pos(board, (pos) {bomb_pos.x + 2, bomb_pos.y});
+	}
+
+	if(!damage_pos(board, (pos) {bomb_pos.x, bomb_pos.y - 1})) {
+		damage_pos(board, (pos) {bomb_pos.x, bomb_pos.y - 2});
+	}
+
+	if(!damage_pos(board, (pos) {bomb_pos.x, bomb_pos.y + 1})) {
+		damage_pos(board, (pos) {bomb_pos.x, bomb_pos.y + 2});
+	}
+
+	damage_pos(board, (pos) {bomb_pos.x - 1, bomb_pos.y - 1});
+	damage_pos(board, (pos) {bomb_pos.x + 1, bomb_pos.y - 1});
+	damage_pos(board, (pos) {bomb_pos.x - 1, bomb_pos.y + 1});
+	damage_pos(board, (pos) {bomb_pos.x + 1, bomb_pos.y + 1});
 
 	return 0;
 }
