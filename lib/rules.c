@@ -58,8 +58,12 @@ int action_player(board board, int player, ACTION action) {
 			}
 			return -1;
 		case A_BOMB:
-			if(valid_pos(board, p) && board.grid[p.x + p.y * WIDTH] == EMPTY)
+			if(valid_pos(board, p) && board.grid[p.x + p.y * WIDTH] == EMPTY) {
 				board.grid[p.x + p.y * WIDTH] = 'B';
+				// TODO: timer pour faire peter la bombe
+				// Attention: si la bombe se fait peter par une autre
+				// bombe, il faut desactiver le timer
+			}
 			else
 				return -1;
 			break;
