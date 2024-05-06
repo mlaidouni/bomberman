@@ -33,6 +33,54 @@ int connect_to_server(int port) {
 }
 
 /**
+ * Envoie un message au serveur.
+ * @param sock_client La socket client.
+ * @param message Un pointeur vers le message à envoyer.
+ * @param msg_size La taille du message.
+ * @param type Le type d'envoie, i.e le nom de la fonction appelante.
+ * @return Le nombre d'octets envoyés ou -1 en cas d'erreur.
+ */
+int send_message(int sock_client, void *message, size_t msg_size, char *type) {
+  // Envoi du message
+  int r = send(sock_client, message, msg_size, 0);
+
+  // Gestion des erreurs
+  if (r == -1) {
+    char err_msg[100];
+    sprintf(err_msg, "src-cli/client.c: %s: send message failed", type);
+    perror(err_msg);
+    close(sock_client);
+    return -1;
+  }
+
+  return r;
+}
+
+/**
+ * Reçoit un message du serveur.
+ * @param sock_client La socket client.
+ * @param message Un pointeur vers le message à recevoir.
+ * @param msg_size La taille du message.
+ * @param type Le type de réception, i.e le nom de la fonction appelante.
+ * @return Le nombre d'octets reçus ou -1 en cas d'erreur.
+ */
+int recv_message(int sock_client, void *message, size_t msg_size, char *type) {
+  // Réception du message
+  int r = recv(sock_client, message, msg_size, 0);
+
+  // Gestion des erreurs
+  if (r == -1) {
+    char err_msg[100];
+    sprintf(err_msg, "src-cli/client.c: %s: recv message failed", type);
+    perror(err_msg);
+    close(sock_client);
+    return -1;
+  }
+
+  return r;
+}
+
+/**
  * Envoie un message de type 'join' au serveur.
  * @param sock_client La socket client.
  * @param game_type Le type de jeu.
@@ -111,36 +159,6 @@ int action(int sock_client, int game_type, int player_id, int team_id, int num,
   return 0;
 }
 
-int abonnement(multicast_client_t mc) {
-  struct sockaddr_in6 adr;
-  memset(&adr, 0, sizeof(adr));
-  adr.sin6_family = AF_INET6;
-  adr.sin6_addr = in6addr_any;
-  adr.sin6_port = htons(4321);
-
-  if (bind(mc.sock, (struct sockaddr *)&adr, sizeof(adr))) {
-    perror("erreur bind");
-    close(mc.sock);
-    return -1;
-  }
-
-  struct ipv6_mreq group;
-  inet_pton(AF_INET6, "ff12::1:2:3", &group.ipv6mr_multiaddr.s6_addr);
-  group.ipv6mr_interface = if_nametoindex("eth0");
-  if (setsockopt(mc.sock, IPPROTO_IPV6, IPV6_JOIN_GROUP, &group,
-                 sizeof(group)) < 0) {
-    perror("erreur abonnement groupe");
-    close(mc.sock);
-    return -1;
-  }
-
-  mc.adr = adr;
-  mc.sock = mc.sock;
-  mc.mreq = group;
-
-  return 0;
-}
-
 int main(int argc, char const *argv[]) {
   // NOTE: Le port devra être passé en argument
   const int port = 8081;
@@ -182,10 +200,6 @@ int main(int argc, char const *argv[]) {
   while (1) {
 
     // On s'abonne à l'adresse de multicast (connexion UDP)
-    multicast_client_t mc;
-    int a = abonnement(mc);
-    if (a == -1)
-      exit(EXIT_FAILURE);
 
     // On s'annonce prêt au serveur
 

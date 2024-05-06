@@ -74,7 +74,6 @@ extern server_t srv;
 
 void affiche_connexion(struct sockaddr_in6 adrclient);
 int create_TCP_connection(int port);
-int create_UDP_connection(int port);
 int accept_client(client_t *client);
 int receive_request();
 

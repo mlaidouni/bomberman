@@ -17,10 +17,6 @@ int main(int argc, char **args) {
   if (create_TCP_connection(tcp_port) < 0)
     exit(EXIT_FAILURE);
 
-  // Création de la connexion UDP
-  if (create_UDP_connection(tcp_port) < 0)
-    exit(EXIT_FAILURE);
-
   while (1) {
     // Pour chaque partie du serveur, on affiche index type et nb de joueurs
     for (int i = 0; i < srv.parties.nb_parties; i++) {
