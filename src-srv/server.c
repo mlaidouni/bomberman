@@ -17,6 +17,10 @@ int main(int argc, char **args) {
   if (create_TCP_connection(tcp_port) < 0)
     exit(EXIT_FAILURE);
 
+  // Création de la connexion UDP
+  if (create_UDP_connection(tcp_port) < 0)
+    exit(EXIT_FAILURE);
+
   while (1) {
     // Pour chaque partie du serveur, on affiche index type et nb de joueurs
     for (int i = 0; i < srv.parties.nb_parties; i++) {
@@ -38,8 +42,24 @@ int main(int argc, char **args) {
       if (init_partie(params, client))
         exit(EXIT_FAILURE); // Si ça passe mal, on exit
     }
-  }
 
+    // Si une partie est pleine, on la lance
+    for (int i = 0; i < srv.parties.nb_parties; i++) {
+      if (srv.parties.parties[i].nb_joueurs == 4) {
+        // On envoie les infos de la partie à tous les joueurs
+        msg_game_data_t game_data;
+        init_msg_game_data(srv.parties.parties[i], game_data);
+
+        for (int j = 0; j < srv.parties.parties[i].nb_joueurs; j++) {
+          send(srv.parties.parties[i].joueurs[j].client.sock, &game_data,
+               sizeof(game_data), 0);
+        }
+
+        // On lance la partie
+        start_game(srv.parties.parties[i]);
+      }
+    }
+  }
   close(srv.tcp_sock);
   return 0;
 }
@@ -59,7 +79,8 @@ void affiche_connexion(struct sockaddr_in6 adrclient) {
 /**
  * Crée une connexion TCP sur le port donné.
  * @param port Le port sur lequel le serveur doit écouter.
- * @param srv La structure server_t où stocker les informations de connexion.
+ * @param srv La structure server_t où stocker les informations de
+ * connexion.
  * @return 0 si tout s'est bien passé, -1 sinon.
  */
 int create_TCP_connection(int port) {
@@ -101,15 +122,47 @@ int create_TCP_connection(int port) {
   return 0;
 }
 
+int create_UDP_connection(int port) {
+  // Création de la socket serveur
+  int sock_srv = socket(PF_INET6, SOCK_DGRAM, 0);
+  if (sock_srv < 0) {
+    perror("server.c: socket(): création de la socket échouée");
+    return -1;
+  }
+
+  // Création de l'adresse du destinataire (serveur)
+  struct sockaddr_in6 addr;
+  memset(&addr, 0, sizeof(addr));
+  addr.sin6_family = AF_INET6;
+  addr.sin6_port = htons(port);
+  addr.sin6_addr = in6addr_any;
+
+  // On lie la socket au port
+  int r = bind(sock_srv, (struct sockaddr *)&addr, sizeof(addr));
+  // Gestions des erreurs
+  if (r < 0) {
+    perror("server.c: bind(): bind échoué");
+    return -1;
+  }
+
+  // Si tout s'est bien passé, on stocke les informations dans le serveur
+  srv.udp_sock = sock_srv;
+  srv.udp_port = port;
+  srv.adr = addr;
+
+  return 0;
+}
+
 /**
  * Accepte un client sur la socket TCP du serveur et met à jour la liste des
  * clients.
- * @param client La structure client_t où stocker les informations du client.
+ * @param client La structure client_t où stocker les informations du
+ * client.
  * @return 0 si tout s'est bien passé, -1 sinon.
  */
 int accept_client(client_t *client) {
-  /* Le serveur accepte une connexion et crée la socket de communication avec le
-   * client */
+  /* Le serveur accepte une connexion et crée la socket de communication
+   * avec le client */
   memset(&client->adr, 0, sizeof(client->adr));
   client->size = sizeof(client->adr);
 
@@ -198,8 +251,8 @@ int receive_request() {
     // msg_ready_t msg = mg_ready(buffer_copie);
   } else {
     // Sinon, c'est un message de tchat
-    /* TODO: lire les octets restants si c'est un message de tchat en bouclant
-     * de nouveaux sur le recv */
+    /* TODO: lire les octets restants si c'est un message de tchat en
+     * bouclant de nouveaux sur le recv */
   }
 
   // On libère le buffer
