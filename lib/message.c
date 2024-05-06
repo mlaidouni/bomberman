@@ -164,7 +164,8 @@ uint8_t *ms_game_grid(msg_grid_t params) {
       malloc(sizeof(uint8_t) * 6 + params.hauteur * params.largeur);
 
   // On crée les deux premiers octets du message (appelés 'header')
-  uint16_t header = (params.game_type << 3) | (params.ID << 1) | params.EQ;
+  uint16_t header =
+      (params.game_type << 3) | (params.player_id << 1) | params.team_id;
   // Les deux premiers octets sont au format Big Endian
   header = htons(header);
   memcpy(message, &header, 2); // On copie 2 octets
@@ -391,9 +392,9 @@ msg_grid_t mg_game_grid(uint8_t *message) {
 
   params.game_type = header >> 3;
   // On masque tous les bits, sauf les deux de poids faible
-  params.ID = (header >> 1) & 3;
+  params.player_id = (header >> 1) & 3;
   // On masque tous les bits, sauf celui de poids faible
-  params.EQ = header & 1;
+  params.team_id = header & 1;
 
   // On récupère le numéro du message
   uint16_t num;

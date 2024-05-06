@@ -54,8 +54,6 @@ struct parties_t {
 struct server_t {
   int tcp_sock;            // La socket TCP.
   int tcp_port;            // Le port d'écoute de la socket TCP du serveur.
-  int udp_sock;            // La socket UDP.
-  int udp_port;            // Le port d'écoute de la socket UDP du serveur.
   struct sockaddr_in6 adr; // L'adresse du serveur.
   parties_t parties;       // Les parties gérées par le serveur.
   client_t *clients;       // Les clients connectés au serveur.
@@ -75,7 +73,6 @@ extern server_t srv;
 
 void affiche_connexion(struct sockaddr_in6 adrclient);
 int create_TCP_connection(int port);
-int create_UDP_connection(int port);
 int accept_client(client_t *client);
 int receive_request();
 

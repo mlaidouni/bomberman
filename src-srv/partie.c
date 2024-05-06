@@ -176,22 +176,21 @@ void generate_multicast_ports(int *port_mdiff, int *port_udp) {
  * @return 0 si tout s'est bien passé, -1 sinon.
  */
 int start_game(partie_t partie) {
-  msg_grid_t params;
-  while (partie.end) {
-    params.game_type = partie.type;
-    params.ID = 0;
-    params.EQ = 0;
-    params.num = 0;
-    params.hauteur = 10;
-    params.largeur = 10;
-    params.grille = malloc(params.hauteur * params.largeur * sizeof(uint8_t));
+  // TODO: Gérer le type de partie et les parties en attente
 
-    uint8_t *msg = ms_game_grid(params);
-    // envoyer à l'adresse de multidiffusion qui est dans partie.g_adr
-    sendto(srv.udp_sock, msg, sizeof(msg_grid_t), 0,
-           (struct sockaddr *)&partie.g_adr, sizeof(partie.g_adr));
-    // sendto(sock, msg, sizeof(msg_grid_t), 0, (struct sockaddr
-    // *)&partie.g_adr, sizeof(partie.g_adr));
+  while (partie.nb_joueurs < 4)
+    // Si le nombre de joueurs est inférieur à 4, on attend des connexions
+    ;
+
+  // Si le nombre de joueurs est égal à 4, on lance et gère le jeu
+  // Tant que la partie n'est pas terminée
+  while (partie.end) {
+
+    // TODO: Le jeu
+    // ...
+
+    // TODO: Penser à gérer la fermeture des sockets des clients
+    // ...
   }
 
   return 0;
