@@ -41,7 +41,7 @@ struct partie_t {
   int port_mdiff; // Le port sur lequel le serveur envoie les messages.
   char adr_mdiff[INET6_ADDRSTRLEN]; // L'adresse de multicastt.
 } typedef partie_t;
-
+  
 // TODO: gestion des différentes parties
 // Structure pour stocker les informations des différentes parties gérées par le
 // serveur.
@@ -54,13 +54,10 @@ struct parties_t {
 struct server_t {
   int tcp_sock;            // La socket TCP.
   int tcp_port;            // Le port d'écoute de la socket TCP du serveur.
-  int udp_sock;            // La socket UDP.
-  int udp_port;            // Le port d'écoute de la socket UDP du serveur.
   struct sockaddr_in6 adr; // L'adresse du serveur.
-  struct sockaddr_in6 adr_multicast; // L'adresse multicast du serveur.
-  parties_t parties;                 // Les parties gérées par le serveur.
-  client_t *clients;                 // Les clients connectés au serveur.
-  int nb_clients; // Le nombre de clients connectés au serveur.
+  parties_t parties;       // Les parties gérées par le serveur.
+  client_t *clients;       // Les clients connectés au serveur.
+  int nb_clients;          // Le nombre de clients connectés au serveur.
 } typedef server_t;
 
 // Structure du multicast
