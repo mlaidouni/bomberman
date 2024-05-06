@@ -17,6 +17,10 @@ int main(int argc, char **args) {
   if (create_TCP_connection(tcp_port) < 0)
     exit(EXIT_FAILURE);
 
+  // Création de la connexion UDP
+  if (create_UDP_connection(tcp_port) < 0)
+    exit(EXIT_FAILURE);
+
   while (1) {
     // Pour chaque partie du serveur, on affiche index type et nb de joueurs
     for (int i = 0; i < srv.parties.nb_parties; i++) {
@@ -113,6 +117,37 @@ int create_TCP_connection(int port) {
   // Si tout s'est bien passé, on stocke les informations dans le serveur
   srv.tcp_sock = sock_srv;
   srv.tcp_port = port;
+  srv.adr = addr;
+
+  return 0;
+}
+
+int create_UDP_connection(int port) {
+  // Création de la socket serveur
+  int sock_srv = socket(PF_INET6, SOCK_DGRAM, 0);
+  if (sock_srv < 0) {
+    perror("server.c: socket(): création de la socket échouée");
+    return -1;
+  }
+
+  // Création de l'adresse du destinataire (serveur)
+  struct sockaddr_in6 addr;
+  memset(&addr, 0, sizeof(addr));
+  addr.sin6_family = AF_INET6;
+  addr.sin6_port = htons(port);
+  addr.sin6_addr = in6addr_any;
+
+  // On lie la socket au port
+  int r = bind(sock_srv, (struct sockaddr *)&addr, sizeof(addr));
+  // Gestions des erreurs
+  if (r < 0) {
+    perror("server.c: bind(): bind échoué");
+    return -1;
+  }
+
+  // Si tout s'est bien passé, on stocke les informations dans le serveur
+  srv.udp_sock = sock_srv;
+  srv.udp_port = port;
   srv.adr = addr;
 
   return 0;
