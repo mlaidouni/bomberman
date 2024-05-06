@@ -1,7 +1,8 @@
 # Compilateur
 CC = gcc
 # Options de compilation
-CFLAGS = -Wall -lncurses -Wno-psabi
+CFLAGS = -Wall -Wno-psabi
+IMPORT = -lncurses
 
 # Répertoire des sources
 SRCDIR_CLI = src-cli
@@ -15,32 +16,45 @@ BINDIR = bin
 EXEC_CLI = $(BINDIR)/cli
 EXEC_SRV = $(BINDIR)/srv
 
-# Fichiers sources
-# On exclut le fichier ncurses.c pour éviter les erreurs de compilation
-SOURCES_CLI = $(filter-out $(SRCDIR_CLI)/ncurses.c, $(wildcard $(SRCDIR_CLI)/*.c))
-SOURCES_SRV = $(wildcard $(SRCDIR_SRV)/*.c)
-SOURCES_LIB = $(wildcard $(LIBDIR)/*.c)
+SRC_CLI = $(wildcard $(SRCDIR_CLI)/*.c)
+SRC_SRV = $(wildcard $(SRCDIR_SRV)/*.c)
+SRC_LIB = $(wildcard $(LIBDIR)/*.c)
 
-# Commandes pour la compilation des exécutables
-all: $(EXEC_CLI) $(EXEC_SRV)
+OBJ_CLI = $(addprefix $(BINDIR)/, $(SRC_CLI:.c=.o))
+OBJ_SRV = $(addprefix $(BINDIR)/, $(SRC_SRV:.c=.o))
+OBJ_LIB = $(addprefix $(BINDIR)/, $(SRC_LIB:.c=.o))
 
-$(EXEC_CLI): $(SOURCES_CLI) $(SOURCES_LIB)
-	mkdir -p $(BINDIR)
-	$(CC) $(CFLAGS) $(SOURCES_CLI) $(SOURCES_LIB) -o $@
+all: $(BINDIR) $(BINDIR)/$(SRCDIR_CLI) $(BINDIR)/$(SRCDIR_SRV) $(BINDIR)/$(LIBDIR) $(EXEC_CLI) $(EXEC_SRV)
 
-$(EXEC_SRV): $(SOURCES_SRV) $(SOURCES_LIB)
-	$(CC) $(CFLAGS) $(SOURCES_SRV) $(SOURCES_LIB) -o $@
+$(EXEC_CLI): $(OBJ_CLI) $(OBJ_LIB)
+	$(CC) $(OBJ_CLI) $(OBJ_LIB) -o $(EXEC_CLI) $(CFLAGS) $(IMPORT)
 
-# Nettoyer les fichiers générés
+$(EXEC_SRV): $(OBJ_SRV) $(OBJ_LIB)
+	$(CC) $(OBJ_SRV) $(OBJ_LIB) -o $(EXEC_SRV) $(CFLAGS) $(IMPORT)
+
+$(BINDIR)/$(SRCDIR_CLI)/%.o: $(SRCDIR_CLI)/%.c
+	$(CC) -c $< -o $(BINDIR)/$(SRCDIR_CLI)/$(notdir $@) $(CFLAGS)
+
+$(BINDIR)/$(SRCDIR_SRV)/%.o: $(SRCDIR_SRV)/%.c
+	$(CC) -c $< -o $(BINDIR)/$(SRCDIR_SRV)/$(notdir $@) $(CFLAGS)
+
+$(BINDIR)/$(LIBDIR)/%.o: $(LIBDIR)/%.c
+	$(CC) -c $< -o $(BINDIR)/$(LIBDIR)/$(notdir $@) $(CFLAGS)
+
+$(BINDIR):
+	@mkdir -p $(BINDIR)
+
+$(BINDIR)/$(SRCDIR_CLI):
+	@mkdir -p $(BINDIR)/$(SRCDIR_CLI)
+
+$(BINDIR)/$(SRCDIR_SRV):
+	@mkdir -p $(BINDIR)/$(SRCDIR_SRV)
+
+$(BINDIR)/$(LIBDIR):
+	@mkdir -p $(BINDIR)/$(LIBDIR)
+
 clean:
 	rm -rf $(BINDIR)
-
-# Vérifier les fuites de mémoire
-leak-cli:
-	valgrind --leak-check=full --show-leak-kinds=all ./$(EXEC_CLI)
-
-leak-srv:
-	valgrind --leak-check=full --show-leak-kinds=all ./$(EXEC_SRV)
 
 # Cibles factices
 .PHONY: all clean
