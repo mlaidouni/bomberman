@@ -19,7 +19,6 @@
 struct multicast_client_t {
   int sock;                // La socket
   struct sockaddr_in6 adr; // L'adresse
-  int port;                // Le port
   struct ipv6_mreq mreq;   // La structure pour la multidiffusion.
 } typedef multicast_client_t;
 

@@ -45,7 +45,7 @@ int main(int argc, char **args) {
         // On envoie les infos de la partie à tous les joueurs
         msg_game_data_t game_data;
         init_msg_game_data(srv.parties.parties[i], game_data);
-
+        
         for (int j = 0; j < srv.parties.parties[i].nb_joueurs; j++) {
           send(srv.parties.parties[i].joueurs[j].client.sock, &game_data,
                sizeof(game_data), 0);

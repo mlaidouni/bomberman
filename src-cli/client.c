@@ -180,17 +180,34 @@ int main(int argc, char const *argv[]) {
   join_game(sock_client, game_type);
 
   // On réceptionne l'adresse et le port multicast
-  uint8_t *msg;
-  recv(sock_client, &msg, sizeof(uint8_t) * 22, 0);
+  uint8_t *msg = malloc(sizeof(uint8_t) * 22);
+  if (msg == NULL) {
+    perror("malloc");
+    return -1;
+  }
+
+  int r = recv(sock_client, msg, sizeof(uint8_t) * 22, 0);
+  if (r == -1) {
+    perror("recv");
+    return -1;
+  }
 
   msg_game_data_t game_data = mg_game_data(msg);
   printf("Adresse multicast: %s, port: %d\n", game_data.adr_mdiff,
          game_data.port_mdiff);
 
   multicast_client_t mc;
+  memset(&mc.adr, 0, sizeof(mc.adr));
+  mc.adr.sin6_family = AF_INET6;
+  mc.adr.sin6_port = htons(game_data.port_mdiff);
   memcpy(&mc.adr, &game_data.adr_mdiff, sizeof(game_data.adr_mdiff));
-  mc.port = game_data.port_mdiff;
+
   mc.sock = socket(PF_INET6, SOCK_DGRAM, 0);
+  if (mc.sock == -1) {
+    perror("erreur socket");
+    return -1;
+  }
+
   if (bind(mc.sock, (struct sockaddr *)&mc.adr, sizeof(mc.adr)) < 0) {
     perror("erreur bind");
     close(mc.sock);
