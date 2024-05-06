@@ -123,32 +123,28 @@ int create_TCP_connection(int port) {
 }
 
 int create_UDP_connection(int port) {
-  // Création de la socket serveur
+  // Création de la socket serveur multicast
   int sock_srv = socket(PF_INET6, SOCK_DGRAM, 0);
   if (sock_srv < 0) {
     perror("server.c: socket(): création de la socket échouée");
     return -1;
   }
 
-  // Création de l'adresse du destinataire (serveur)
-  struct sockaddr_in6 addr;
-  memset(&addr, 0, sizeof(addr));
-  addr.sin6_family = AF_INET6;
-  addr.sin6_port = htons(port);
-  addr.sin6_addr = in6addr_any;
+  // Création de l'adresse multicast
+  struct sockaddr_in6 gradr;
+  memset(&gradr, 0, sizeof(gradr));
+  gradr.sin6_family = AF_INET6;
+  inet_pton(AF_INET6, "ff12::1:2:3", &gradr.sin6_addr);
+  gradr.sin6_port = htons(4321);
 
-  // On lie la socket au port
-  int r = bind(sock_srv, (struct sockaddr *)&addr, sizeof(addr));
-  // Gestions des erreurs
-  if (r < 0) {
-    perror("server.c: bind(): bind échoué");
-    return -1;
-  }
+  // Interface locale par laquelle partiront les paquets multicast
+  int ifindex = if_nametoindex("eth0");
+  gradr.sin6_scope_id = ifindex;
 
   // Si tout s'est bien passé, on stocke les informations dans le serveur
   srv.udp_sock = sock_srv;
   srv.udp_port = port;
-  srv.adr = addr;
+  srv.adr_multicast = gradr;
 
   return 0;
 }

@@ -189,7 +189,7 @@ int start_game(partie_t partie) {
     uint8_t *msg = ms_game_grid(params);
     // envoyer à l'adresse de multidiffusion qui est dans partie.g_adr
     sendto(srv.udp_sock, msg, sizeof(msg_grid_t), 0,
-           (struct sockaddr *)&partie.g_adr, sizeof(partie.g_adr));
+           (struct sockaddr *)&srv.adr_multicast, sizeof(srv.adr_multicast));
     // sendto(sock, msg, sizeof(msg_grid_t), 0, (struct sockaddr
     // *)&partie.g_adr, sizeof(partie.g_adr));
   }

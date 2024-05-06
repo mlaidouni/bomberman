@@ -57,9 +57,10 @@ struct server_t {
   int udp_sock;            // La socket UDP.
   int udp_port;            // Le port d'écoute de la socket UDP du serveur.
   struct sockaddr_in6 adr; // L'adresse du serveur.
-  parties_t parties;       // Les parties gérées par le serveur.
-  client_t *clients;       // Les clients connectés au serveur.
-  int nb_clients;          // Le nombre de clients connectés au serveur.
+  struct sockaddr_in6 adr_multicast; // L'adresse multicast du serveur.
+  parties_t parties;                 // Les parties gérées par le serveur.
+  client_t *clients;                 // Les clients connectés au serveur.
+  int nb_clients; // Le nombre de clients connectés au serveur.
 } typedef server_t;
 
 // Structure du multicast

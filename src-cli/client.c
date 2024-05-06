@@ -159,6 +159,36 @@ int action(int sock_client, int game_type, int player_id, int team_id, int num,
   return 0;
 }
 
+int abonnement(multicast_client_t mc) {
+  struct sockaddr_in6 adr;
+  memset(&adr, 0, sizeof(adr));
+  adr.sin6_family = AF_INET6;
+  adr.sin6_addr = in6addr_any;
+  adr.sin6_port = htons(4321);
+
+  if (bind(srv.udp_sock, (struct sockaddr *)&adr, sizeof(adr))) {
+    perror("erreur bind");
+    close(srv.udp_sock);
+    return -1;
+  }
+
+  struct ipv6_mreq group;
+  inet_pton(AF_INET6, "ff12::1:2:3", &group.ipv6mr_multiaddr.s6_addr);
+  group.ipv6mr_interface = if_nametoindex("eth0");
+  if (setsockopt(srv.udp_sock, IPPROTO_IPV6, IPV6_JOIN_GROUP, &group,
+                 sizeof(group)) < 0) {
+    perror("erreur abonnement groupe");
+    close(srv.udp_sock);
+    return -1;
+  }
+
+  mc.adr = adr;
+  mc.sock = srv.udp_sock;
+  mc.mreq = group;
+
+  return 0;
+}
+
 int main(int argc, char const *argv[]) {
   // NOTE: Le port devra être passé en argument
   const int port = 8081;
@@ -183,20 +213,24 @@ int main(int argc, char const *argv[]) {
     // On attend la réception des données de la partie
 
     // On s'abonne à l'adresse de multicast (connexion UDP)
-    /*
-    struct sockaddr_in6 multicast_info;
-    memset(&multicast_info, 0, sizeof(multicast_info));
-    multicast_info.sin6_family = AF_INET6;
-    multicast_info.sin6_port = htons(MULTICAST_PORT);
-    inet_pton(AF_INET6, MULTICAST_ADDRESS, &multicast_info.sin6_addr);
-    */
+    multicast_client_t mc;
+    int a = abonnement(mc);
+    if (a == -1)
+      exit(EXIT_FAILURE);
+
+    // On s'annonce prêt au serveur
+
+    // recvfrom pour recevoir les messages multicast
+    uint8_t msg;
+    recvfrom(mc.sock, &msg, sizeof(msg), 0, NULL, NULL);
+    msg_grid_t grille = mg_game_grid(msg);
+    printf("Grille reçue: %d, largeur: %d et longueur: %d\n", grille.num,
+           grille.largeur, grille.hauteur);
+
+    // On attend les messages du serveur
+
+    // Autres traitements à effectuer
   }
-
-  // On s'annonce prêt au serveur
-  // ...
-  // Autres traitements à effectuer
-  // ...
-
   // Fermeture de la socket client: à la fin de la partie seulement
   close(sock_client);
   return 0;

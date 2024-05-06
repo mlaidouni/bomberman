@@ -3,6 +3,7 @@
 
 /* ********** Includes ********** */
 #include "../lib/message.h"
+#include "../src-srv/server.h"
 #include <arpa/inet.h>
 #include <net/if.h>
 #include <stddef.h>
@@ -13,6 +14,13 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
+
+// Structure multicast
+struct multicast_client_t {
+  int sock;                // La socket
+  struct sockaddr_in6 adr; // L'adresse
+  struct ipv6_mreq mreq;   // La structure pour la multidiffusion.
+} typedef multicast_client_t;
 
 /* ********** Fonctions client ********** */
 
