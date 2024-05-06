@@ -193,8 +193,15 @@ int main(int argc, char const *argv[]) {
   }
 
   msg_game_data_t game_data = mg_game_data(msg);
-  printf("Adresse multicast: %s, port: %d\n", game_data.adr_mdiff,
-         game_data.port_mdiff);
+  // transformer l'adresse de uint8* en char* sans modifier le type de
+  // game_data.adr_mdiff
+  char *adr_mdiff = malloc(INET6_ADDRSTRLEN);
+  if (adr_mdiff == NULL) {
+    perror("malloc");
+    return -1;
+  }
+  inet_ntop(AF_INET6, &game_data.adr_mdiff, adr_mdiff, INET6_ADDRSTRLEN);
+  printf("Adresse multicast: %s, port: %d\n", adr_mdiff, game_data.port_mdiff);
 
   multicast_client_t mc;
   memset(&mc.adr, 0, sizeof(mc.adr));
