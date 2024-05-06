@@ -33,54 +33,6 @@ int connect_to_server(int port) {
 }
 
 /**
- * Envoie un message au serveur.
- * @param sock_client La socket client.
- * @param message Un pointeur vers le message à envoyer.
- * @param msg_size La taille du message.
- * @param type Le type d'envoie, i.e le nom de la fonction appelante.
- * @return Le nombre d'octets envoyés ou -1 en cas d'erreur.
- */
-int send_message(int sock_client, void *message, size_t msg_size, char *type) {
-  // Envoi du message
-  int r = send(sock_client, message, msg_size, 0);
-
-  // Gestion des erreurs
-  if (r == -1) {
-    char err_msg[100];
-    sprintf(err_msg, "src-cli/client.c: %s: send message failed", type);
-    perror(err_msg);
-    close(sock_client);
-    return -1;
-  }
-
-  return r;
-}
-
-/**
- * Reçoit un message du serveur.
- * @param sock_client La socket client.
- * @param message Un pointeur vers le message à recevoir.
- * @param msg_size La taille du message.
- * @param type Le type de réception, i.e le nom de la fonction appelante.
- * @return Le nombre d'octets reçus ou -1 en cas d'erreur.
- */
-int recv_message(int sock_client, void *message, size_t msg_size, char *type) {
-  // Réception du message
-  int r = recv(sock_client, message, msg_size, 0);
-
-  // Gestion des erreurs
-  if (r == -1) {
-    char err_msg[100];
-    sprintf(err_msg, "src-cli/client.c: %s: recv message failed", type);
-    perror(err_msg);
-    close(sock_client);
-    return -1;
-  }
-
-  return r;
-}
-
-/**
  * Envoie un message de type 'join' au serveur.
  * @param sock_client La socket client.
  * @param game_type Le type de jeu.
@@ -166,24 +118,24 @@ int abonnement(multicast_client_t mc) {
   adr.sin6_addr = in6addr_any;
   adr.sin6_port = htons(4321);
 
-  if (bind(srv.udp_sock, (struct sockaddr *)&adr, sizeof(adr))) {
+  if (bind(mc.sock, (struct sockaddr *)&adr, sizeof(adr))) {
     perror("erreur bind");
-    close(srv.udp_sock);
+    close(mc.sock);
     return -1;
   }
 
   struct ipv6_mreq group;
   inet_pton(AF_INET6, "ff12::1:2:3", &group.ipv6mr_multiaddr.s6_addr);
   group.ipv6mr_interface = if_nametoindex("eth0");
-  if (setsockopt(srv.udp_sock, IPPROTO_IPV6, IPV6_JOIN_GROUP, &group,
+  if (setsockopt(mc.sock, IPPROTO_IPV6, IPV6_JOIN_GROUP, &group,
                  sizeof(group)) < 0) {
     perror("erreur abonnement groupe");
-    close(srv.udp_sock);
+    close(mc.sock);
     return -1;
   }
 
   mc.adr = adr;
-  mc.sock = srv.udp_sock;
+  mc.sock = mc.sock;
   mc.mreq = group;
 
   return 0;
@@ -209,8 +161,25 @@ int main(int argc, char const *argv[]) {
   scanf("%d", &game_type);
   join_game(sock_client, game_type);
 
+  // On réceptionne l'adresse et le port multicast
+  uint8_t *msg;
+  recv(sock_client, &msg, sizeof(uint8_t) * 22, 0);
+
+  msg_game_data_t game_data = mg_game_data(msg);
+  printf("Adresse multicast: %s, port: %d\n", game_data.adr_mdiff,
+         game_data.port_mdiff);
+
+  multicast_client_t mc;
+  memcpy(&mc.adr, &game_data.adr_mdiff, sizeof(game_data.adr_mdiff));
+  mc.port = game_data.port_mdiff;
+  mc.sock = socket(PF_INET6, SOCK_DGRAM, 0);
+  if (bind(mc.sock, (struct sockaddr *)&mc.adr, sizeof(mc.adr)) < 0) {
+    perror("erreur bind");
+    close(mc.sock);
+    return -1;
+  }
+
   while (1) {
-    // On attend la réception des données de la partie
 
     // On s'abonne à l'adresse de multicast (connexion UDP)
     multicast_client_t mc;
@@ -221,7 +190,7 @@ int main(int argc, char const *argv[]) {
     // On s'annonce prêt au serveur
 
     // recvfrom pour recevoir les messages multicast
-    uint8_t msg;
+    uint8_t *msg;
     recvfrom(mc.sock, &msg, sizeof(msg), 0, NULL, NULL);
     msg_grid_t grille = mg_game_grid(msg);
     printf("Grille reçue: %d, largeur: %d et longueur: %d\n", grille.num,

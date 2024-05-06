@@ -39,9 +39,10 @@ struct partie_t {
   struct sockaddr_in6 r_adr; // L'adresse de réception des messages du groupe.
   int port_udp;   // Le port sur lequel le serveur reçoit les messages.
   int port_mdiff; // Le port sur lequel le serveur envoie les messages.
-  char adr_mdiff[INET6_ADDRSTRLEN]; // L'adresse de multicastt.
+  char adr_mdiff[INET6_ADDRSTRLEN]; // L'adresse de multicast.
+  int sock_mdiff;                   // La socket UDP de multicast
 } typedef partie_t;
-  
+
 // TODO: gestion des différentes parties
 // Structure pour stocker les informations des différentes parties gérées par le
 // serveur.

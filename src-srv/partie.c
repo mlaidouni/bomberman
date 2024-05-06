@@ -42,6 +42,14 @@ int create_partie(client_t client, msg_join_ready_t params) {
   // Création de la structure partie
   partie_t partie = {.nb_joueurs = 0, .end = 1, .type = params.game_type};
 
+  // Création de la socket multicast
+  int sock = socket(PF_INET6, SOCK_DGRAM, 0);
+  if (sock < 0) {
+    perror("partie.c: socket(): création de la socket échouée");
+    return -1;
+  }
+  partie.sock_mdiff = sock;
+
   // Création de l'adresse multicast
   memset(&partie.g_adr, 0, sizeof(partie.g_adr));
   partie.g_adr.sin6_family = AF_INET6;
@@ -188,8 +196,8 @@ int start_game(partie_t partie) {
 
     uint8_t *msg = ms_game_grid(params);
     // envoyer à l'adresse de multidiffusion qui est dans partie.g_adr
-    sendto(srv.udp_sock, msg, sizeof(msg_grid_t), 0,
-           (struct sockaddr *)&srv.adr_multicast, sizeof(srv.adr_multicast));
+    sendto(partie.sock_mdiff, msg, sizeof(msg_grid_t), 0,
+           (struct sockaddr *)&partie.adr_mdiff, sizeof(partie.adr_mdiff));
     // sendto(sock, msg, sizeof(msg_grid_t), 0, (struct sockaddr
     // *)&partie.g_adr, sizeof(partie.g_adr));
   }

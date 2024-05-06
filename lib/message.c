@@ -129,6 +129,7 @@ uint8_t *ms_game_data(msg_game_data_t params) {
   /* On copie les 16 octets de l'adresse de multidiffusion. L'adresse vient de
    * la structure sockaddr_in, elle est donc déjà au format Big Endian. */
   memcpy(message + 6, params.adr_mdiff, 16);
+  
 
   return message;
 }
