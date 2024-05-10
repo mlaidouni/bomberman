@@ -175,16 +175,13 @@ void generate_multicast_ports(int *port_mdiff, int *port_udp) {
  * @param partie La partie à lancer.
  * @return 0 si tout s'est bien passé, -1 sinon.
  */
-int start_game(partie_t partie) {
+int start_game(partie_t *partie) {
+  puts("partie.c: start_game(): START");
   // TODO: Gérer le type de partie et les parties en attente
-
-  while (partie.nb_joueurs < 4)
-    // Si le nombre de joueurs est inférieur à 4, on attend des connexions
-    ;
 
   // Si le nombre de joueurs est égal à 4, on lance et gère le jeu
   // Tant que la partie n'est pas terminée
-  while (partie.end) {
+  while (partie->end) {
 
     // TODO: Le jeu
     // ...
