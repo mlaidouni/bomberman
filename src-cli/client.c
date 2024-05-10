@@ -179,23 +179,32 @@ int main(int argc, char const *argv[]) {
   scanf("%d", &game_type);
   join_game(sock_client, game_type);
 
-  while (1) {
-    // On attend la réception des données de la partie
+  // while (1) {
+  // On attend la réception des données de la partie
 
-    // On s'abonne à l'adresse de multicast (connexion UDP)
-    /*
-    struct sockaddr_in6 multicast_info;
-    memset(&multicast_info, 0, sizeof(multicast_info));
-    multicast_info.sin6_family = AF_INET6;
-    multicast_info.sin6_port = htons(MULTICAST_PORT);
-    inet_pton(AF_INET6, MULTICAST_ADDRESS, &multicast_info.sin6_addr);
-    */
-  }
+  // On s'abonne à l'adresse de multicast (connexion UDP)
+  /*
+  struct sockaddr_in6 multicast_info;
+  memset(&multicast_info, 0, sizeof(multicast_info));
+  multicast_info.sin6_family = AF_INET6;
+  multicast_info.sin6_port = htons(MULTICAST_PORT);
+  inet_pton(AF_INET6, MULTICAST_ADDRESS, &multicast_info.sin6_addr);
+  */
+  // }
 
-  // On s'annonce prêt au serveur
-  // ...
-  // Autres traitements à effectuer
-  // ...
+  // TODO: On s'annonce prêt au serveur
+  // TODELETE: DEBUT
+  printf("Entrer player_id, i.e l'odre d'ajout du client (0 à 3): ");
+  int player_id;
+  scanf("%d", &player_id);
+
+  // On est prêt à jouer
+  ready(sock_client, game_type, player_id, 0);
+
+  puts("\033[33m Ready envoyé. Entée dans le while(1) ...\033[0m");
+  while (1)
+    ;
+  // TODELETE: FIN
 
   // Fermeture de la socket client: à la fin de la partie seulement
   close(sock_client);
