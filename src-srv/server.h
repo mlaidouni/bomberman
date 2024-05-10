@@ -51,21 +51,15 @@ struct parties_t {
   int nb_parties;    // Le nombre de parties gérées par le serveur.
 } typedef parties_t;
 
-// Structure pour gérer le poll des sockets
-struct poll_t {
-  struct pollfd *fds; // Les sockets à surveiller.
-  int nfds;           // Le nombre de sockets à surveiller.
-} typedef poll_t;
-
 // Structure pour stocker les informations du serveur.
 struct server_t {
   int tcp_sock;            // La socket TCP.
   int tcp_port;            // Le port d'écoute de la socket TCP du serveur.
   struct sockaddr_in6 adr; // L'adresse du serveur.
   parties_t parties;       // Les parties gérées par le serveur.
+  struct pollfd *socks;    // Les sockets des clients connectés, à surveiller.
   client_t *clients;       // Les clients connectés au serveur.
   int nb_clients;          // Le nombre de clients connectés au serveur.
-  poll_t poll;             // Le poll des sockets.
 } typedef server_t;
 
 // Structure du multicast
@@ -82,9 +76,11 @@ extern server_t srv;
 void affiche_connexion(struct sockaddr_in6 adrclient);
 int create_TCP_connection(int port);
 int accept_client(client_t *client);
+int deconnect_client(int sock_client);
 
 /* ********** Fonctions utilitaires ********** */
 
 void init_msg_game_data(partie_t partie, msg_game_data_t game_data);
+int is_client_in_partie(int sock_client);
 
 #endif

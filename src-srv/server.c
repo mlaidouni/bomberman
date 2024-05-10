@@ -24,23 +24,120 @@ int main(int argc, char **args) {
   if (create_TCP_connection(tcp_port) < 0)
     exit(EXIT_FAILURE);
 
+  /* ********** Gestion des messages TCP des clients ********** */
+
+  /* On commence par ajouter la socket server à l'ensemble des sockets à
+   * surveiller */
+  srv.socks = malloc(sizeof(struct pollfd));
+  // La socket serveur sera toujours identifiée par l'indice 0
+  srv.socks[0].fd = srv.tcp_sock;
+  // On la surveille en lecture
+  srv.socks[0].events = POLLIN;
+
   while (1) {
+    affiche_parties(); // TODELETE: On affiche les parties
 
-    affiche_parties(); // CACA: On affiche les parties
+    /**
+     * srv.socks: l'ensemble des sockets à surveiller
+     * srv.nb_clients + 1: le nombre de sockets à surveiller
+     * timeout = -1: donc le poll va bloquer indéfiniment
+     */
+    // On bloque ici jusqu'à ce qu'une socket soit prête
+    poll(srv.socks, srv.nb_clients + 1, -1);
 
-    // On accepte un client
-    client_t client = {0};
-    if (accept_client(&client) == 0) {
-      // Si le client est accepté, on récupère le message du client
-      uint16_t message;
-      recv(client.sock, &message, sizeof(message), 0);
+    /* Si la socket du serveur est en activité en lecture, cela signifie qu'un
+     * client tente de se connecter */
+    if (srv.socks[0].revents & POLLIN) {
+      // Le client qui va se connecter
+      client_t client = {0};
 
-      // On décode son message
-      msg_join_ready_t params = mg_join(message);
+      // On essaye d'accepter le client
+      if (!accept_client(&client)) {
+        // Si le client est accepté, on réalloue la mémoire
+        srv.socks =
+            realloc(srv.socks, (srv.nb_clients + 1) * sizeof(struct pollfd));
 
-      // On gère la création ou l'ajout du joueur à une partie
-      if (init_partie(params, client))
-        exit(EXIT_FAILURE); // Si ça passe mal, on exit
+        // Ajout de la socket client dans le tableau des sockets
+        srv.socks[srv.nb_clients].fd = client.sock;
+        srv.socks[srv.nb_clients].events = POLLIN;
+      }
+
+      // NOTE: On ne fait rien si le client n'est pas accepté
+    }
+
+    /* ********** Gestions des sockets clients ********** */
+    for (int i = 1; i < srv.nb_clients + 1; i++) {
+      // Ici on gère la reception des messages join, ready et tchat des clients
+
+      // La socket du client
+      int sock_client = srv.socks[i].fd;
+
+      // Si on reçoit un message du client
+      if (srv.socks[i].revents & POLLIN) {
+
+        // Si le client n'est dans aucune partie, c'est un message 'join'
+        if (is_client_in_partie(sock_client)) {
+          printf("\033[30m server.c: main: poll socks: demande JOIN\033[0m \n");
+
+          // On reçoit le message
+          uint16_t message;
+          int bytes = recv(sock_client, &message, sizeof(message), 0);
+
+          // Gestion des erreurs
+          if (bytes < 0) {
+            // On déconnecte le client
+            deconnect_client(sock_client);
+            perror("server.c: main(): poll socks: recv()");
+            break;
+          }
+          // Si le client s'est déconnecté
+          if (!bytes) {
+            puts("server.c: main(): poll socks: client déconnecté !");
+            // On déconnecte le client
+            deconnect_client(sock_client);
+            break;
+          }
+
+          // Sinon, on décode le message
+          msg_join_ready_t params = mg_join(message);
+
+          // On gère la création ou l'ajout du joueur à une partie
+          if (init_partie(params, srv.clients[i - 1])) {
+            puts("server.c: main(): poll socks: init_partie()");
+            exit(EXIT_FAILURE); // Si ça passe mal, on exit (pour l'instant)
+          }
+        }
+
+        // Si le client est dans une partie, c'est un message 'ready'
+        /* TODO: (plus tard on devra regarder les 2 premiers octets pour savoir
+         * si c'est ready ou tchat) */
+        else {
+          // On reçoit le message
+          uint16_t message;
+          int bytes = recv(sock_client, &message, sizeof(message), 0);
+
+          // Gestion des erreurs
+          if (bytes < 0) {
+            // On déconnecte le client
+            deconnect_client(sock_client);
+            perror("server.c: main(): poll socks: recv()");
+            break;
+          }
+          // Si le client s'est déconnecté
+          if (!bytes) {
+            puts("server.c: main(): poll socks: client déconnecté !");
+            // On déconnecte le client
+            deconnect_client(sock_client);
+            break;
+          }
+
+          // Sinon, on décode le message
+          // msg_join_ready_t params = mg_ready(message);
+
+          // TODO: On gère le ready du joueur
+          printf("\033[32mserver.c: main(): poll socks: msg_ready()\033[0m \n");
+        }
+      }
     }
   }
 
@@ -81,11 +178,21 @@ int create_TCP_connection(int port) {
   addr.sin6_port = htons(port);
   addr.sin6_addr = in6addr_any;
 
-  // On lie la socket au port
-  int r = bind(sock_srv, (struct sockaddr *)&addr, sizeof(addr));
+  /* Le numéro de port peut être réutilisé immédiatement après la fermeture du
+   serveur */
+  int o = 1;
+  int r = setsockopt(sock_srv, SOL_SOCKET, SO_REUSEADDR, &o, sizeof(o));
   // Gestions des erreurs
   if (r < 0) {
-    perror("server.c: bind(): bind échoué");
+    perror("server.c: create_TCP_connection(): setsockopt()");
+    return -1;
+  }
+
+  // On lie la socket au port
+  r = bind(sock_srv, (struct sockaddr *)&addr, sizeof(addr));
+  // Gestions des erreurs
+  if (r < 0) {
+    perror("server.c: create_TCP_connection(): bind()");
     return -1;
   }
 
@@ -93,7 +200,7 @@ int create_TCP_connection(int port) {
   r = listen(sock_srv, 0);
   // Gestions des erreurs
   if (r < 0) {
-    perror("server.c: listen(): listen échoué");
+    perror("server.c: create_TCP_connection(): listen()");
     return -1;
   }
 
@@ -125,7 +232,7 @@ int accept_client(client_t *client) {
 
   // Gestions des erreurs
   if (sock_client == -1) {
-    perror("server.c: accept(): problème avec la socket client");
+    perror("server.c: accept_client(): accept()");
     return -1;
   }
 
@@ -155,20 +262,51 @@ int accept_client(client_t *client) {
   return 0;
 }
 
-int gestion_connexion_tcp() {
-  // On accepte un client
-  client_t client = {0};
-  if (accept_client(&client) == 0) {
-    // Si le client est accepté, on récupère le message du client
-    uint8_t message;
-    recv(client.sock, &message, sizeof(message), 0);
+/**
+ * Déconnecte un client du serveur.
+ * @param sock_client La socket du client à déconnecter.
+ * @return 0 si tout s'est bien passé, -1 sinon.
+ */
+int deconnect_client(int sock_client) {
+  // On supprime le client de la liste des clients
+  for (int j = 0; j < srv.nb_clients; j++) {
+    if (srv.clients[j].sock == sock_client) {
+      // On ferme la socket du client
+      close(sock_client);
 
-    // On décode son message
-    msg_join_ready_t params = mg_join(message);
+      // On décale les clients suivants
+      for (int k = j; k < srv.nb_clients - 1; k++)
+        srv.clients[k] = srv.clients[k + 1];
 
-    // On gère la création ou l'ajout du joueur à une partie
-    if (init_partie(params, client))
-      return -1; // Si ça passe mal, on retourne -1
+      // On réalloue la mémoire
+      srv.clients =
+          realloc(srv.clients, (srv.nb_clients - 1) * sizeof(client_t));
+
+      // On décrémente le nombre de clients
+      srv.nb_clients--;
+
+      break;
+    }
+  }
+
+  // TODO: Retirer le client de la partie
+
+  // On supprime la socket du client du tableau des sockets
+  for (int i = 0; i < srv.nb_clients + 1; i++) {
+    if (srv.socks[i].fd == sock_client) {
+      // On ferme la socket du client
+      close(sock_client);
+
+      // On décale les sockets suivantes
+      for (int k = i; k < srv.nb_clients + 1; k++)
+        srv.socks[k] = srv.socks[k + 1];
+
+      // On réalloue la mémoire
+      srv.socks =
+          realloc(srv.socks, (srv.nb_clients + 1) * sizeof(struct pollfd));
+
+      break;
+    }
   }
 
   return 0;
@@ -191,4 +329,15 @@ void init_msg_game_data(partie_t partie, msg_game_data_t game_data) {
   joueur_t added_player = partie.joueurs[partie.nb_joueurs - 1];
   game_data.player_id = added_player.id;
   game_data.team_id = added_player.team;
+}
+
+// Renvoie -1 si la socket client n'est dans aucune partie, 0 sinon
+int is_client_in_partie(int sock_client) {
+  for (int i = 0; i < srv.parties.nb_parties; i++) {
+    for (int j = 0; j < srv.parties.parties[i].nb_joueurs; j++) {
+      if (srv.parties.parties[i].joueurs[j].client.sock == sock_client)
+        return 0;
+    }
+  }
+  return -1;
 }
