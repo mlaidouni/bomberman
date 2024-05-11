@@ -247,7 +247,7 @@ int deconnect_client(int sock_client) {
   for (int j = 0; j < srv.nb_clients; j++) {
     if (srv.clients[j].sock == sock_client) {
       // On ferme la socket du client
-      close(so pire ock_client);
+      close(sock_client);
 
       // On décale les clients suivants
       for (int k = j; k < srv.nb_clients - 1; k++)
