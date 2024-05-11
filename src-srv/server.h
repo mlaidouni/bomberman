@@ -28,6 +28,7 @@ struct joueur_t {
   client_t client; // Le client associé, qui stocke les informations réseaux.
   int id;          // L'id du joueur dans sa partie.
   int team;        // L'équipe du joueur (0 ou 1, 0 par défaut).
+  int ready;       // 1 si le joueur est prêt, 0 sinon
 } typedef joueur_t;
 
 // Structure représentant une partie.
@@ -77,10 +78,18 @@ void affiche_connexion(struct sockaddr_in6 adrclient);
 int create_TCP_connection(int port);
 int accept_client(client_t *client);
 int deconnect_client(int sock_client);
+int is_partie_ready(int partie_index);
+void init_poll();
+int poll_accept();
+int poll_join(int sock_client, int sock_index);
+int poll_ready(int sock_client);
 
 /* ********** Fonctions utilitaires ********** */
 
 void init_msg_game_data(partie_t partie, msg_game_data_t game_data);
-int is_client_in_partie(int sock_client);
+int send_game_data(int sock_client);
+int get_client(int sock_client);
+int get_partie(int sock_client);
+joueur_t *get_joueur(partie_t *partie, int sock_client);
 
 #endif

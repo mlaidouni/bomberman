@@ -201,7 +201,7 @@ int main(int argc, char const *argv[]) {
   // On est prêt à jouer
   ready(sock_client, game_type, player_id, 0);
 
-  puts("\033[33m Ready envoyé. Entée dans le while(1) ...\033[0m");
+  puts("\033[33mReady envoyé. Entrée dans le while(1) ...\033[0m");
   while (1)
     ;
   // TODELETE: FIN
