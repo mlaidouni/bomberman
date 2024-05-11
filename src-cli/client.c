@@ -181,10 +181,6 @@ int main(int argc, char const *argv[]) {
 
   // On réceptionne l'adresse et le port multicast
   uint8_t *msg = malloc(sizeof(uint8_t) * 22);
-  if (msg == NULL) {
-    perror("malloc");
-    return -1;
-  }
 
   int r = recv(sock_client, msg, sizeof(uint8_t) * 22, 0);
   if (r == -1) {

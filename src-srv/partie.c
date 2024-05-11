@@ -55,6 +55,8 @@ int create_partie(client_t client, msg_join_ready_t params) {
   partie.g_adr.sin6_family = AF_INET6;
   // On initialise l'adresse ipv6 de l'adresse de groupe
   generate_multicast_adr(partie.adr_mdiff, sizeof(partie.adr_mdiff));
+  // Afficher l'adresse de multidiffusion
+  printf("Adresse de multidiffusion : %s\n", partie.adr_mdiff);
   inet_pton(AF_INET6, partie.adr_mdiff, &partie.g_adr);
   // On initialise l'interface locale de multicast
   partie.g_adr.sin6_scope_id = 0; // 0 pour interface par défaut
@@ -165,6 +167,7 @@ void generate_multicast_adr(char *adr, size_t size) {
   // On génère une adresse multicast
   // FIXME: Check la limite qu'on peut atteindre, i.e :2:10000: est-il valide ?
   sprintf(adr, "ff12:1:2:%d", srv.parties.nb_parties);
+  // Afficher l'adresse de multidiffusion
 }
 
 /**

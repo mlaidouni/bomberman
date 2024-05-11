@@ -45,7 +45,7 @@ int main(int argc, char **args) {
         // On envoie les infos de la partie à tous les joueurs
         msg_game_data_t game_data;
         init_msg_game_data(srv.parties.parties[i], game_data);
-        
+
         for (int j = 0; j < srv.parties.parties[i].nb_joueurs; j++) {
           send(srv.parties.parties[i].joueurs[j].client.sock, &game_data,
                sizeof(game_data), 0);
@@ -237,6 +237,8 @@ void init_msg_game_data(partie_t partie, msg_game_data_t game_data) {
   uint8_t buf[16];
   inet_pton(AF_INET6, partie.adr_mdiff, &buf);
   memcpy(&game_data.adr_mdiff, buf, sizeof(buf));
+  // Afficher l'adresse de multidiffusion
+  printf("Adresse de multidiffusion --------: %s\n", partie.adr_mdiff);
   game_data.port_mdiff = partie.port_mdiff;
   game_data.port_udp = partie.port_udp;
   game_data.game_type = partie.type;
