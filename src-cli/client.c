@@ -179,7 +179,8 @@ int main(int argc, char const *argv[]) {
   scanf("%d", &game_type);
   join_game(sock_client, game_type);
 
-  // On réceptionne l'adresse et le port multicast
+  // while (1) {
+  // TODO: On attend la réception des données de la partie
   uint8_t *msg = malloc(sizeof(uint8_t) * 22);
 
   int r = recv(sock_client, msg, sizeof(uint8_t) * 22, 0);
@@ -188,16 +189,27 @@ int main(int argc, char const *argv[]) {
     return -1;
   }
 
-  msg_game_data_t game_data = mg_game_data(msg);
-  // transformer l'adresse de uint8* en char* sans modifier le type de
-  // game_data.adr_mdiff
-  char *adr_mdiff = malloc(INET6_ADDRSTRLEN);
-  if (adr_mdiff == NULL) {
-    perror("malloc");
-    return -1;
-  }
+  // On convertit l'adresse de uin8_t* à char* pour pouvoir l'afficher
+  char msg_str[INET6_ADDRSTRLEN];
   inet_ntop(AF_INET6, &game_data.adr_mdiff, adr_mdiff, INET6_ADDRSTRLEN);
   printf("Adresse multicast: %s, port: %d\n", adr_mdiff, game_data.port_mdiff);
+
+  // TODO: On s'abonne à l'adresse de multicast (connexion UDP)
+  // }
+
+  // TODO: On s'annonce prêt au serveur
+  // TODELETE: DEBUT
+  printf("Entrer player_id, i.e l'odre d'ajout du client (0 à 3): ");
+  int player_id;
+  scanf("%d", &player_id);
+
+  // On est prêt à jouer
+  ready(sock_client, game_type, player_id, 0);
+
+  puts("\033[33mReady envoyé. Entrée dans le while(1) ...\033[0m");
+  while (1)
+    ;
+  // TODELETE: FIN
 
   multicast_client_t mc;
   memset(&mc.adr, 0, sizeof(mc.adr));

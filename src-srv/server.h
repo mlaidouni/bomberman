@@ -6,6 +6,7 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -27,6 +28,7 @@ struct joueur_t {
   client_t client; // Le client associé, qui stocke les informations réseaux.
   int id;          // L'id du joueur dans sa partie.
   int team;        // L'équipe du joueur (0 ou 1, 0 par défaut).
+  int ready;       // 1 si le joueur est prêt, 0 sinon
 } typedef joueur_t;
 
 // Structure représentant une partie.
@@ -57,6 +59,7 @@ struct server_t {
   int tcp_port;            // Le port d'écoute de la socket TCP du serveur.
   struct sockaddr_in6 adr; // L'adresse du serveur.
   parties_t parties;       // Les parties gérées par le serveur.
+  struct pollfd *socks;    // Les sockets des clients connectés, à surveiller.
   client_t *clients;       // Les clients connectés au serveur.
   int nb_clients;          // Le nombre de clients connectés au serveur.
 } typedef server_t;
@@ -75,10 +78,19 @@ extern server_t srv;
 void affiche_connexion(struct sockaddr_in6 adrclient);
 int create_TCP_connection(int port);
 int accept_client(client_t *client);
-int receive_request();
+int deconnect_client(int sock_client);
+int is_partie_ready(int partie_index);
+void init_poll();
+int poll_accept();
+int poll_join(int sock_client, int sock_index);
+int poll_ready(int sock_client);
 
 /* ********** Fonctions utilitaires ********** */
 
 void init_msg_game_data(partie_t partie, msg_game_data_t game_data);
+int send_game_data(int sock_client);
+int get_client(int sock_client);
+int get_partie(int sock_client);
+joueur_t *get_joueur(partie_t *partie, int sock_client);
 
 #endif
