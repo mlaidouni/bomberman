@@ -209,13 +209,11 @@ int main(int argc, char const *argv[]) {
 
   // TODO: On s'abonne à l'adresse de multicast (connexion UDP)
   multicast_client_t mc;
-  struct sockaddr_in6 adr;
-  memset(&adr, 0, sizeof(adr));
-  adr.sin6_family = AF_INET6;
-  adr.sin6_addr = in6addr_any;
-  adr.sin6_port = htons(game_data.port_mdiff);
+  memset(&mc.adr, 0, sizeof(mc.adr));
+  mc.adr.sin6_family = AF_INET6;
+  mc.adr.sin6_addr = in6addr_any;
+  mc.adr.sin6_port = htons(game_data.port_mdiff);
 
-  mc.adr = adr;
   inet_pton(AF_INET6, adr_str, &mc.adr.sin6_addr);
   mc.mreq.ipv6mr_interface = 0; // Interface multicast par défaut
 
@@ -230,7 +228,8 @@ int main(int argc, char const *argv[]) {
     return -1;
   }
 
-  if (bind(mc.sock, (struct sockaddr *)&mc.adr, sizeof(mc.adr)) < 0) {
+  if (bind(mc.sock, (struct sockaddr *)&mc.adr, sizeof(struct sockaddr_in6)) <
+      0) {
     perror("client.c: main: bind failed");
     close(mc.sock);
     return -1;
@@ -268,8 +267,8 @@ int main(int argc, char const *argv[]) {
       printf("Entrez un message à envoyer: ");
       if (read(STDIN_FILENO, buf, BUF_SIZE) < 0)
         perror("erreur read");
-      if (sendto(mc.sock, buf, strlen(buf), 0, (struct sockaddr *)&adr,
-                 sizeof(adr)) < 0)
+      if (sendto(mc.sock, buf, strlen(buf), 0, (struct sockaddr *)&mc.adr,
+                 sizeof(mc.adr)) < 0)
         perror("erreur sendto");
     }
   }

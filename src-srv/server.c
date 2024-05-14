@@ -260,6 +260,8 @@ int deconnect_client(int sock_client) {
       // On décrémente le nombre de clients
       srv.nb_clients--;
 
+      partie_t partie = srv.parties.parties[get_partie(sock_client)];
+      partie.nb_joueurs--;
       break;
     }
   }
