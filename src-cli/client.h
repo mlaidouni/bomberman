@@ -15,6 +15,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#define BUF_SIZE 1024
+
 // Structure multicast
 struct multicast_client_t {
   int sock;                // La socket

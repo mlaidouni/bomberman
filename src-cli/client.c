@@ -208,27 +208,21 @@ int main(int argc, char const *argv[]) {
   // TODELETE: END
 
   // TODO: On s'abonne à l'adresse de multicast (connexion UDP)
-  // }
-
-  // TODO: On s'annonce prêt au serveur
-  // TODELETE: DEBUT
-  printf("Entrer player_id, i.e l'odre d'ajout du client (0 à 3): ");
-  int player_id;
-  scanf("%d", &player_id);
-
-  // On est prêt à jouer
-  ready(sock_client, game_type, player_id, 0);
-
-  puts("\033[33mReady envoyé. Entrée dans le while(1) ...\033[0m");
-  while (1)
-    ;
-  // TODELETE: FIN
-
   multicast_client_t mc;
-  memset(&mc.adr, 0, sizeof(mc.adr));
-  mc.adr.sin6_family = AF_INET6;
-  mc.adr.sin6_port = htons(game_data.port_mdiff);
-  memcpy(&mc.adr, &game_data.adr_mdiff, sizeof(game_data.adr_mdiff));
+  struct sockaddr_in6 adr;
+  memset(&adr, 0, sizeof(adr));
+  adr.sin6_family = AF_INET6;
+  adr.sin6_addr = in6addr_any;
+  adr.sin6_port = htons(game_data.port_mdiff);
+
+  mc.adr = adr;
+  inet_pton(AF_INET6, adr_str, &mc.adr.sin6_addr);
+  mc.mreq.ipv6mr_interface = 0; // Interface multicast par défaut
+
+  // Vérifiez que l'adresse est correcte
+  char buffer[INET6_ADDRSTRLEN];
+  inet_ntop(AF_INET6, &mc.adr.sin6_addr, buffer, INET6_ADDRSTRLEN);
+  printf("Address: %s\n", buffer);
 
   mc.sock = socket(PF_INET6, SOCK_DGRAM, 0);
   if (mc.sock == -1) {
@@ -242,22 +236,42 @@ int main(int argc, char const *argv[]) {
     return -1;
   }
 
+  struct ipv6_mreq group;
+  inet_pton(AF_INET6, adr_str, &group.ipv6mr_multiaddr.s6_addr);
+  group.ipv6mr_interface = 0; // Interface multicast par défaut
+  if (setsockopt(mc.sock, IPPROTO_IPV6, IPV6_JOIN_GROUP, &group,
+                 sizeof(group)) < 0) {
+    perror("erreur abonnement groupe");
+    close(mc.sock);
+  }
+  // On s'annonce prêt au serveur
+
+  // On est prêt à jouer
+  ready(sock_client, game_type, game_data.player_id, 0);
+
+  puts("\033[33mReady envoyé. Entrée dans le while(1) ...\033[0m");
+
+  char buf[BUF_SIZE];
   while (1) {
+    if (read(mc.sock, buf, BUF_SIZE) < 0)
+      perror("erreur read");
+    printf("Message reçu: %s\n", buf);
 
-    // On s'abonne à l'adresse de multicast (connexion UDP)
+    memset(buf, 0, BUF_SIZE);
 
-    // On s'annonce prêt au serveur
-
-    // recvfrom pour recevoir les messages multicast
-    uint8_t *msg;
-    recvfrom(mc.sock, &msg, sizeof(msg), 0, NULL, NULL);
-    msg_grid_t grille = mg_game_grid(msg);
-    printf("Grille reçue: %d, largeur: %d et longueur: %d\n", grille.num,
-           grille.largeur, grille.hauteur);
-
-    // On attend les messages du serveur
-
-    // Autres traitements à effectuer
+    // Si le joueur appuie sur 't', le programme attendra qu'il écrive un
+    // message pour l'envoyer à mc.sock
+    char c;
+    if (read(STDIN_FILENO, &c, 1) < 0)
+      perror("erreur read");
+    if (c == 't') {
+      printf("Entrez un message à envoyer: ");
+      if (read(STDIN_FILENO, buf, BUF_SIZE) < 0)
+        perror("erreur read");
+      if (sendto(mc.sock, buf, strlen(buf), 0, (struct sockaddr *)&adr,
+                 sizeof(adr)) < 0)
+        perror("erreur sendto");
+    }
   }
   // Fermeture de la socket client: à la fin de la partie seulement
   close(sock_client);
