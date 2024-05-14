@@ -86,8 +86,7 @@ int poll_join(int sock_client, int sock_index);
 int poll_ready(int sock_client);
 
 /* ********** Fonctions utilitaires ********** */
-
-void init_msg_game_data(partie_t partie, msg_game_data_t game_data);
+void init_msg_game_data(partie_t partie, msg_game_data_t *game_data);
 int send_game_data(int sock_client);
 int get_client(int sock_client);
 int get_partie(int sock_client);

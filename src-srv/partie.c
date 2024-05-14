@@ -166,7 +166,7 @@ void generate_multicast_adr(char *adr, size_t size) {
 
   // On génère une adresse multicast
   // FIXME: Check la limite qu'on peut atteindre, i.e :2:10000: est-il valide ?
-  sprintf(adr, "ff12:1:2:%d", srv.parties.nb_parties);
+  sprintf(adr, "ff12::1:2:%d", srv.parties.nb_parties);
 }
 
 /**

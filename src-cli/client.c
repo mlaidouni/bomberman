@@ -47,7 +47,7 @@ int send_message(int sock_client, void *message, size_t msg_size, char *type) {
   // Gestion des erreurs
   if (r == -1) {
     char err_msg[100];
-    sprintf(err_msg, "src-cli/client.c: %s: send message failed", type);
+    sprintf(err_msg, "client.c: %s: send message failed", type);
     perror(err_msg);
     close(sock_client);
     return -1;
@@ -71,7 +71,7 @@ int recv_message(int sock_client, void *message, size_t msg_size, char *type) {
   // Gestion des erreurs
   if (r == -1) {
     char err_msg[100];
-    sprintf(err_msg, "src-cli/client.c: %s: recv message failed", type);
+    sprintf(err_msg, "client.c: %s: recv message failed", type);
     perror(err_msg);
     close(sock_client);
     return -1;
@@ -185,14 +185,27 @@ int main(int argc, char const *argv[]) {
 
   int r = recv(sock_client, msg, sizeof(uint8_t) * 22, 0);
   if (r == -1) {
-    perror("recv");
+    perror("client.c: main: recv");
     return -1;
   }
 
+  // On récupère les données de la partie
+  msg_game_data_t game_data = mg_game_data(msg);
+
+  // TODELETE: START
   // On convertit l'adresse de uin8_t* à char* pour pouvoir l'afficher
-  char msg_str[INET6_ADDRSTRLEN];
-  inet_ntop(AF_INET6, &game_data.adr_mdiff, adr_mdiff, INET6_ADDRSTRLEN);
-  printf("Adresse multicast: %s, port: %d\n", adr_mdiff, game_data.port_mdiff);
+  char adr_str[INET6_ADDRSTRLEN];
+  inet_ntop(AF_INET6, &game_data.adr_mdiff, adr_str, INET6_ADDRSTRLEN);
+
+  printf(
+      "\033[35m Données de la partie reçues:\n\t Adresse multicast: %s \n\t "
+      "adr_mdiff: %d \n\t port_mdiff: %d \n\t "
+      "port_udp:%d \n\t game_type: %d \n\t player_id: %d \n\t team_id: "
+      "%d\n\033[0m",
+      adr_str, *(game_data.adr_mdiff), game_data.port_mdiff, game_data.port_udp,
+      game_data.game_type, game_data.player_id, game_data.team_id);
+
+  // TODELETE: END
 
   // TODO: On s'abonne à l'adresse de multicast (connexion UDP)
   // }
@@ -219,12 +232,12 @@ int main(int argc, char const *argv[]) {
 
   mc.sock = socket(PF_INET6, SOCK_DGRAM, 0);
   if (mc.sock == -1) {
-    perror("erreur socket");
+    perror("client.c: main: socket failed");
     return -1;
   }
 
   if (bind(mc.sock, (struct sockaddr *)&mc.adr, sizeof(mc.adr)) < 0) {
-    perror("erreur bind");
+    perror("client.c: main: bind failed");
     close(mc.sock);
     return -1;
   }

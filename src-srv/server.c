@@ -423,6 +423,8 @@ int poll_ready(int sock_client) {
   }
 
   // Sinon, on décode le message
+  /* TODO: Utiliser ça pour récupérer le joueur avec partie.joueurs[params.id]
+   * (quelques lignes plus loin) */
   msg_join_ready_t params = mg_ready(message);
 
   // On récupère la partie dans laquelle le joueur est
@@ -457,18 +459,27 @@ int poll_ready(int sock_client) {
  * @param partie La partie dont on veut récupérer les données.
  * @param game_data La structure msg_game_data_t à initialiser.
  */
-void init_msg_game_data(partie_t partie, msg_game_data_t game_data) {
+void init_msg_game_data(partie_t partie, msg_game_data_t *game_data) {
   uint8_t buf[16];
-  inet_pton(AF_INET6, partie.adr_mdiff, &buf);
-  memcpy(&game_data.adr_mdiff, buf, sizeof(buf));
-  // TODELETE: Afficher l'adresse de multidiffusion
-  printf("server.c: init_msg_game_data: partie.adr_mdiff %s\n", partie.adr_mdiff);
-  game_data.port_mdiff = partie.port_mdiff;
-  game_data.port_udp = partie.port_udp;
-  game_data.game_type = partie.type;
+
+  // On convertit l'adresse multicast en uint8_t*
+  int pton_result = inet_pton(AF_INET6, partie.adr_mdiff, buf);
+  if (pton_result <= 0) {
+    if (pton_result == 0)
+      printf("server.c: init_msg_game_data: inet_pton: adresse invalide !\n");
+    else
+      perror("server.c: init_msg_game_data: inet_pton");
+    exit(EXIT_FAILURE); // Pour l'instant, on exit si ça se passe mal
+  }
+
+  // On remplit la structure msg_game_data_t
+  memcpy(&game_data->adr_mdiff, buf, sizeof(buf));
+  game_data->port_mdiff = partie.port_mdiff;
+  game_data->port_udp = partie.port_udp;
+  game_data->game_type = partie.type;
   joueur_t added_player = partie.joueurs[partie.nb_joueurs - 1];
-  game_data.player_id = added_player.id;
-  game_data.team_id = added_player.team;
+  game_data->player_id = added_player.id;
+  game_data->team_id = added_player.team;
 }
 
 /**
@@ -483,7 +494,7 @@ int send_game_data(int sock_client) {
 
   // On récupère les données de la partie
   msg_game_data_t game_data;
-  init_msg_game_data(partie, game_data);
+  init_msg_game_data(partie, &game_data);
 
   // On convertit ces données en message
   uint8_t *msg = ms_game_data(game_data);
