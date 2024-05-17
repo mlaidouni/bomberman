@@ -7,11 +7,7 @@
 #include "server.h"
 #include <bits/pthreadtypes.h>
 
-/* ********** Structures ********** */
-
-struct threads_t {
-  pthread_t thread[4];
-} typedef threads_t;
+/* ********** Structures ********** */s
 
 /* ********** Fonctions parties ********** */
 
