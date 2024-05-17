@@ -51,13 +51,13 @@ typedef struct {
 
 // Structure représentant la grille complète
 typedef struct {
-  int game_type;    // Le type de partie.
-  int player_id;    // L'identifiant du joueur.
-  int team_id;      // Le numéro d'équipe du joueur.
-  int num;          // Le numéro du message.
-  int hauteur;      // La hauteur de la grille.
-  int largeur;      // La largeur de la grille.
-  uint8_t grille[]; // La grille.
+  int codereq;     // Le type de partie.
+  int ID;          // L'identifiant du joueur.
+  int EQ;          // Le numéro d'équipe du joueur.
+  int num;         // Le numéro du message.
+  int hauteur;     // La hauteur de la grille.
+  int largeur;     // La largeur de la grille.
+  uint8_t *grille; // La grille.
 } msg_grid_t;
 
 // Structure représentant la grille temporaire

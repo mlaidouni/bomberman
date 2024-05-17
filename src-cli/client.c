@@ -56,33 +56,6 @@ int main(int argc, char const *argv[]) {
 
   /* ********** Gestion des messages de la partie... ********** */
 
-  puts("\033[33mReady envoyé. Entrée dans le while(1) ...\033[0m");
-
-  while (1)
-    ;
-
-  char buf[BUF_SIZE];
-  while (1) {
-    if (read(mc.sock, buf, BUF_SIZE) < 0)
-      perror("erreur read");
-    printf("Message reçu: %s\n", buf);
-
-    memset(buf, 0, BUF_SIZE);
-
-    // Si le joueur appuie sur 't', le programme attendra qu'il écrive un
-    // message pour l'envoyer à mc.sock
-    char c;
-    if (read(STDIN_FILENO, &c, 1) < 0)
-      perror("erreur read");
-    if (c == 't') {
-      printf("Entrez un message à envoyer: ");
-      if (read(STDIN_FILENO, buf, BUF_SIZE) < 0)
-        perror("erreur read");
-      if (sendto(mc.sock, buf, strlen(buf), 0, (struct sockaddr *)&mc.adr,
-                 sizeof(mc.adr)) < 0)
-        perror("erreur sendto");
-    }
-  }
   // Fermeture de la socket client: à la fin de la partie seulement
   close(sock_client);
   return 0;
@@ -329,6 +302,25 @@ int recv_msg_game_data(msg_game_data_t *game_data, int sock_client) {
 
   // On récupère les données de la partie
   *game_data = mg_game_data(msg);
+
+  // On libère la mémoire
+  free(msg);
+
+  return 0;
+}
+
+int recv_grille(multicast_client_t mc, msg_grid_t *g) {
+  uint8_t *msg = malloc(sizeof(uint8_t) * 20 * 15 + 3);
+
+  int r = recvfrom(mc.sock, msg, sizeof(uint8_t) * 20 * 15 + 3, 0,
+                   (struct sockaddr *)&mc.adr, (socklen_t *)sizeof(mc.adr));
+  if (r == -1) {
+    perror("client.c: recv_grille: recvfrom");
+    return -1;
+  }
+
+  // On récupère les données de la partie
+  *g = mg_game_grid(msg);
 
   // On libère la mémoire
   free(msg);
