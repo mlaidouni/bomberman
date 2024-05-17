@@ -1,6 +1,10 @@
 #ifndef RULES_H
 #define RULES_H
 
+#include <time.h>
+
+#include "list.h"
+
 #define WIDTH 20
 #define HEIGHT 20
 
@@ -16,6 +20,10 @@ typedef struct pos {
     int y;
 } pos;
 
+typedef struct bomb {
+    pos pos;
+    clock_t timer;
+} bomb;
 
 /*
     Si on est en mode SOLO, il suffit d'ignorer le champ team
@@ -30,6 +38,7 @@ typedef struct board {
     TILE grid[WIDTH * HEIGHT];
     TYPE type;
     player players[NB_PLAYERS];
+    list *bombs;
 } board;
 
 

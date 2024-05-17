@@ -1,6 +1,8 @@
 #include "rules.h"
 
 #include <assert.h>
+#include <stdlib.h>
+
 
 int init_board(board board, TYPE type) {
 	board.type = type;
@@ -11,8 +13,10 @@ int init_board(board board, TYPE type) {
 	board.players[1] = (player) {0, ALIVE, {WIDTH - 1, HEIGHT - 1}};
 	board.players[2] = (player) {1, ALIVE, {0, HEIGHT - 1}};
 	board.players[3] = (player) {1, ALIVE, {WIDTH - 1, 0}};
+	board.bombs = init_list();
 	return 0;
 }
+
 
 int valid_pos(board board, pos p) {
 	return p.x >= 0 && p.x < WIDTH && p.y >= 0 && p.y < HEIGHT;
@@ -60,9 +64,10 @@ int action_player(board board, int player, ACTION action) {
 		case A_BOMB:
 			if(valid_pos(board, p) && board.grid[p.x + p.y * WIDTH] == EMPTY) {
 				board.grid[p.x + p.y * WIDTH] = 'B';
-				// TODO: timer pour faire peter la bombe
-				// Attention: si la bombe se fait peter par une autre
-				// bombe, il faut desactiver le timer
+				//bomb b = {p, clock()};
+				/*
+					TODO: Ajout a la liste
+				*/
 			}
 			else
 				return -1;
@@ -74,12 +79,15 @@ int action_player(board board, int player, ACTION action) {
 	return 0;
 }
 
+
+
 int damage_pos(board board, pos p) {
 	if(!valid_pos(board, p)) {
 		return -1;
 	}
 	if(board.grid[p.x + p.y * WIDTH] == BOMB) {
-		explode_bomb(board, p);
+		// TODO
+		// explode(board, p);
 		return 0;
 	}
 	if(board.grid[p.x + p.y * WIDTH] == DEST_WALL) {
@@ -97,7 +105,7 @@ int damage_pos(board board, pos p) {
 	return 0;
 }
 
-int explode_bomb(board board, pos bomb_pos) {
+int explode(board board, pos bomb_pos) {
 	if(!valid_pos(board, bomb_pos) || board.grid[bomb_pos.x + bomb_pos.y * WIDTH] != BOMB)
 		return -1;
 	board.grid[bomb_pos.x + bomb_pos.y * WIDTH] = EMPTY;
