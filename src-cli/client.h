@@ -21,25 +21,22 @@
 struct multicast_client_t {
   int sock;                // La socket
   struct sockaddr_in6 adr; // L'adresse
-  struct ipv6_mreq mreq;   // La structure pour la multidiffusion.
+  struct ipv6_mreq grp;    // La structure pour la multidiffusion.
 } typedef multicast_client_t;
 
 /* ********** Fonctions client ********** */
 
 int connect_to_server(int port);
+int abonnement_mdiff(multicast_client_t *mc, char *adr_mdiff, int port_mdiff);
 int join_game(int sock_client, int game_type);
 int ready(int sock_client, int game_type, int player_id, int team_id);
 int action(int sock_client, int game_type, int player_id, int team_id, int num,
            int action);
 
-int get_game_data(int sock_client, msg_game_data_t *game_data);
-int get_grid(int sock_client, msg_grid_t *grid);
-int get_grid_tmp(int sock_client, msg_grid_tmp_t *grid);
-int get_end_game(int sock_client, msg_end_game_t *end_game);
-
 /* ********** Fonctions utilitaires ********** */
 
 int send_message(int sock, void *message, size_t size, char *msg_type);
-int receive_message(int sock, void *message, size_t size, char *msg_type);
+int recv_message(int sock_client, void *message, size_t msg_size, char *type);
+int recv_msg_game_data(msg_game_data_t *game_data, int sock_client);
 
 #endif
