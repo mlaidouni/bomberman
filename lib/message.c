@@ -1,5 +1,6 @@
 #include "message.h"
 #include <arpa/inet.h>
+#include <stdio.h>
 
 /* ************************ Fonctions d'envoie ************************ */
 

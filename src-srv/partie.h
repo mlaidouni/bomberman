@@ -10,7 +10,7 @@
 
 /* ********** Fonctions parties ********** */
 
-int start_game(partie_t partie);
+int start_game(partie_t *partie);
 int init_partie(msg_join_ready_t params, client_t client);
 int create_partie(client_t client, msg_join_ready_t params);
 int add_joueur(partie_t *partie, client_t client);
