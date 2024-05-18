@@ -1,5 +1,138 @@
 # Todo
 
+> [!CAUTION]
+>
+> - Gérer les free pour chaque malloc !
+> - Gérer les erreurs des fonctions et systèmes
+
+## Côté client.c
+
+- Gérer la réception et l'envoie des messages. Je pense qu'il faudrait faire une fonction qui lit les 16 premiers bits, récupère le `player_id` et `team_id`, ainsi que le codereq. Et en fonction du type de message, il appelle la bonne fonction de décodage et effectue les actions nécessaires.
+
+<details>
+
+```c
+  // On initialise ncurses
+  init_ncurses();
+
+while (1) {
+
+    // Réception des messages TCP
+    // If tchat ...
+    // If end game ...
+
+    // On reçoit les 16 premiers bits du message
+    msg_header_t mh;
+    if (recv_msg_header(&mh, mc))
+        // ...
+
+    // En fonction du type de message, on appelle la bonne fonction de décodage
+    if ( mh.codereq == CODE_REQ_GAME_GRID ) {
+        // On reçoit la grid de jeu
+        msg_grid_t grid;
+        if (recv_msg_game_grid(&grid, mc))
+            // ...
+        // Affichage de la grille
+        display_grid(grid);
+        // Rafraîchit la fenêtre courante afin de voir le message apparaître
+        refresh();
+    } else if ( mh.codereq == CODE_REQ_GRID_UPDATE ) {
+        // On reçoit la mise à jour de la grille
+        msg_grid_update_t grid_update;
+        if (recv_msg_grid_update(&grid_update, mc))
+            // ...
+        // Mise à jour de la grille
+        update_grid(grid_update);
+    } else {
+        // On reçoit un message inconnu
+        // ...
+    }
+
+    // On envoie les actions du joueur
+    msg_game_t action;
+    // Read stdin...
+    init_msg_game(&action);
+    if (send_msg_action(&action, mc))
+        // ...
+
+}
+
+    // On libère la mémoire
+    // ...
+
+// Fermeture de la socket TCP du client: à la fin de la partie seulement
+close(sock_client);
+return 0;
+```
+
+</details>
+
+## Côté partie.c
+
+- Gérer l'envoie et la réception des messages en continue avec poll
+
+<details>
+
+```c
+
+// init poll...
+
+while (partie->end) {
+
+    // poll...
+
+    // Si c'est le temps de diffuser la grille...
+
+    /* ********** Envoie de la grille complète ********** */
+
+    // On initialise la structure msg_grid_t avec la grille de jeu
+    msg_grid_t grid = init_msg_grid(partie, board);
+
+    // On convertit la structure en message
+    uint8_t *message = ms_game_grid(grid);
+
+    // Envoi du message en multidiffusion à tous les joueurs
+    if (sendto(partie->sock_mdiff, message, sizeof(message), 0,
+               (struct sockaddr *)&partie->g_adr, sizeof(partie->g_adr)) < 0) {
+      close(partie->sock_mdiff);
+      // On libère la mémoire ...
+      return -1;
+    }
+
+    /* ********** Reception des messages de joueurs ********** */
+
+    // Gestion de l'odre des actions...
+    // ...
+
+    // Après chaque réception de message, on met à jour la grille
+
+    // Après la réception de tous les messages (1 par joueur), on met à jour la grille
+
+    // On envoie la grille update à tous les joueurs
+
+    /* ********** Gestion de la fin de la partie ********** */
+
+    // Penser à gérer la fermeture des sockets des clients
+    // ...
+  }
+
+```
+
+</details>
+
+## Côté server.c
+
+- Gérer l'utilisation de threads, leur lancement, leurs fins
+- Accepter les connexions et messages en IPV4
+- Gérer la réactions de l'ensemble du jeu (clients/serveurs) lorsqu'il y a des erreurs systèmes / de certaines fonctions
+- Gérer le cas suivant:
+
+```plaintext
+Le cas du client qui intègre une partie mais ne se déclare jamais prêt. Cela signifie que vos applications doivent décider à un moment, qu’un client ou le serveur n’est plus actif si cela fait trop longtemps qu’elles attendent un message.
+```
+
+---
+
 ## Client: `client.c`
 
 - Connexion en mode TCP au serveur.
