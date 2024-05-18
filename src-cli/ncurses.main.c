@@ -158,7 +158,7 @@ bool perform_action(board *b, pos *p, ACTION a) {
   return false;
 }
 
-int affiche() {
+int mainn() {
   board *b = malloc(sizeof(board));
   line *l = malloc(sizeof(line));
   l->cursor = 0;
@@ -166,17 +166,27 @@ int affiche() {
   p->x = 0;
   p->y = 0;
 
-  //     // NOTE: All ncurses operations (getch, mvaddch, refresh, etc.) must be
-  //     done on the same thread. initscr(); /* Start curses mode */ raw(); /*
-  //     Disable line buffering */ intrflush(stdscr, FALSE); /* No need to flush
-  //     when intr key is pressed */ keypad(stdscr, TRUE); /* Required in order
-  //     to get events from keyboard */ nodelay(stdscr, TRUE); /* Make getch
-  //     non-blocking */ noecho(); /* Don't echo() while we do getch (we will
-  //     manually print characters when relevant) */ curs_set(0); // Set the
-  //     cursor to invisible start_color(); // Enable colors init_pair(1,
-  //     COLOR_YELLOW, COLOR_BLACK); // Define a new color style (text is
-  //     yellow, background is black)
-
+  // NOTE: All ncurses operations (getch, mvaddch, refresh, etc.) must be done
+  // on the same thread.
+  // /* Start curses mode */
+  // initscr();
+  // /* Disable line buffering */
+  // raw();
+  // /* No need to flush when intr key is pressed */
+  // intrflush(stdscr, FALSE);
+  // // Required in order to get events from keyboard
+  // keypad(stdscr, TRUE);
+  // // Make getch non-blocking
+  // nodelay(stdscr, TRUE);
+  // /* Don't echo() while we do getch (we will manually print characters when
+  //  * relevant) */
+  // noecho();
+  // // Set the cursor to invisible
+  // curs_set(0);
+  // // Enable colors
+  // start_color();
+  // // Define a new color style (text is yellow, background is black)
+  // init_pair(1, COLOR_YELLOW, COLOR_BLACK);
   setup_board(b);
   while (true) {
     ACTION a = control(l);

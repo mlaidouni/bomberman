@@ -6,6 +6,7 @@
 #include "../src-srv/rules.h"
 #include "../src-srv/server.h"
 #include <arpa/inet.h>
+#include <ncurses.h>
 #include <net/if.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -39,5 +40,6 @@ int action(int sock_client, int game_type, int player_id, int team_id, int num,
 int send_message(int sock, void *message, size_t size, char *msg_type);
 int recv_message(int sock_client, void *message, size_t msg_size, char *type);
 int recv_msg_game_data(msg_game_data_t *game_data, int sock_client);
+uint8_t *recv_grille(multicast_client_t mc);
 
 #endif
