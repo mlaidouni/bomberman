@@ -58,31 +58,29 @@ int main(int argc, char const *argv[]) {
 
   puts("\033[33mReady envoyé. Entrée dans le while(1) ...\033[0m");
 
+  puts("\033[33m Réception de la grille...\033[0m");
+  int len = sizeof(uint8_t) * (6 + HEIGHT * WIDTH);
+  uint8_t *message = malloc(len);
+  // Réception des données
+  int bytes = recvfrom(mc.sock, message, len, 0, (struct sockaddr *)&mc.adr,
+                       (socklen_t *)sizeof(mc.adr));
+  if (bytes == 0) {
+    puts("alo");
+    exit(EXIT_FAILURE);
+  }
+
+  puts("\033[33m Réception de la grille...\033[0m");
+  msg_grid_t grid = mg_game_grid(message);
+
+  // Affichage des données de la structure
+  printf(
+      "\033[35m Données de la grille reçues: HEIGHT: %d, WIDTH: %d\n\033[0m",
+      grid.hauteur, grid.largeur);
+
   while (1)
+    // TODO: Recv/send msg avec le serveur
     ;
 
-  char buf[BUF_SIZE];
-  while (1) {
-    if (read(mc.sock, buf, BUF_SIZE) < 0)
-      perror("erreur read");
-    printf("Message reçu: %s\n", buf);
-
-    memset(buf, 0, BUF_SIZE);
-
-    // Si le joueur appuie sur 't', le programme attendra qu'il écrive un
-    // message pour l'envoyer à mc.sock
-    char c;
-    if (read(STDIN_FILENO, &c, 1) < 0)
-      perror("erreur read");
-    if (c == 't') {
-      printf("Entrez un message à envoyer: ");
-      if (read(STDIN_FILENO, buf, BUF_SIZE) < 0)
-        perror("erreur read");
-      if (sendto(mc.sock, buf, strlen(buf), 0, (struct sockaddr *)&mc.adr,
-                 sizeof(mc.adr)) < 0)
-        perror("erreur sendto");
-    }
-  }
   // Fermeture de la socket client: à la fin de la partie seulement
   close(sock_client);
   return 0;
@@ -240,6 +238,8 @@ int ready(int sock_client, int game_type, int player_id, int team_id) {
  */
 int action(int sock_client, int game_type, int player_id, int team_id, int num,
            int action) {
+
+  // FIX: OBSOLETE -> Utilise send_message, qui est en TCP
   // Création de la structure du message
   msg_game_t params;
   params.game_type = game_type;

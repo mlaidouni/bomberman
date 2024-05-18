@@ -162,7 +162,7 @@ uint8_t *ms_game_grid(msg_grid_t params) {
    */
 
   uint8_t *message =
-      malloc(sizeof(uint8_t) * 6 + params.hauteur * params.largeur);
+      malloc(sizeof(uint8_t) * (6 + params.hauteur * params.largeur));
 
   // On crée les deux premiers octets du message (appelés 'header')
   uint16_t header =
@@ -179,7 +179,7 @@ uint8_t *ms_game_grid(msg_grid_t params) {
   uint8_t hauteur = htons(params.hauteur);
   uint8_t largeur = htons(params.largeur);
   memcpy(message + 4, &hauteur, 1);
-  memcpy(message + 5, &largeur, 1); 
+  memcpy(message + 5, &largeur, 1);
 
   // On copie la grille (où chaque case est déjà au format Big Endian).
   memcpy(message + 6, params.grille, params.hauteur * params.largeur);

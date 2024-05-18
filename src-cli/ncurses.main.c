@@ -160,7 +160,6 @@ bool perform_action(board *b, pos *p, ACTION a) {
 
 int affiche() {
   board *b = malloc(sizeof(board));
-  ;
   line *l = malloc(sizeof(line));
   l->cursor = 0;
   pos *p = malloc(sizeof(pos));

@@ -2,14 +2,14 @@
 #define LIST_H
 
 typedef struct list_elem {
-    void *curr;
-    struct list_elem *next;
-    struct list_elem *prev;
+  void *curr;
+  struct list_elem *next;
+  struct list_elem *prev;
 } list_elem;
 
 typedef struct list {
-    list_elem *in;
-    list_elem *out;
+  list_elem *in;
+  list_elem *out;
 } list;
 
 list *init_list();

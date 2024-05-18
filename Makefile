@@ -1,7 +1,7 @@
 # Compilateur
 CC = gcc
 # Options de compilation
-CFLAGS = -Wall -Wno-psabi
+CFLAGS = -Wall -Wno-psabi -Wuninitialized
 IMPORT = -lncurses
 
 # Répertoire des sources
