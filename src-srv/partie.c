@@ -213,11 +213,38 @@ int start_game(partie_t *partie) {
     // Convertir la structure en message
     uint8_t *message = ms_game_grid(grid);
 
-    msg_grid_t lll = mg_game_grid(message);
-
     puts("nawel");
-    sendto(partie->sock_mdiff, message, sizeof(message), 0,
-           (struct sockaddr *)&partie->g_adr, sizeof(partie->g_adr));
+    printf("Socket %d\n", partie->sock_mdiff);
+    // Affichage des données de sendto
+    printf("Message : %s\n", message);
+    printf("Taille du message : %ld\n", sizeof(*message));
+    printf("Adresse : %s\n", partie->adr_mdiff);
+    printf("Port : %d\n", partie->port_mdiff);
+
+    char buf[10] = "VICTOR";
+    printf("Message : %s\n", buf);
+
+    // Envoi du message en multidiffusion
+    int r = sendto(partie->sock_mdiff, buf, sizeof(buf), 0,
+                   (struct sockaddr *)&partie->g_adr, sizeof(partie->g_adr));
+
+    printf("Message : %d\n", r);
+
+    // Envoi du message en multidiffusion
+    // ssize_t r =
+    //     sendto(partie->sock_mdiff, message, sizeof(uint8_t) * (6 + 20 * 20),
+    //     0,
+    //            (struct sockaddr *)&partie->g_adr, sizeof(partie->g_adr));
+
+    if (r < 0) {
+      perror("partie.c: start_game(): sendto()");
+      return -1;
+    }
+    if (r != sizeof(message)) {
+      fprintf(stderr, "partie.c: start_game(): sendto(): message tronqué\n");
+      return -1;
+    }
+
     grid.num++;
 
     break;
