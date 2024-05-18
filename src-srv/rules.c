@@ -64,10 +64,9 @@ int action_player(board board, int player, ACTION action) {
 		case A_BOMB:
 			if(valid_pos(board, p) && board.grid[p.x + p.y * WIDTH] == EMPTY) {
 				board.grid[p.x + p.y * WIDTH] = 'B';
-				//bomb b = {p, clock()};
-				/*
-					TODO: Ajout a la liste
-				*/
+				bomb *b = malloc(sizeof(bomb));
+				*b = (bomb) {p, clock()};
+				add_head(board.bombs, b);
 			}
 			else
 				return -1;
@@ -79,15 +78,28 @@ int action_player(board board, int player, ACTION action) {
 	return 0;
 }
 
+bomb *get_bomb_pos_list(board board, pos p) {
+	list_elem *n = board.bombs->out;
+	while(n != NULL) {
+		bomb *b = n->curr;
+		if(b->pos.x == p.x && b->pos.y == p.y) {
+			return b;
+		}
+		n = n->next;
+	}
+	return NULL;
+}
 
-
+/*
+ * Endommager la position donnée
+*/
 int damage_pos(board board, pos p) {
 	if(!valid_pos(board, p)) {
 		return -1;
 	}
 	if(board.grid[p.x + p.y * WIDTH] == BOMB) {
-		// TODO
-		// explode(board, p);
+		remove_elem(board.bombs, get_bomb_pos_list(board, p));
+		explode_pos(board, p);
 		return 0;
 	}
 	if(board.grid[p.x + p.y * WIDTH] == DEST_WALL) {
@@ -105,7 +117,10 @@ int damage_pos(board board, pos p) {
 	return 0;
 }
 
-int explode(board board, pos bomb_pos) {
+/*
+ * Commencer une explosion à la position donnée
+*/
+int explode_pos(board board, pos bomb_pos) {
 	if(!valid_pos(board, bomb_pos) || board.grid[bomb_pos.x + bomb_pos.y * WIDTH] != BOMB)
 		return -1;
 	board.grid[bomb_pos.x + bomb_pos.y * WIDTH] = EMPTY;
@@ -132,6 +147,25 @@ int explode(board board, pos bomb_pos) {
 	damage_pos(board, (pos) {bomb_pos.x + 1, bomb_pos.y + 1});
 
 	return 0;
+}
+
+/*
+ * Faire exploser toutes les bombes qui ont été posées il y a plus de 3 secondes
+ * Renvoie 1 si toutes les bombes ont explosé, 0 sinon
+*/
+int explode_bombs(board board) {
+	list_elem *n = board.bombs->out;
+	while((n = board.bombs->out) != NULL) {
+		bomb *b = n->curr;
+		if((clock() - b->timer) / CLOCKS_PER_SEC >= 3) {
+			remove_tail(board.bombs);
+			explode_pos(board, b->pos);
+			free(b);
+		} else {
+			return 0;
+		}
+	}
+	return 1;
 }
 
 
