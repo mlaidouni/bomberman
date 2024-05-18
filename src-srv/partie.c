@@ -1,6 +1,78 @@
 #include "partie.h"
 
 /**
+ * Lance et gère une partie.
+ * @param partie La partie à lancer.
+ * @return 0 si tout s'est bien passé, -1 sinon.
+ */
+int start_game(partie_t *partie) {
+  puts("\033[32mpartie.c: start_game: La partie vient d'être lancée !\033[0m");
+
+  // On initialise la grille de jeu
+  board board = {0};
+  init_board(board, partie->type);
+
+  // Tant que la partie n'est pas terminée
+  while (partie->end) {
+
+    /* ********** Envoie de la grille complète ********** */
+
+    // On initialise la structure msg_grid_t avec la grille de jeu
+    msg_grid_t grid = init_msg_grid(partie, board);
+
+    // On convertit la structure en message
+    uint8_t *message = ms_game_grid(grid);
+
+    // Envoi du message en multidiffusion à tous les joueurs
+    if (sendto(partie->sock_mdiff, message, sizeof(message), 0,
+               (struct sockaddr *)&partie->g_adr, sizeof(partie->g_adr)) < 0) {
+      perror("partie.c: start_game(): sendto()");
+      close(partie->sock_mdiff);
+      // On libère la mémoire
+      free(grid.grille);
+      free(message);
+      return -1;
+    }
+
+    break; // TODELETE: (debug) On arrête la boucle après un envoi
+
+    /* ********** Reception des messages de joueurs ********** */
+
+    // TODO: Le jeu
+    // ...
+
+    /* ********** Gestion de la fin de la partie ********** */
+
+    // TODO: Penser à gérer la fermeture des sockets des clients
+    // ...
+  }
+
+  return 0;
+}
+
+/* ********** Fonctions de messages de partie ********** */
+
+/**
+ * Initialise la structure msg_grid_t avec la grille de jeu.
+ * @param partie La partie en cours.
+ * @param board La grille de jeu.
+ * @return La structure msg_grid_t initialisée.
+ */
+msg_grid_t init_msg_grid(partie_t *partie, board board) {
+  msg_grid_t grid;
+  memset(&grid, 0, sizeof(msg_grid_t));
+  grid.hauteur = HEIGHT;
+  grid.largeur = WIDTH;
+  int len_grille = HEIGHT * WIDTH * sizeof(uint8_t);
+  grid.grille = malloc(len_grille);
+  memcpy(grid.grille, board.grid, len_grille);
+
+  return grid;
+}
+
+/* ********** Fonctions de création & gestion de partie ********** */
+
+/**
  * Crée une nouvelle partie avec le client donné, ou ajoute celui-ci à une
  * partie déjà existante.
  * @param client Le client qui a créé la partie.
@@ -57,7 +129,7 @@ int create_partie(client_t client, msg_join_ready_t params) {
   generate_multicast_adr(partie.adr_mdiff, sizeof(partie.adr_mdiff));
   // Afficher l'adresse de multidiffusion
   printf("Adresse de multidiffusion : %s\n", partie.adr_mdiff);
-  inet_pton(AF_INET6, partie.adr_mdiff, &partie.g_adr);
+  inet_pton(AF_INET6, partie.adr_mdiff, &partie.g_adr.sin6_addr);
   // On initialise l'interface locale de multicast
   partie.g_adr.sin6_scope_id = 0; // 0 pour interface par défaut
 
@@ -165,7 +237,7 @@ void generate_multicast_adr(char *adr, size_t size) {
   memset(adr, 0, size);
 
   // On génère une adresse multicast
-  // FIXME: Check la limite qu'on peut atteindre, i.e :2:10000: est-il valide ?
+  // FIX: Check la limite qu'on peut atteindre, i.e :2:10000: est-elle valide ?
   sprintf(adr, "ff12::1:2:%d", srv.parties.nb_parties);
 }
 
@@ -178,83 +250,4 @@ void generate_multicast_ports(int *port_mdiff, int *port_udp) {
   // On génère les ports
   *port_mdiff = 5000 + srv.parties.nb_parties;
   *port_udp = 7000 + srv.parties.nb_parties;
-}
-
-msg_grid_t init_msg_grid(partie_t *partie, board board) {
-  msg_grid_t grid = {0};
-  grid.hauteur = HEIGHT;
-  grid.largeur = WIDTH;
-  grid.grille = malloc(HEIGHT * WIDTH * sizeof(uint8_t));
-  memcpy(grid.grille, board.grid, HEIGHT * WIDTH * sizeof(uint8_t));
-
-  return grid;
-}
-
-/**
- * Lance le jeu.
- * @param partie La partie à lancer.
- * @return 0 si tout s'est bien passé, -1 sinon.
- */
-int start_game(partie_t *partie) {
-  puts("partie.c: start_game(): La partie vient d'être lancée !");
-  // TODO: Gérer le type de partie et les parties en attente
-
-  // Si le nombre de joueurs est égal à 4, on lance et gère le jeu
-  // Tant que la partie n'est pas terminée
-
-  board board = {0};
-  init_board(board, partie->type);
-
-  while (partie->end) {
-
-    // On envoie la grille à tous les joueurs
-    msg_grid_t grid = init_msg_grid(partie, board);
-
-    // Convertir la structure en message
-    uint8_t *message = ms_game_grid(grid);
-
-    puts("nawel");
-    printf("Socket %d\n", partie->sock_mdiff);
-    // Affichage des données de sendto
-    printf("Message : %s\n", message);
-    printf("Taille du message : %ld\n", sizeof(*message));
-    printf("Adresse : %s\n", partie->adr_mdiff);
-    printf("Port : %d\n", partie->port_mdiff);
-
-    char buf[10] = "VICTOR";
-    printf("Message : %s\n", buf);
-
-    // Envoi du message en multidiffusion
-    int r = sendto(partie->sock_mdiff, buf, sizeof(buf), 0,
-                   (struct sockaddr *)&partie->g_adr, sizeof(partie->g_adr));
-
-    printf("Message : %d\n", r);
-
-    // Envoi du message en multidiffusion
-    // ssize_t r =
-    //     sendto(partie->sock_mdiff, message, sizeof(uint8_t) * (6 + 20 * 20),
-    //     0,
-    //            (struct sockaddr *)&partie->g_adr, sizeof(partie->g_adr));
-
-    if (r < 0) {
-      perror("partie.c: start_game(): sendto()");
-      return -1;
-    }
-    if (r != sizeof(message)) {
-      fprintf(stderr, "partie.c: start_game(): sendto(): message tronqué\n");
-      return -1;
-    }
-
-    grid.num++;
-
-    break;
-
-    // TODO: Le jeu
-    // ...
-
-    // TODO: Penser à gérer la fermeture des sockets des clients
-    // ...
-  }
-
-  return 0;
 }
