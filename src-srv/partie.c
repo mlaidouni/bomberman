@@ -212,6 +212,14 @@ int start_game(partie_t *partie) {
     // Convertir la structure en message
     uint8_t *message = ms_game_grid(grid);
 
+    msg_grid_t lll = mg_game_grid(message);
+
+    // Affichage des données de lll
+    printf("lll.hauteur : %d\n", lll.hauteur);
+    printf("lll.largeur : %d\n", lll.largeur);
+
+    puts("zozozo");
+
     sendto(partie->sock_mdiff, message, sizeof(message), 0,
            (struct sockaddr *)&partie->g_adr, sizeof(partie->g_adr));
     grid.num++;

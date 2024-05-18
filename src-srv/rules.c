@@ -6,7 +6,7 @@
 int init_board(board board, TYPE type) {
   board.type = type;
   for (int i = 0; i < WIDTH * HEIGHT; i++) {
-    board.grid[i] = EMPTY;
+    board.grid[i] = EMPTY_TILE;
   }
   board.players[0] = (player){0, ALIVE, {0, 0}};
   board.players[1] = (player){0, ALIVE, {WIDTH - 1, HEIGHT - 1}};
@@ -21,7 +21,7 @@ int valid_pos(board board, pos p) {
 }
 
 int action_player(board board, int player, ACTION action) {
-  // Rappel: x <= BOMB signifie x est EMPTY ou x est BOMB
+  // Rappel: x <= BOMB_TILE signifie x est EMPTY_TILE ou x est BOMB_TILE
 
   assert(player >= 0 && player < NB_PLAYERS);
 
@@ -29,7 +29,7 @@ int action_player(board board, int player, ACTION action) {
   switch (action) {
   case A_UP:
     if (p.y > 0) {
-      if (board.grid[p.x + (p.y - 1) * WIDTH] <= BOMB) {
+      if (board.grid[p.x + (p.y - 1) * WIDTH] <= BOMB_TILE) {
         p.y--;
         break;
       }
@@ -37,7 +37,7 @@ int action_player(board board, int player, ACTION action) {
     return -1;
   case A_DOWN:
     if (p.y < HEIGHT - 1) {
-      if (board.grid[p.x + (p.y + 1) * WIDTH] <= BOMB) {
+      if (board.grid[p.x + (p.y + 1) * WIDTH] <= BOMB_TILE) {
         p.y++;
         break;
       }
@@ -45,7 +45,7 @@ int action_player(board board, int player, ACTION action) {
     return -1;
   case A_LEFT:
     if (p.x > 0) {
-      if (board.grid[(p.x - 1) + p.y * WIDTH] <= BOMB) {
+      if (board.grid[(p.x - 1) + p.y * WIDTH] <= BOMB_TILE) {
         p.x--;
         break;
       }
@@ -53,16 +53,16 @@ int action_player(board board, int player, ACTION action) {
     return -1;
   case A_RIGHT:
     if (p.x < WIDTH - 1) {
-      if (board.grid[(p.x + 1) + p.y * WIDTH] <= BOMB) {
+      if (board.grid[(p.x + 1) + p.y * WIDTH] <= BOMB_TILE) {
         p.x++;
         break;
       }
     }
     return -1;
   case A_BOMB:
-    if (valid_pos(board, p) && board.grid[p.x + p.y * WIDTH] == EMPTY) {
+    if (valid_pos(board, p) && board.grid[p.x + p.y * WIDTH] == EMPTY_TILE) {
       board.grid[p.x + p.y * WIDTH] = 'B';
-      bomb *b = malloc(sizeof(bomb));
+      bomb *b = malloc(sizeof(BOMB_TILE));
       *b = (bomb){p, clock()};
       add_head(board.bombs, b);
     } else
@@ -94,16 +94,16 @@ int damage_pos(board board, pos p) {
   if (!valid_pos(board, p)) {
     return -1;
   }
-  if (board.grid[p.x + p.y * WIDTH] == BOMB) {
+  if (board.grid[p.x + p.y * WIDTH] == BOMB_TILE) {
     remove_elem(board.bombs, get_bomb_pos_list(board, p));
     explode_pos(board, p);
     return 0;
   }
-  if (board.grid[p.x + p.y * WIDTH] == DEST_WALL) {
-    board.grid[p.x + p.y * WIDTH] = EMPTY;
+  if (board.grid[p.x + p.y * WIDTH] == DEST_WALL_TILE) {
+    board.grid[p.x + p.y * WIDTH] = EMPTY_TILE;
     return 1;
   }
-  if (board.grid[p.x + p.y * WIDTH] == INDEST_WALL) {
+  if (board.grid[p.x + p.y * WIDTH] == INDEST_WALL_TILE) {
     return 2;
   }
   for (int i = 0; i < NB_PLAYERS; i++) {
@@ -119,9 +119,9 @@ int damage_pos(board board, pos p) {
  */
 int explode_pos(board board, pos bomb_pos) {
   if (!valid_pos(board, bomb_pos) ||
-      board.grid[bomb_pos.x + bomb_pos.y * WIDTH] != BOMB)
+      board.grid[bomb_pos.x + bomb_pos.y * WIDTH] != BOMB_TILE)
     return -1;
-  board.grid[bomb_pos.x + bomb_pos.y * WIDTH] = EMPTY;
+  board.grid[bomb_pos.x + bomb_pos.y * WIDTH] = EMPTY_TILE;
 
   if (!damage_pos(board, (pos){bomb_pos.x - 1, bomb_pos.y})) {
     damage_pos(board, (pos){bomb_pos.x - 2, bomb_pos.y});

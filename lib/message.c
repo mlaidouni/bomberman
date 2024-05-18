@@ -161,6 +161,10 @@ uint8_t *ms_game_grid(msg_grid_t params) {
    * -> 5 + i si la case contient le joueur
    */
 
+  // Affichage hauteur et largeur
+  printf("ms: Hauteur: %d\n", params.hauteur);
+  printf("ms: Largeur: %d\n", params.largeur);
+
   uint8_t *message =
       malloc(sizeof(uint8_t) * (6 + params.hauteur * params.largeur));
 
@@ -176,10 +180,8 @@ uint8_t *ms_game_grid(msg_grid_t params) {
   memcpy(message + 2, &num, 2);
 
   // On crée les 2 octets représentant la hauteur/largueur de la grille
-  uint8_t hauteur = htons(params.hauteur);
-  uint8_t largeur = htons(params.largeur);
-  memcpy(message + 4, &hauteur, 1);
-  memcpy(message + 5, &largeur, 1);
+  uint16_t dimension = htons(params.hauteur << 8 | params.largeur);
+  memcpy(message + 4, &dimension, 2);
 
   // On copie la grille (où chaque case est déjà au format Big Endian).
   memcpy(message + 6, params.grille, params.hauteur * params.largeur);
@@ -383,7 +385,7 @@ msg_game_data_t mg_game_data(uint8_t *message) {
  * @return Les informations extraites.
  */
 msg_grid_t mg_game_grid(uint8_t *message) {
-  msg_grid_t params;
+  msg_grid_t params = {0};
 
   uint16_t header;
   // On copie les 2 premiers octets du message
@@ -403,11 +405,15 @@ msg_grid_t mg_game_grid(uint8_t *message) {
   params.num = ntohs(num);
 
   // On récupère la hauteur et la largeur de la grille
-  uint8_t hauteur, largeur;
-  memcpy(&hauteur, message + 4, 1);
-  memcpy(&largeur, message + 5, 1);
-  params.hauteur = ntohs(hauteur);
-  params.largeur = ntohs(largeur);
+  uint16_t dimension;
+  memcpy(&dimension, message + 4, 2);
+  dimension = ntohs(dimension);
+  params.hauteur = dimension >> 8;
+  params.largeur = dimension & 0xFF;
+
+  // Affichage de la hauteur et de la largeur
+  printf("mg: Hauteur: %d\n", params.hauteur);
+  printf("mg: Largeur: %d\n", params.largeur);
 
   // On copie la grille
   memcpy(params.grille, message + 6, params.hauteur * params.largeur);

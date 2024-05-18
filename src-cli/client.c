@@ -59,7 +59,6 @@ int main(int argc, char const *argv[]) {
 
   puts("\033[33mReady envoyé. Entrée dans le while(1) ...\033[0m");
 
-  puts("\033[33m Réception de la grille...\033[0m");
   int len = sizeof(uint8_t) * (6 + HEIGHT * WIDTH);
   uint8_t *message = malloc(len);
   // Réception des données
