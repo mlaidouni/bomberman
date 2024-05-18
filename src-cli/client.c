@@ -58,29 +58,37 @@ int main(int argc, char const *argv[]) {
 
   /* ********** Gestion des messages de la partie... ********** */
 
-  // On reçoit la grid de jeu
-  msg_grid_t grid;
-  if (recv_msg_game_grid(&grid, mc))
-    exit(EXIT_FAILURE); // En cas d'échec on exit, pour l'instant.
-
   // On initialise ncurses
   init_ncurses();
 
-  // TODELETE: Test ncurses: START
-  // Écrit Hello World à l'endroit où le curseur logique est positionné
-  printw("Hello World");
-  // Rafraîchit la fenêtre courante afin de voir le message apparaître
-  refresh();
-  // Attend que l'utilisateur appuie sur une touche
-  getch();
-  // Ferme la fenêtre
-  endwin();
-  // TODELETE: Test ncurses: END
+  while (1) {
+    // On reçoit la grid de jeu
+    msg_grid_t grid;
+    if (recv_msg_game_grid(&grid, mc))
+      exit(EXIT_FAILURE); // En cas d'échec on exit, pour l'instant.
 
-  while (1)
+    // TODELETE: Test ncurses: START
+
+    // On écrit à l'endroit où le curseur logique est positionné
+    // On affiche le numéro de message
+    printw("Numéro de message: %d\n", grid.num);
+    // On affiche les données de la grid
+    printw("Données de la grid reçues:\n\t largeur: %d \n\t hauteur: "
+           "%d \n\t player_id: %d \n\t team_id: %d\n",
+           grid.largeur, grid.hauteur, grid.player_id, grid.team_id);
+    // Rafraîchit la fenêtre courante afin de voir le message apparaître
+    refresh();
+    // Clear la fenêtre
+    clear();
+
+    // Attend que l'utilisateur appuie sur une touche
+    getch();
+    // Ferme la fenêtre
+    endwin();
+    // TODELETE: Test ncurses: END
+
     // TODO: Recv/send msg avec le serveur
-    ;
-
+  }
   // Fermeture de la socket TCP du client: à la fin de la partie seulement
   close(sock_client);
   return 0;
