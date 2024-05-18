@@ -161,10 +161,6 @@ uint8_t *ms_game_grid(msg_grid_t params) {
    * -> 5 + i si la case contient le joueur
    */
 
-  // Affichage hauteur et largeur
-  printf("ms: Hauteur: %d\n", params.hauteur);
-  printf("ms: Largeur: %d\n", params.largeur);
-
   uint8_t *message =
       malloc(sizeof(uint8_t) * (6 + params.hauteur * params.largeur));
 
@@ -411,9 +407,13 @@ msg_grid_t mg_game_grid(uint8_t *message) {
   params.hauteur = dimension >> 8;
   params.largeur = dimension & 0xFF;
 
-  // Affichage de la hauteur et de la largeur
-  printf("mg: Hauteur: %d\n", params.hauteur);
-  printf("mg: Largeur: %d\n", params.largeur);
+  // On alloue de la mémoire pour la grille
+  params.grille =
+      malloc(params.hauteur * params.largeur * sizeof(*params.grille));
+  if (params.grille == NULL) {
+    perror("malloc");
+    exit(EXIT_FAILURE); // FIXME: Gérer proprement l'erreur
+  }
 
   // On copie la grille
   memcpy(params.grille, message + 6, params.hauteur * params.largeur);

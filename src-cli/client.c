@@ -55,7 +55,7 @@ int main(int argc, char const *argv[]) {
     return -1; // En cas d'échec on exit, pour l'instant.
 
   /* ********** Gestion des messages de la partie... ********** */
-  puts("alooooooooooooooooooo");
+  puts("Naweeeeeeeeeeeeeeeeel");
 
   puts("\033[33mReady envoyé. Entrée dans le while(1) ...\033[0m");
 
@@ -63,47 +63,40 @@ int main(int argc, char const *argv[]) {
   uint8_t *message = malloc(len);
   // Réception des données
   int bytes = recvfrom(mc.sock, message, len, 0, (struct sockaddr *)&mc.adr,
-                       (socklen_t *)sizeof(mc.adr));
+                       (socklen_t *)sizeof(struct sockaddr_in6));
   if (bytes == 0) {
     puts("alo");
     exit(EXIT_FAILURE);
   }
 
-  printf("bytes: %d\n", bytes);
-
   puts("Réception de la grille...");
-
-  printf("babaaaaaaaaaaaaaaaaaaaaaaaa");
   msg_grid_t grid = mg_game_grid(message);
-  puts("bobooooooooooooooooooooooooooooo");
+  puts("mg_game_grid done");
 
   // Affichage des données de la structure
   printf(
       "\033[35m Données de la grille reçues: HEIGHT: %d, WIDTH: %d\n\033[0m",
       grid.hauteur, grid.largeur);
 
-  puts("alooooooooooooooooooo");
-  fflush(stdin);
-
-  // /* Start curses mode */
-  // initscr();
-  // /* Disable line buffering */
-  // raw();
-  // /* No need to flush when intr key is pressed */
-  // intrflush(stdscr, FALSE);
-  // // Required in order to get events from keyboard
-  // keypad(stdscr, TRUE);
-  // // Make getch non-blocking
-  // nodelay(stdscr, TRUE);
-  // /* Don't echo() while we do getch (we will manually print characters when
-  //  * relevant) */
-  // noecho();
-  // // Set the cursor to invisible
-  // curs_set(0);
-  // // Enable colors
-  // start_color();
-  // // Define a new color style (text is yellow, background is black)
-  // init_pair(1, COLOR_YELLOW, COLOR_BLACK);
+  /* Start curses mode */
+  initscr();
+  /* Disable line buffering */
+  raw();
+  /* No need to flush when intr key is pressed */
+  intrflush(stdscr, FALSE);
+  // Required in order to get events from keyboard
+  keypad(stdscr, TRUE);
+  // Make getch non-blocking
+  nodelay(stdscr, TRUE);
+  /* Don't echo() while we do getch (we will manually print characters when
+   * relevant) */
+  noecho();
+  // Set the cursor to invisible
+  curs_set(0);
+  // Enable colors
+  start_color();
+  // Define a new color style (text is yellow, background is black)
+  init_pair(1, COLOR_YELLOW, COLOR_BLACK);
 
   // // Écrit Hello World à l'endroit où le curseur logique est positionné
   // printw("Hello World");

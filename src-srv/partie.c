@@ -184,7 +184,8 @@ msg_grid_t init_msg_grid(partie_t *partie, board board) {
   msg_grid_t grid = {0};
   grid.hauteur = HEIGHT;
   grid.largeur = WIDTH;
-  grid.grille = board.grid;
+  grid.grille = malloc(HEIGHT * WIDTH * sizeof(uint8_t));
+  memcpy(grid.grille, board.grid, HEIGHT * WIDTH * sizeof(uint8_t));
 
   return grid;
 }
@@ -214,12 +215,7 @@ int start_game(partie_t *partie) {
 
     msg_grid_t lll = mg_game_grid(message);
 
-    // Affichage des données de lll
-    printf("lll.hauteur : %d\n", lll.hauteur);
-    printf("lll.largeur : %d\n", lll.largeur);
-
-    puts("zozozo");
-
+    puts("nawel");
     sendto(partie->sock_mdiff, message, sizeof(message), 0,
            (struct sockaddr *)&partie->g_adr, sizeof(partie->g_adr));
     grid.num++;
