@@ -55,21 +55,7 @@ int main(int argc, char const *argv[]) {
     return -1; // En cas d'échec on exit, pour l'instant.
 
   /* ********** Gestion des messages de la partie... ********** */
-
-  puts("\033[33mReady envoyé. Entrée dans le while(1) ...\033[0m");
-
-  puts("\033[33m Réception de la grille...\033[0m");
-  int len = sizeof(uint8_t) * (6 + HEIGHT * WIDTH);
-  uint8_t *message = malloc(len);
-  // Réception des données
-  int bytes = recvfrom(mc.sock, message, len, 0, (struct sockaddr *)&mc.adr,
-                       (socklen_t *)sizeof(mc.adr));
-  if (bytes == 0) {
-    puts("alo");
-    exit(EXIT_FAILURE);
-  }
-
-  puts("\033[33m Réception de la grille...\033[0m");
+  uint8_t *message = recv_grille(mc);
   msg_grid_t grid = mg_game_grid(message);
 
   // Affichage des données de la structure
@@ -336,21 +322,21 @@ int recv_msg_game_data(msg_game_data_t *game_data, int sock_client) {
   return 0;
 }
 
-int recv_grille(multicast_client_t mc, msg_grid_t *g) {
-  uint8_t *msg = malloc(sizeof(uint8_t) * 20 * 15 + 3);
+uint8_t *recv_grille(multicast_client_t mc) {
+  puts("\033[33mReady envoyé. Entrée dans le while(1) ...\033[0m");
 
-  int r = recvfrom(mc.sock, msg, sizeof(uint8_t) * 20 * 15 + 3, 0,
-                   (struct sockaddr *)&mc.adr, (socklen_t *)sizeof(mc.adr));
-  if (r == -1) {
-    perror("client.c: recv_grille: recvfrom");
-    return -1;
+  puts("\033[33m Réception de la grille...\033[0m");
+  int len = sizeof(uint8_t) * (6 + HEIGHT * WIDTH);
+  uint8_t *message = malloc(len);
+  // Réception des données
+  int bytes = recvfrom(mc.sock, message, len, 0, (struct sockaddr *)&mc.adr,
+                       (socklen_t *)sizeof(mc.adr));
+  if (bytes == 0) {
+    puts("alo");
+    exit(EXIT_FAILURE);
   }
 
-  // On récupère les données de la partie
-  *g = mg_game_grid(msg);
+  puts("\033[33m Réception de la grille...\033[0m");
 
-  // On libère la mémoire
-  free(msg);
-
-  return 0;
+  return message;
 }
