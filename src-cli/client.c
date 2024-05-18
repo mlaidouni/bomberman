@@ -79,7 +79,7 @@ int main(int argc, char const *argv[]) {
     // Rafraîchit la fenêtre courante afin de voir le message apparaître
     refresh();
     // Clear la fenêtre
-    clear();
+    // clear();
 
     // Attend que l'utilisateur appuie sur une touche
     getch();
@@ -307,6 +307,8 @@ int recv_msg_game_data(msg_game_data_t *game_data, int sock_client) {
   // FIXME: magic number, trouver comment récupérer la taille du message
   int len = sizeof(uint8_t) * 22;
   uint8_t *msg = malloc(len);
+
+  puts("\033[35m Réception des game_data...\033[0m"); // TODELETE: debug
 
   int r = recv(sock_client, msg, len, 0);
   // Gestion des erreurs

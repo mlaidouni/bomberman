@@ -52,7 +52,6 @@ typedef struct {
 // Structure représentant la grille complète
 typedef struct {
   int game_type;   // Le type de partie.
-  int codereq;     // Le codereq
   int player_id;   // L'identifiant du joueur.
   int team_id;     // Le numéro d'équipe du joueur.
   int num;         // Le numéro du message.
