@@ -184,8 +184,6 @@ msg_grid_t init_msg_grid(partie_t *partie, board board) {
   msg_grid_t grid = {0};
   grid.hauteur = HEIGHT;
   grid.largeur = WIDTH;
-  printf("grid.hauteur = %d\n", grid.hauteur);
-  printf("grid.largeur = %d\n", grid.largeur);
   grid.grille = board.grid;
 
   return grid;
@@ -210,16 +208,15 @@ int start_game(partie_t *partie) {
 
     // On envoie la grille à tous les joueurs
     msg_grid_t grid = init_msg_grid(partie, board);
-    printf("alo.hauteur = %d\n", grid.hauteur);
-    printf("alo.largeur = %d\n", grid.largeur);
 
     // Convertir la structure en message
     uint8_t *message = ms_game_grid(grid);
-    puts("bobo");
 
     sendto(partie->sock_mdiff, message, sizeof(message), 0,
            (struct sockaddr *)&partie->g_adr, sizeof(partie->g_adr));
     grid.num++;
+
+    break;
 
     // TODO: Le jeu
     // ...
