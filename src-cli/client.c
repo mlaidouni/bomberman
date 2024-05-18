@@ -23,7 +23,7 @@ int main(int argc, char const *argv[]) {
   if (sock_client == -1)
     exit(EXIT_FAILURE);
 
-  printf("Connected to server !\n");
+  // printf("Connected to server !\n"); // TODELETE: debug
 
   /* ********** Gestion du choix de partie ********** */
 
@@ -31,83 +31,57 @@ int main(int argc, char const *argv[]) {
   int game_type;
   printf("Entrer 0 pour jouer à 4 joueurs, 1 pour jouer en équipes: ");
   scanf("%d", &game_type);
-  join_game(sock_client, game_type);
+  if (join_game(sock_client, game_type))
+    exit(EXIT_FAILURE); // En cas d'échec on exit, pour l'instant.
 
   /* ********** Gestion de la configuration de la partie ********** */
 
   // On attend la réception des données de la partie
   msg_game_data_t game_data;
-  recv_msg_game_data(&game_data, sock_client);
+  if (recv_msg_game_data(&game_data, sock_client))
+    exit(EXIT_FAILURE); // En cas d'échec on exit, pour l'instant.
 
   // On convertit l'adresse de uin8_t* à char*
   char adr_mdiff[INET6_ADDRSTRLEN];
   inet_ntop(AF_INET6, game_data.adr_mdiff, adr_mdiff, INET6_ADDRSTRLEN);
 
-  affiche_data_partie(&game_data, adr_mdiff); // TODELETE
+  // affiche_data_partie(&game_data, adr_mdiff); // TODELETE: debug
 
   // Abonnement à l'adresse de multicast
   multicast_client_t mc;
-  if (abonnement_mdiff(&mc, adr_mdiff, game_data.port_mdiff) < 0)
-    return -1; // En cas d'échec on exit, pour l'instant.
+  if (abonnement_mdiff(&mc, adr_mdiff, game_data.port_mdiff))
+    exit(EXIT_FAILURE); // En cas d'échec on exit, pour l'instant.
 
   // On s'annonce prêt à jouer au serveur
-  if (ready(sock_client, game_type, game_data.player_id, 0) < 0)
-    return -1; // En cas d'échec on exit, pour l'instant.
+  if (ready(sock_client, game_type, game_data.player_id, 0))
+    exit(EXIT_FAILURE); // En cas d'échec on exit, pour l'instant.
 
   /* ********** Gestion des messages de la partie... ********** */
-  puts("Naweeeeeeeeeeeeeeeeel");
 
-  puts("\033[33mReady envoyé. Entrée dans le while(1) ...\033[0m");
+  // On reçoit la grid de jeu
+  msg_grid_t grid;
+  if (recv_msg_game_grid(&grid, mc))
+    exit(EXIT_FAILURE); // En cas d'échec on exit, pour l'instant.
 
-  int len = sizeof(uint8_t) * (6 + HEIGHT * WIDTH);
-  uint8_t *message = malloc(len);
-  // Réception des données
-  int bytes = recvfrom(mc.sock, message, len, 0, (struct sockaddr *)&mc.adr,
-                       (socklen_t *)sizeof(struct sockaddr_in6));
-  if (bytes == 0) {
-    puts("alo");
-    exit(EXIT_FAILURE);
-  }
+  // On initialise ncurses
+  init_ncurses();
 
-  puts("Réception de la grille...");
-  msg_grid_t grid = mg_game_grid(message);
-  puts("mg_game_grid done");
-
-  // Affichage des données de la structure
-  printf(
-      "\033[35m Données de la grille reçues: HEIGHT: %d, WIDTH: %d\n\033[0m",
-      grid.hauteur, grid.largeur);
-
-  /* Start curses mode */
-  initscr();
-  /* Disable line buffering */
-  raw();
-  /* No need to flush when intr key is pressed */
-  intrflush(stdscr, FALSE);
-  // Required in order to get events from keyboard
-  keypad(stdscr, TRUE);
-  // Make getch non-blocking
-  nodelay(stdscr, TRUE);
-  /* Don't echo() while we do getch (we will manually print characters when
-   * relevant) */
-  noecho();
-  // Set the cursor to invisible
-  curs_set(0);
-  // Enable colors
-  start_color();
-  // Define a new color style (text is yellow, background is black)
-  init_pair(1, COLOR_YELLOW, COLOR_BLACK);
-
-  // // Écrit Hello World à l'endroit où le curseur logique est positionné
-  // printw("Hello World");
-  // // Rafraîchit la fenêtre courante afin de voir le message apparaître
-  // refresh();
+  // TODELETE: Test ncurses: START
+  // Écrit Hello World à l'endroit où le curseur logique est positionné
+  printw("Hello World");
+  // Rafraîchit la fenêtre courante afin de voir le message apparaître
+  refresh();
+  // Attend que l'utilisateur appuie sur une touche
+  getch();
+  // Ferme la fenêtre
+  endwin();
+  // TODELETE: Test ncurses: END
 
   while (1)
     // TODO: Recv/send msg avec le serveur
     ;
 
-  // Fermeture de la socket client: à la fin de la partie seulement
+  // Fermeture de la socket TCP du client: à la fin de la partie seulement
   close(sock_client);
   return 0;
 }
@@ -207,61 +181,7 @@ int abonnement_mdiff(multicast_client_t *mc, char *adr_mdiff, int port_mdiff) {
   return 0;
 }
 
-/**
- * Envoie un message de type 'join' au serveur.
- * @param sock_client La socket client.
- * @param game_type Le type de jeu.
- * @return 0 si tout s'est bien passé, -1 sinon.
- */
-int join_game(int sock_client, int game_type) {
-  // Création de la structure du message et du message
-  msg_join_ready_t params;
-  params.game_type = game_type;
-  uint16_t message = ms_join(params);
-
-  // Envoi du message
-  int bytes = send_message(sock_client, &message, sizeof(message), "join_game");
-  // Gestion des erreurs (en partie gérée par send_message())
-  if (bytes == -1)
-    return -1;
-
-  // TODO: Gestion du nb d'octets envoyés (voir s'ils ont tous été envoyés)
-
-  return 0;
-}
-
-/**
- * Envoie un message de type 'ready' au serveur.
- * @param sock_client La socket client.
- * @param game_type Le type de jeu.
- * @param player_id L'identifiant du joueur.
- * @param team_id Le numéro d'équipe du joueur.
- * @return 0 si tout s'est bien passé, -1 sinon.s
- */
-int ready(int sock_client, int game_type, int player_id, int team_id) {
-  // Création de la structure du message
-  msg_join_ready_t params;
-  params.game_type = game_type;
-  params.player_id = player_id;
-  params.team_id = team_id;
-
-  // Création du message
-  uint16_t message = ms_ready(params);
-
-  // Envoi du message
-  int bytes = send_message(sock_client, &message, sizeof(message), "ready");
-  // Gestion des erreurs (en partie gérée par send_message())
-  if (bytes == -1)
-    return -1;
-
-  // TODO: Gestion du nb d'octets envoyés (voir s'ils ont tous été envoyés)
-
-  return 0;
-}
-
-/**
- * Envoie un message de type 'game' au serveur.
- */
+// FIX: OBSOLETE: Envoie un message de type 'game' au serveur.
 int action(int sock_client, int game_type, int player_id, int team_id, int num,
            int action) {
 
@@ -288,10 +208,148 @@ int action(int sock_client, int game_type, int player_id, int team_id, int num,
   return 0;
 }
 
+/* ********** Fonctions client ncurses ********** */
+
+// Initialise ncurses
+void init_ncurses() {
+  /* Start curses mode */
+  initscr();
+  /* Disable line buffering */
+  raw();
+  /* No need to flush when intr key is pressed */
+  intrflush(stdscr, FALSE);
+  // Required in order to get events from keyboard
+  keypad(stdscr, TRUE);
+  // Make getch non-blocking
+  // nodelay(stdscr, TRUE);
+  /* Don't echo() while we do getch (we will manually print characters when
+   * relevant) */
+  noecho();
+  // Set the cursor to invisible
+  curs_set(0);
+  // Enable colors
+  start_color();
+  // Define a new color style (text is yellow, background is black)
+  init_pair(1, COLOR_YELLOW, COLOR_BLACK);
+}
+
+/* ********** Fonctions d'envoi de messages ********** */
+
+/**
+ * Envoie un message de type 'join' au serveur.
+ * @param sock_client La socket TCP du client.
+ * @param game_type Le type de jeu.
+ * @return 0 si tout s'est bien passé, -1 sinon.
+ */
+int join_game(int sock_client, int game_type) {
+  // Création de la structure du message et du message
+  msg_join_ready_t params;
+  params.game_type = game_type;
+  uint16_t message = ms_join(params);
+
+  // Envoi du message
+  int bytes = send_message(sock_client, &message, sizeof(message), "join_game");
+  // Gestion des erreurs (en partie gérée par send_message())
+  if (bytes == -1)
+    return -1;
+
+  // TODO: Gestion du nb d'octets envoyés (voir s'ils ont tous été envoyés)
+
+  return 0;
+}
+
+/**
+ * Envoie un message de type 'ready' au serveur.
+ * @param sock_client La socket TCP du client.
+ * @param game_type Le type de jeu.
+ * @param player_id L'identifiant du joueur.
+ * @param team_id Le numéro d'équipe du joueur.
+ * @return 0 si tout s'est bien passé, -1 sinon.s
+ */
+int ready(int sock_client, int game_type, int player_id, int team_id) {
+  // Création de la structure du message
+  msg_join_ready_t params;
+  params.game_type = game_type;
+  params.player_id = player_id;
+  params.team_id = team_id;
+
+  // Création du message
+  uint16_t message = ms_ready(params);
+
+  // Envoi du message
+  int bytes = send_message(sock_client, &message, sizeof(message), "ready");
+  // Gestion des erreurs (en partie gérée par send_message())
+  if (bytes == -1)
+    return -1;
+
+  // TODO: Gestion du nb d'octets envoyés (voir s'ils ont tous été envoyés)
+
+  return 0;
+}
+
+/* ********** Fonctions de réception de messages ********** */
+
+/**
+ * Réception du msg_game_data du serveur.
+ * @param game_data La structure a remplir.
+ * @param sock_client La socket sur laquelle on réceptionne.
+ * @return 0 si tout se passe bien, -1 sinon.
+ */
+int recv_msg_game_data(msg_game_data_t *game_data, int sock_client) {
+  // FIXME: magic number, trouver comment récupérer la taille du message
+  int len = sizeof(uint8_t) * 22;
+  uint8_t *msg = malloc(len);
+
+  int r = recv(sock_client, msg, len, 0);
+  // Gestion des erreurs
+  if (r == -1) {
+    perror("client.c: recv_msg_game_data: recv");
+    return -1;
+  }
+
+  // On récupère les données de la partie
+  *game_data = mg_game_data(msg);
+
+  // On libère la mémoire
+  free(msg);
+
+  return 0;
+}
+
+/**
+ * Réception de la grid de jeu.
+ * @param mc La structure multicast.
+ * @return Un pointeur vers le message reçu.
+ */
+int recv_msg_game_grid(msg_grid_t *grid, multicast_client_t mc) {
+  // FIXME: magic number, trouver comment récupérer la hauteur et la largeur
+  int len = sizeof(uint8_t) * (6 + 20 * 20);
+  uint8_t *msg = malloc(len);
+  socklen_t len_adr = sizeof(mc.adr);
+
+  puts("\033[35m Réception de la grid...\033[0m"); // TODELETE: debug
+
+  // Réception des données
+  int r = recvfrom(mc.sock, msg, len, 0, (struct sockaddr *)&mc.adr, &len_adr);
+  //  Gestions des erreurs
+  if (!r || r < 0) {
+    perror("client.c: recv_grid: recvfrom");
+    return -1;
+  }
+
+  // On récupère les données de la grid
+  *grid = mg_game_grid(msg);
+
+  // On libère la mémoire
+  free(msg);
+
+  return 0;
+}
+
 /* ********** Fonctions utilitaires ********** */
 
 /**
- * Envoie un message au serveur.
+ * Envoie un message au serveur en TCP.
  * @param sock_client La socket client.
  * @param message Un pointeur vers le message à envoyer.
  * @param msg_size La taille du message.
@@ -312,71 +370,4 @@ int send_message(int sock_client, void *message, size_t msg_size, char *type) {
   }
 
   return r;
-}
-
-/**
- * Reçoit un message du serveur.
- * @param sock_client La socket client.
- * @param message Un pointeur vers le message à recevoir.
- * @param msg_size La taille du message.
- * @param type Le type de réception, i.e le nom de la fonction appelante.
- * @return Le nombre d'octets reçus ou -1 en cas d'erreur.
- */
-int recv_message(int sock_client, void *message, size_t msg_size, char *type) {
-  // Réception du message
-  int r = recv(sock_client, message, msg_size, 0);
-
-  // Gestion des erreurs
-  if (r == -1) {
-    char err_msg[100];
-    sprintf(err_msg, "client.c: %s: recv message failed", type);
-    perror(err_msg);
-    close(sock_client);
-    return -1;
-  }
-
-  return r;
-}
-
-/**
- * Réception du msg_game_data du serveur.
- * @param game_data La structure a remplir.
- * @param sock_client La socket sur laquelle on réceptionne.
- * @return 0 si tout se passe bien, -1 sinon.
- */
-int recv_msg_game_data(msg_game_data_t *game_data, int sock_client) {
-  uint8_t *msg = malloc(sizeof(uint8_t) * 22); // FIX: à free
-
-  int r = recv(sock_client, msg, sizeof(uint8_t) * 22, 0);
-  if (r == -1) {
-    perror("client.c: recv_msg_game_data: recv");
-    return -1;
-  }
-
-  // On récupère les données de la partie
-  *game_data = mg_game_data(msg);
-
-  // On libère la mémoire
-  free(msg);
-
-  return 0;
-}
-
-uint8_t *recv_grille(multicast_client_t mc) {
-  puts("\033[33mReady envoyé. Entrée dans le while(1) ...\033[0m");
-
-  puts("\033[33m Réception de la grille...\033[0m");
-  int len = sizeof(uint8_t) * (6 + HEIGHT * WIDTH);
-  uint8_t *message = malloc(len);
-  // Réception des données
-  int bytes = recvfrom(mc.sock, message, len, 0, (struct sockaddr *)&mc.adr,
-                       (socklen_t *)sizeof(mc.adr));
-  if (bytes == 0) {
-    puts("alo");
-    exit(EXIT_FAILURE);
-  }
-
-  puts("\033[33m Réception de la grille...\033[0m");
-
-  return message;
 }
