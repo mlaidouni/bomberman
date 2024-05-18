@@ -87,6 +87,8 @@ bomb *get_bomb_pos_list(board board, pos p) {
   return NULL;
 }
 
+int explode_pos(board board, pos bomb_pos);
+
 /*
  * Endommager la position donnée
  */

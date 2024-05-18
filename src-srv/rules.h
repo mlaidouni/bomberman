@@ -50,7 +50,7 @@ typedef struct board {
 
 int init_board(board board, TYPE type);
 int action_player(board board, int player, ACTION action);
-int explode_pos(board board, pos bomb_pos);
+int explode_bombs(board boardc);
 int winner(board board);
 
 #endif

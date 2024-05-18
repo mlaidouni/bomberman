@@ -35,6 +35,23 @@ void affiche_parties() {
 }
 
 int main(int argc, char **args) {
+  // Tests des couleurs
+  // printf("\033[31mRouge\033[0m\n");
+  // printf("\033[32mVert\033[0m\n");
+  // printf("\033[33mJaune\033[0m\n");
+  // printf("\033[34mBleu\033[0m\n");
+  // printf("\033[35mMagenta\033[0m\n");
+  // printf("\033[36mCyan\033[0m\n");
+  // printf("\033[37mBlanc\033[0m\n");
+  // printf("\033[90mNoir brillant\033[0m\n");
+  // printf("\033[91mRouge brillant\033[0m\n");
+  // printf("\033[92mVert brillant\033[0m\n");
+  // printf("\033[93mJaune brillant\033[0m\n");
+  // printf("\033[94mBleu brillant\033[0m\n");
+  // printf("\033[95mMagenta brillant\033[0m\n");
+  // printf("\033[96mCyan brillant\033[0m\n");
+  // printf("\033[97mBlanc brillant\033[0m\n");
+
   // NOTE: Le port devra être passé en argument
   const int tcp_port = 8081;
 
@@ -428,6 +445,9 @@ int poll_ready(int sock_client) {
   /* TODO: Utiliser ça pour récupérer le joueur avec partie.joueurs[params.id]
    * (quelques lignes plus loin) */
   msg_join_ready_t params = mg_ready(message);
+
+  // TODELETE: Affichage pour éviter l'inutilisation de params
+  printf("server.c: poll_ready: type de partie: %d\n", params.game_type);
 
   // On récupère la partie dans laquelle le joueur est
   int partie_index = get_partie(sock_client);
