@@ -180,21 +180,6 @@ void generate_multicast_ports(int *port_mdiff, int *port_udp) {
   *port_udp = 7000 + srv.parties.nb_parties;
 }
 
-msg_grid_t init_grid(partie_t *partie) {
-  msg_grid_t grid = {0};
-  grid.codereq = 0;
-  grid.ID = 0;
-  grid.EQ = 0;
-  grid.num = 0;
-  grid.hauteur = 10;
-  grid.largeur = 10;
-  grid.grille = malloc(grid.hauteur * grid.largeur * sizeof(uint8_t));
-  for (int i = 0; i < grid.hauteur * grid.largeur; i++) {
-    grid.grille[i] = 0;
-  }
-  return grid;
-}
-
 /**
  * Lance le jeu.
  * @param partie La partie à lancer.
@@ -206,23 +191,24 @@ int start_game(partie_t *partie) {
 
   // Si le nombre de joueurs est égal à 4, on lance et gère le jeu
   // Tant que la partie n'est pas terminée
-
-  msg_grid_t params = init_grid(partie);
-
-  // Créer 4 threads pour les 4 joueurs
-  // Chaque thread attend un message du joueur
-  // Si le message est un message de jeu, on met à jour la grille
-  // Si le message est un message de fin de partie, on met fin à la partie
-  // Si le message est un message de déconnexion, on met fin à la partie
-
   while (partie->end) {
+    // msg_grid_t params;
 
-    uint8_t *msg = ms_game_grid(params);
-    // Envoyer à l'adresse de multidiffusion
-    sendto(partie->sock_mdiff, msg, sizeof(msg), 0,
-           (struct sockaddr *)&partie->g_adr, sizeof(partie->g_adr));
+    // params.game_type = partie.type;
+    // params.ID = 0;
+    // params.EQ = 0;
+    // params.num = 0;
+    // params.hauteur = 10;
+    // params.largeur = 10;
+    // params.grille = malloc(params.hauteur * params.largeur *
+    // sizeof(uint8_t));
 
-    params.num++;
+    // uint8_t *msg = ms_game_grid(params);
+    // // envoyer à l'adresse de multidiffusion qui est dans partie.g_adr
+    // sendto(partie.sock_mdiff, msg, sizeof(msg_grid_t), 0,
+    //        (struct sockaddr *)&partie.adr_mdiff, sizeof(partie.adr_mdiff));
+    // // sendto(sock, msg, sizeof(msg_grid_t), 0, (struct sockaddr
+    // // *)&partie.g_adr, sizeof(partie.g_adr));
 
     // TODO: Le jeu
     // ...

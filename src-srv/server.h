@@ -29,7 +29,6 @@ struct joueur_t {
   int id;          // L'id du joueur dans sa partie.
   int team;        // L'équipe du joueur (0 ou 1, 0 par défaut).
   int ready;       // 1 si le joueur est prêt, 0 sinon
-  threads_t *th;   // Le thread associé au joueur.
 } typedef joueur_t;
 
 // Structure représentant une partie.
