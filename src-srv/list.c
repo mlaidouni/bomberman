@@ -88,7 +88,7 @@ int remove_elem(list *list, void *b) {
 	return -1;
 }
 
-void *pop_list(list *list) {
+void *pop_tail(list *list) {
 	list_elem *tl = list->out;
 	if(tl == NULL) {
 		return NULL;

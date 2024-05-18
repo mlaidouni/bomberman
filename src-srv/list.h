@@ -18,6 +18,6 @@ void free_list(list *list);
 int add_head(list *list, void *b);
 int remove_tail(list *list);
 int remove_elem(list *list, void *b);
-void *pop_list(list *list);
+void *pop_tail(list *list);
 
 #endif
