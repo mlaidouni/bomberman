@@ -335,3 +335,22 @@ int recv_msg_game_data(msg_game_data_t *game_data, int sock_client) {
 
   return 0;
 }
+
+int recv_grille(multicast_client_t mc, msg_grid_t *g) {
+  uint8_t *msg = malloc(sizeof(uint8_t) * 20 * 15 + 3);
+
+  int r = recvfrom(mc.sock, msg, sizeof(uint8_t) * 20 * 15 + 3, 0,
+                   (struct sockaddr *)&mc.adr, (socklen_t *)sizeof(mc.adr));
+  if (r == -1) {
+    perror("client.c: recv_grille: recvfrom");
+    return -1;
+  }
+
+  // On récupère les données de la partie
+  *g = mg_game_grid(msg);
+
+  // On libère la mémoire
+  free(msg);
+
+  return 0;
+}

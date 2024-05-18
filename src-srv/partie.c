@@ -180,6 +180,17 @@ void generate_multicast_ports(int *port_mdiff, int *port_udp) {
   *port_udp = 7000 + srv.parties.nb_parties;
 }
 
+msg_grid_t init_msg_grid(partie_t *partie, board board) {
+  msg_grid_t grid = {0};
+  grid.codereq = 0;
+  grid.ID = 0;
+  grid.EQ = 0;
+  grid.num = 0;
+  grid.hauteur = HEIGHT;
+  grid.largeur = WIDTH;
+  grid.grille = board.grid;
+}
+
 /**
  * Lance le jeu.
  * @param partie La partie à lancer.
@@ -191,24 +202,17 @@ int start_game(partie_t *partie) {
 
   // Si le nombre de joueurs est égal à 4, on lance et gère le jeu
   // Tant que la partie n'est pas terminée
+
+  board board = {0};
+  init_board(board, partie->type);
+
   while (partie->end) {
-    // msg_grid_t params;
 
-    // params.game_type = partie.type;
-    // params.ID = 0;
-    // params.EQ = 0;
-    // params.num = 0;
-    // params.hauteur = 10;
-    // params.largeur = 10;
-    // params.grille = malloc(params.hauteur * params.largeur *
-    // sizeof(uint8_t));
-
-    // uint8_t *msg = ms_game_grid(params);
-    // // envoyer à l'adresse de multidiffusion qui est dans partie.g_adr
-    // sendto(partie.sock_mdiff, msg, sizeof(msg_grid_t), 0,
-    //        (struct sockaddr *)&partie.adr_mdiff, sizeof(partie.adr_mdiff));
-    // // sendto(sock, msg, sizeof(msg_grid_t), 0, (struct sockaddr
-    // // *)&partie.g_adr, sizeof(partie.g_adr));
+    // On envoie la grille à tous les joueurs
+    msg_grid_t grid = init_msg_grid(partie, board);
+    sendto(partie->sock_mdiff, &grid, sizeof(msg_grid_t), 0,
+           (struct sockaddr *)&partie->g_adr, sizeof(partie->g_adr));
+    grid.num++;
 
     // TODO: Le jeu
     // ...

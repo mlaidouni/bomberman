@@ -4,8 +4,8 @@
 // Ce fichier contient toutes les fonctions relatives à la gestion des parties
 
 /* ********** Includes ********** */
+#include "rules.h"
 #include "server.h"
-
 /* ********** Structures ********** */
 
 /* ********** Fonctions parties ********** */
