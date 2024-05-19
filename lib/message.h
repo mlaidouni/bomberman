@@ -69,7 +69,7 @@ typedef struct {
   int nb_cases;  // Le nombre de cases transmises.
   /* La grille, avec la ligne, la colonne et la valeur de chaque case, les unes
    * à la suite des hautres. Donc il y a sizeof(grille)/3 cases dedans. */
-  uint8_t grille[];
+  uint8_t *grille;
 } msg_grid_tmp_t;
 
 // Structure représentant la fin de partie

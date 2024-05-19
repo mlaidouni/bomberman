@@ -122,16 +122,18 @@ int main(int argc, char const *argv[]) {
   init_ncurses();
 
   while (1) {
+
     // On reçoit la grid de jeu
     msg_grid_t grid;
     if (recv_msg_game_grid(&grid, mc))
       exit(EXIT_FAILURE); // En cas d'échec on exit, pour l'instant.
 
-    // Affichage du contenu de chaque case
-    puts("\033[31m client... Affichage de la grille... \033[0m");
-    affichetmpgrid(grid);
+    // On reçoit la grid de jeu
+    // if (recv_msg_grid_tmp(&grid, mc))
+    // exit(EXIT_FAILURE);
 
     affiche(grid);
+
     // Attend que l'utilisateur appuie sur une touche
     getch();
 
@@ -407,7 +409,35 @@ int recv_msg_game_grid(msg_grid_t *grid, multicast_client_t mc) {
   // Affichage du contenu de chaque case
   puts("\033[31m recv_msg_game_grid... Affichage de la grille... \033[0m");
 
-  affichetmpgrid(*grid);
+  // On libère la mémoire
+  free(msg);
+
+  return 0;
+}
+
+int recv_msg_grid_tmp(msg_grid_t *grid, multicast_client_t mc) {
+  int len = sizeof(uint8_t) * 5 + (HEIGHT * WIDTH * 3);
+  uint8_t *msg = malloc(len);
+  socklen_t len_adr = sizeof(mc.adr);
+
+  // Réception des données
+  int r = recvfrom(mc.sock, msg, len, 0, (struct sockaddr *)&mc.adr, &len_adr);
+
+  //  Gestions des erreurs
+  if (!r || r < 0) {
+    perror("client.c: recv_grid: recvfrom");
+    return -1;
+  }
+
+  // On récupère les données de la grid
+  msg_grid_tmp_t grid_tmp = mg_grid_tmp(msg);
+
+  for (int i = 0; i < grid_tmp.nb_cases; i++) {
+    int x = grid_tmp.grille[i * 3];
+    int y = grid_tmp.grille[i * 3 + 1];
+    int val = grid_tmp.grille[i * 3 + 2];
+    grid->grille[y * grid->largeur + x] = val;
+  }
 
   // On libère la mémoire
   free(msg);
