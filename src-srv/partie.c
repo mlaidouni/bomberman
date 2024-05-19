@@ -47,6 +47,12 @@ int start_game(partie_t *partie) {
     } else {
       printf("partie.c: start_game(): Message envoyé en multidiffusion\n");
     }
+  } else {
+
+      /*
+        Diffusion de la grille de jeu temporaire
+      */
+
   }
 
     //break; // TODELETE: (debug) On arrête la boucle après un envoi
