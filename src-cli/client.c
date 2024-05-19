@@ -119,7 +119,7 @@ int main(int argc, char const *argv[]) {
   /* ********** Gestion des messages de la partie... ********** */
 
   // On initialise ncurses
-  init_ncurses();
+  // init_ncurses();
 
   while (1) {
     // On reçoit la grid de jeu
@@ -127,7 +127,16 @@ int main(int argc, char const *argv[]) {
     if (recv_msg_game_grid(&grid, mc))
       exit(EXIT_FAILURE); // En cas d'échec on exit, pour l'instant.
 
-    affiche(grid);
+    // Affichage du contenu de chaque case
+    puts("\033[34m client... Affichage de la grille... \033[0m");
+    for (int i = 0; i < HEIGHT; i++) {
+      for (int j = 0; j < WIDTH; j++) {
+        printf("%d ", grid.grille[i + j * HEIGHT]);
+      }
+      printf("\n");
+    }
+
+    // affiche(grid);
     // Attend que l'utilisateur appuie sur une touche
     getch();
 
@@ -398,6 +407,15 @@ int recv_msg_game_grid(msg_grid_t *grid, multicast_client_t mc) {
 
   // On récupère les données de la grid
   *grid = mg_game_grid(msg);
+
+  // Affichage du contenu de chaque case
+  puts("\033[34m recv_msg_game_grid... Affichage de la grille... \033[0m");
+  for (int i = 0; i < HEIGHT; i++) {
+    for (int j = 0; j < WIDTH; j++) {
+      printf("%d ", grid->grille[i * WIDTH + j]);
+    }
+    printf("\n");
+  }
 
   // On libère la mémoire
   free(msg);

@@ -27,6 +27,15 @@ int start_game(partie_t *partie) {
     // FIX: magical number
     size_t message_size = grid.hauteur * grid.largeur * sizeof(uint8_t) + 6;
 
+    // Affichage du contenu de chaque case
+    puts("\033[34m while... Affichage de la grille... \033[0m");
+    for (int i = 0; i < HEIGHT; i++) {
+      for (int j = 0; j < WIDTH; j++) {
+        printf("%d ", grid.grille[j + i * WIDTH]);
+      }
+      printf("\n");
+    }
+
     if (sendto(partie->sock_mdiff, message, message_size, 0,
                (struct sockaddr *)&partie->g_adr, sizeof(partie->g_adr)) < 0) {
       perror("partie.c: start_game(): sendto()");
@@ -70,15 +79,22 @@ msg_grid_t init_msg_grid(partie_t *partie, board board) {
   grid.grille = malloc(len_grille);
   memcpy(grid.grille, board.grid, len_grille);
 
-  for (int i = 0; i < partie->nb_joueurs; i++) {
-    // On récupère la position du joueur
-    pos p = board.players[i].pos;
-    // On récupère l'identifiant du joueur
-    int id = partie->joueurs[i].id;
+  // for (int i = 0; i < partie->nb_joueurs; i++) {
+  //   // On récupère la position du joueur
+  //   pos p = board.players[i].pos;
+  //   // On récupère l'identifiant du joueur
+  //   int id = partie->joueurs[i].id;
 
-    // On met à jour la grille avec la position du joueur
-    grid.grille[p.x + p.y * WIDTH] = id + 5;
-  }
+  //   // On met à jour la grille avec la position du joueur
+  //   grid.grille[p.x + p.y * WIDTH] = id + 5;
+  // }
+
+  // for (int i = 0; i < HEIGHT; i++) {
+  //   for (int j = 0; j < WIDTH; j++) {
+  //     // On met  la valeur de la case à i
+  //     grid.grille[j + i * WIDTH] = i;
+  //   }
+  // }
 
   return grid;
 }

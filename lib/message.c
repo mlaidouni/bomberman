@@ -418,6 +418,15 @@ msg_grid_t mg_game_grid(uint8_t *message) {
   // On copie la grille
   memcpy(params.grille, message + 6, params.hauteur * params.largeur);
 
+  puts("\033[31m msg: \033[0m");
+   for (int i = 0; i < params.hauteur; i++) {
+    for (int j = 0; j < params.largeur; j++) {
+      // On affiche la valeur de chaque case
+      printf("%d ", params.grille[i * params.largeur + j]);
+    }
+    printf("\n");
+  }
+
   return params;
 }
 
