@@ -15,8 +15,8 @@ int start_game(partie_t *partie) {
   board board = {0};
   init_board(&board, partie->type);
 
-  long last_clock = 0;
-  long current_clock = 0;
+  unsigned long last_clock = 0;
+  unsigned long current_clock = 1000000;
   // Tant que la partie n'est pas terminée
   while (partie->end) {
 
