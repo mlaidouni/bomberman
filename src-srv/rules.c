@@ -1,21 +1,35 @@
 #include "rules.h"
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
+
+uint8_t labyrinth[20][20] = {
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 2, 2, 2, 2, 1, 0, 0, 0},
+    {0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 2, 0, 0, 2, 1, 1, 1, 0},
+    {2, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 1, 0, 2, 0, 0, 1, 0},
+    {2, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 2, 1, 0, 1, 0},
+    {2, 1, 1, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 2, 1, 0, 0, 0},
+    {2, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 1, 0, 2, 1, 1, 1, 1},
+    {0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 2, 0, 0, 1, 1},
+    {0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 2, 0, 1, 1, 1},
+    {0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 2, 0, 0, 0, 0},
+    {0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 2, 1, 1, 1, 0},
+    {0, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 2, 0, 0, 1, 0},
+    {0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 2, 0, 1, 1, 0},
+    {0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 2, 0, 0, 1, 0},
+    {0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 2, 1, 1, 1, 0},
+    {0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0},
+    {0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 0},
+    {0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0}};
 
 int init_board(board *board, TYPE type) {
   board->type = type;
 
   // On crée une board par défaut avec des murs destructibles et indescructibles
-  for (int i = 0; i < WIDTH * HEIGHT; i++) {
-    if (i % WIDTH == 0 || i % WIDTH == WIDTH - 1 || i / WIDTH == 0 ||
-        i / WIDTH == HEIGHT - 1) {
-      board->grid[i] = DEST_WALL_TILE;
-    } else if (i % 2 == 0 && i / WIDTH % 2 == 0) {
-      board->grid[i] = INDEST_WALL_TILE;
-    } else {
-      board->grid[i] = EMPTY_TILE;
-    }
-  }
+  memcpy(board->grid, labyrinth, sizeof(labyrinth) * sizeof(uint8_t));
 
   board->players[0] = (player){0, ALIVE, {0, 0}};
   board->players[1] = (player){0, ALIVE, {WIDTH - 1, HEIGHT - 1}};
@@ -30,7 +44,7 @@ int valid_pos(board board, pos p) {
   return p.x >= 0 && p.x < WIDTH && p.y >= 0 && p.y < HEIGHT;
 }
 
-int action_player(board board, int player, ACTION action) {
+int action_player(board board, int player, ACT action) {
   // Rappel: x <= BOMB_TILE signifie x est EMPTY_TILE ou x est BOMB_TILE
 
   assert(player >= 0 && player < NB_PLAYERS);

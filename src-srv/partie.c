@@ -19,14 +19,10 @@ int start_game(partie_t *partie) {
 
     // On initialise la structure msg_grid_t avec la grille de jeu
     msg_grid_t grid = init_msg_grid(partie, board);
-
     // On convertit la structure en message
     uint8_t *message = ms_game_grid(grid);
-
     // Envoi du message en multidiffusion à tous les joueurs
-    // FIX: magical number
     size_t message_size = grid.hauteur * grid.largeur * sizeof(uint8_t) + 6;
-
     if (sendto(partie->sock_mdiff, message, message_size, 0,
                (struct sockaddr *)&partie->g_adr, sizeof(partie->g_adr)) < 0) {
       perror("partie.c: start_game(): sendto()");
@@ -37,17 +33,13 @@ int start_game(partie_t *partie) {
       return -1;
     }
 
-    break; // TODELETE: (debug) On arrête la boucle après un envoi
+    /* ******** Reception action d'un joueur et actualisation grille ******** */
 
-    /* ********** Reception des messages de joueurs ********** */
+    uint32_t msg;
+    recvfrom(partie->sock_mdiff, &msg, sizeof(msg), 0, NULL, NULL);
+    msg_game_t mg = mg_game(msg);
 
-    // TODO: Le jeu
-    // ...
-
-    /* ********** Gestion de la fin de la partie ********** */
-
-    // TODO: Penser à gérer la fermeture des sockets des clients
-    // ...
+    action_player(board, mg.player_id, mg.action);
   }
 
   return 0;
