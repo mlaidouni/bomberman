@@ -28,13 +28,8 @@ int start_game(partie_t *partie) {
     size_t message_size = grid.hauteur * grid.largeur * sizeof(uint8_t) + 6;
 
     // Affichage du contenu de chaque case
-    puts("\033[34m while... Affichage de la grille... \033[0m");
-    for (int x = 0; x < WIDTH; x++) {
-      for (int y = 0; y < HEIGHT; y++) {
-        printf("%d ", grid.grille[x + y * WIDTH]);
-      }
-      printf("\n");
-    }
+    puts("\033[31m while... Affichage de la grille... \033[0m");
+    affichetmpgrid(grid);
 
     if (sendto(partie->sock_mdiff, message, message_size, 0,
                (struct sockaddr *)&partie->g_adr, sizeof(partie->g_adr)) < 0) {

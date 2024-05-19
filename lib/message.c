@@ -2,6 +2,16 @@
 #include <arpa/inet.h>
 #include <stdio.h>
 
+void affichetmpgrid(msg_grid_t grid) {
+  for (int y = 0; y < grid.hauteur; y++) {
+    for (int x = 0; x < grid.largeur; x++) {
+      // On affiche la valeur de chaque case
+      printf("%d ", grid.grille[x + y * grid.largeur]);
+    }
+    printf("\n");
+  }
+}
+
 /* ************************ Fonctions d'envoie ************************ */
 
 /**
@@ -419,13 +429,7 @@ msg_grid_t mg_game_grid(uint8_t *message) {
   memcpy(params.grille, message + 6, params.hauteur * params.largeur);
 
   puts("\033[31m msg: \033[0m");
-  for (int x = 0; x < params.largeur; x++) {
-    for (int y = 0; y < params.hauteur; y++) {
-      // On affiche la valeur de chaque case
-      printf("%d ", params.grille[x * params.largeur + y]);
-    }
-    printf("\n");
-  }
+  affichetmpgrid(params);
 
   return params;
 }

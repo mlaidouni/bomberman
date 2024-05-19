@@ -128,13 +128,8 @@ int main(int argc, char const *argv[]) {
       exit(EXIT_FAILURE); // En cas d'échec on exit, pour l'instant.
 
     // Affichage du contenu de chaque case
-    puts("\033[34m client... Affichage de la grille... \033[0m");
-    for (int x = 0; x < WIDTH; x++) {
-      for (int y = 0; y < HEIGHT; y++) {
-        printf("%d ", grid.grille[x + y * WIDTH]);
-      }
-      printf("\n");
-    }
+    puts("\033[31m client... Affichage de la grille... \033[0m");
+    affichetmpgrid(grid);
 
     // affiche(grid);
     // Attend que l'utilisateur appuie sur une touche
@@ -409,13 +404,9 @@ int recv_msg_game_grid(msg_grid_t *grid, multicast_client_t mc) {
   *grid = mg_game_grid(msg);
 
   // Affichage du contenu de chaque case
-  puts("\033[34m recv_msg_game_grid... Affichage de la grille... \033[0m");
-  for (int x = 0; x < WIDTH; x++) {
-    for (int y = 0; y < HEIGHT; y++) {
-      printf("%d ", grid->grille[x + y * WIDTH]);
-    }
-    printf("\n");
-  }
+  puts("\033[31m recv_msg_game_grid... Affichage de la grille... \033[0m");
+
+  affichetmpgrid(*grid);
 
   // On libère la mémoire
   free(msg);
