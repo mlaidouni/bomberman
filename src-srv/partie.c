@@ -23,23 +23,12 @@ int start_game(partie_t *partie) {
     // On convertit la structure en message
     uint8_t *message = ms_game_grid(grid);
 
-    // Affichage du contenu de chaque case
-    puts("\033[34m while... Affichage de la grille... \033[0m");
-    for (int i = 0; i < HEIGHT; i++) {
-      for (int j = 0; j < WIDTH; j++) {
-        printf("%d ", grid.grille[j + i * WIDTH]);
-      }
-      printf("\n");
-    }
-
     // Envoi du message en multidiffusion à tous les joueurs
-    size_t message_size = grid.hauteur * grid.largeur * sizeof(uint8_t);
-    int r = sendto(partie->sock_mdiff, message, message_size, 0,
-                   (struct sockaddr *)&partie->g_adr, sizeof(partie->g_adr));
+    // FIX: magical number
+    size_t message_size = grid.hauteur * grid.largeur * sizeof(uint8_t) + 6;
 
-    printf("partie.c: start_game(): sendto() : %d\n", r); // TODELETE: (debug)
-
-    if (r < 0) {
+    if (sendto(partie->sock_mdiff, message, message_size, 0,
+               (struct sockaddr *)&partie->g_adr, sizeof(partie->g_adr)) < 0) {
       perror("partie.c: start_game(): sendto()");
       close(partie->sock_mdiff);
       // On libère la mémoire
@@ -77,7 +66,7 @@ msg_grid_t init_msg_grid(partie_t *partie, board board) {
   memset(&grid, 0, sizeof(msg_grid_t));
   grid.hauteur = HEIGHT;
   grid.largeur = WIDTH;
-  int len_grille = HEIGHT * WIDTH * sizeof(uint8_t);
+  int len_grille = grid.hauteur * grid.largeur * sizeof(uint8_t);
   grid.grille = malloc(len_grille);
   memcpy(grid.grille, board.grid, len_grille);
 

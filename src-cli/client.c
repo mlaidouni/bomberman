@@ -11,32 +11,27 @@ void affiche_data_partie(msg_game_data_t *game_data, char *adr_mdiff) {
       game_data->team_id);
 }
 
+/**
+ * Récupère la valeur d'une case de la grille.
+ * @param grid La grille.
+ * @param x La coordonnée x de la case.
+ * @param y La coordonnée y de la case.
+ * @return La valeur de la case.
+ */
 int get_grille(msg_grid_t grid, int x, int y) {
-
-  // Affichage de la valeur de la case (sans cast)
-  printf("Valeur de la case: %d\n", grid.grille[y * grid.largeur + x]);
-
-  // Affichage de la valeur de la case (avec cast)
-  printf("Valeur de la case: %d\n", (int)grid.grille[y * grid.largeur + x]);
-
   return (int)grid.grille[y * grid.largeur + x];
 }
 
+/**
+ * Affiche la grille de jeu avec ncurses.
+ * @param grid La grille à afficher.
+ */
 void affiche(msg_grid_t grid) {
-  // Affichage du contenu de chaque case
-  puts("\033[34m affiche... Affichage de la grille... \033[0m");
-  for (int i = 0; i < HEIGHT; i++) {
-    for (int j = 0; j < WIDTH; j++) {
-      printf("%d ", grid.grille[j + i * WIDTH]);
-    }
-    printf("\n");
-  }
-
   int x, y;
   for (y = 0; y < grid.hauteur; y++) {
     for (x = 0; x < grid.largeur; x++) {
+      // On récupère le caractère associé à la valeure de la case
       char c;
-
       switch (get_grille(grid, x, y)) {
       case 0:
         c = '_';
@@ -51,7 +46,7 @@ void affiche(msg_grid_t grid) {
         c = '.';
         break;
       case 4:
-        c = 'X';
+        c = 'x';
         break;
       }
 
@@ -59,6 +54,7 @@ void affiche(msg_grid_t grid) {
       mvaddch(y + 1, 2 * x + 1, c);
     }
   }
+  // On rafraichit la fenêtre
   refresh();
 }
 
@@ -109,11 +105,16 @@ int main(int argc, char const *argv[]) {
 
   /* ********** Gestion des messages de la partie... ********** */
 
+  // On initialise ncurses
+  init_ncurses();
+
   while (1) {
     // On reçoit la grid de jeu
     msg_grid_t grid;
     if (recv_msg_game_grid(&grid, mc))
       exit(EXIT_FAILURE); // En cas d'échec on exit, pour l'instant.
+
+    affiche(grid);
 
     while (1) {
       // On attend que l'utilisateur appuie sur une touche
@@ -122,11 +123,6 @@ int main(int argc, char const *argv[]) {
       if (c == 'q')
         break;
     }
-
-    // On initialise ncurses
-    init_ncurses();
-
-    affiche(grid);
 
     // Clear la fenêtre
     // clear();
@@ -384,11 +380,9 @@ int recv_msg_game_data(msg_game_data_t *game_data, int sock_client) {
 int recv_msg_game_grid(msg_grid_t *grid, multicast_client_t mc) {
   // FIXME: magic number, trouver comment récupérer la hauteur et la largeur
   // IDEA: On peut transmettre cette info dans les msg TCP précédents
-  int len = sizeof(uint8_t) * (6 + HEIGHT * WIDTH);
+  int len = sizeof(uint8_t) * (6 + grid->hauteur * grid->largeur);
   uint8_t *msg = malloc(len);
   socklen_t len_adr = sizeof(mc.adr);
-
-  puts("\033[35m Réception de la grid...\033[0m"); // TODELETE: debug
 
   // Réception des données
   int r = recvfrom(mc.sock, msg, len, 0, (struct sockaddr *)&mc.adr, &len_adr);
@@ -398,19 +392,8 @@ int recv_msg_game_grid(msg_grid_t *grid, multicast_client_t mc) {
     return -1;
   }
 
-  printf("\033[35m Réception de la grid... %d octets reçus \033[0m\n", r);
-
   // On récupère les données de la grid
   *grid = mg_game_grid(msg);
-
-  // Affichage du contenu de chaque case
-  puts("\033[34m recv_msg_game_grid... Affichage de la grille... \033[0m");
-  for (int i = 0; i < HEIGHT; i++) {
-    for (int j = 0; j < WIDTH; j++) {
-      printf("%d ", grid->grille[i + j * HEIGHT]);
-    }
-    printf("\n");
-  }
 
   // On libère la mémoire
   free(msg);
