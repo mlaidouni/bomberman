@@ -283,7 +283,26 @@ int deconnect_client(int sock_client) {
     }
   }
 
-  // TODO: Retirer le client de la partie
+  // On retire le client de la partie
+  partie_t *partie = &srv.parties.parties[get_partie(sock_client)];
+
+  // On supprime le joueur de la partie
+  for (int j = 0; j < partie->nb_joueurs; j++) {
+    if (partie->joueurs[j].client.sock == sock_client) {
+      // On décale les joueurs suivants
+      for (int k = j; k < partie->nb_joueurs - 1; k++)
+        partie->joueurs[k] = partie->joueurs[k + 1];
+
+      // On réalloue la mémoire
+      partie->joueurs =
+          realloc(partie->joueurs, (partie->nb_joueurs - 1) * sizeof(joueur_t));
+
+      // On décrémente le nombre de joueurs
+      partie->nb_joueurs--;
+
+      break;
+    }
+  }
 
   // On supprime la socket du client du tableau des sockets
   for (int i = 0; i < srv.nb_clients + 1; i++) {

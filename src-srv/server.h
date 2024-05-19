@@ -34,7 +34,7 @@ struct joueur_t {
 // Structure représentant une partie.
 struct partie_t {
   int type;            // Le type de la partie (0: 4 joueurs, 1: 2 équipes).
-  joueur_t joueurs[4]; // Les joueurs de la partie.
+  joueur_t *joueurs; // Les joueurs de la partie.
   int nb_joueurs;      // Le nombre de joueurs dans la partie.
   int end;             // 0 si la partie est terminée, 1 sinon
   struct sockaddr_in6 g_adr; // L'adresse multicast du groupe.
