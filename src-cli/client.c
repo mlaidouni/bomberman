@@ -388,12 +388,13 @@ int recv_msg_game_data(msg_game_data_t *game_data, int sock_client) {
 int recv_msg_game_grid(msg_grid_t *grid, multicast_client_t mc) {
   // FIXME: magic number, trouver comment récupérer la hauteur et la largeur
   // IDEA: On peut transmettre cette info dans les msg TCP précédents
-  int len = sizeof(uint8_t) * (6 + grid->hauteur * grid->largeur);
+  int len = sizeof(uint8_t) * (6 + HEIGHT * WIDTH);
   uint8_t *msg = malloc(len);
   socklen_t len_adr = sizeof(mc.adr);
 
   // Réception des données
   int r = recvfrom(mc.sock, msg, len, 0, (struct sockaddr *)&mc.adr, &len_adr);
+
   //  Gestions des erreurs
   if (!r || r < 0) {
     perror("client.c: recv_grid: recvfrom");
