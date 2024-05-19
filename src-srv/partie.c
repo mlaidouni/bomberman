@@ -10,7 +10,7 @@ int start_game(partie_t *partie) {
 
   // On initialise la grille de jeu
   board board = {0};
-  init_board(board, partie->type);
+  init_board(&board, partie->type);
 
   // Tant que la partie n'est pas terminée
   while (partie->end) {
@@ -24,7 +24,14 @@ int start_game(partie_t *partie) {
     uint8_t *message = ms_game_grid(grid);
 
     // Envoi du message en multidiffusion à tous les joueurs
-    if (sendto(partie->sock_mdiff, message, sizeof(message), 0,
+    // FIX: magical number
+    size_t message_size = grid.hauteur * grid.largeur * sizeof(uint8_t) + 6;
+
+    // Affichage du contenu de chaque case
+    puts("\033[31m while... Affichage de la grille... \033[0m");
+    affichetmpgrid(grid);
+
+    if (sendto(partie->sock_mdiff, message, message_size, 0,
                (struct sockaddr *)&partie->g_adr, sizeof(partie->g_adr)) < 0) {
       perror("partie.c: start_game(): sendto()");
       close(partie->sock_mdiff);
@@ -63,9 +70,19 @@ msg_grid_t init_msg_grid(partie_t *partie, board board) {
   memset(&grid, 0, sizeof(msg_grid_t));
   grid.hauteur = HEIGHT;
   grid.largeur = WIDTH;
-  int len_grille = HEIGHT * WIDTH * sizeof(uint8_t);
+  int len_grille = grid.hauteur * grid.largeur * sizeof(uint8_t);
   grid.grille = malloc(len_grille);
   memcpy(grid.grille, board.grid, len_grille);
+
+  for (int i = 0; i < partie->nb_joueurs; i++) {
+    // On récupère la position du joueur
+    pos p = board.players[i].pos;
+    // On récupère l'identifiant du joueur
+    int id = partie->joueurs[i].id;
+
+    // On met à jour la grille avec la position du joueur
+    grid.grille[p.x + p.y * WIDTH] = id + 5;
+  }
 
   return grid;
 }

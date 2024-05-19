@@ -11,6 +11,66 @@ void affiche_data_partie(msg_game_data_t *game_data, char *adr_mdiff) {
       game_data->team_id);
 }
 
+/**
+ * Récupère la valeur d'une case de la grille.
+ * @param grid La grille.
+ * @param x La coordonnée x de la case.
+ * @param y La coordonnée y de la case.
+ * @return La valeur de la case.
+ */
+int get_grille(msg_grid_t grid, int x, int y) {
+
+  return (int)grid.grille[y * grid.largeur + x];
+}
+
+/**
+ * Affiche la grille de jeu avec ncurses.
+ * @param grid La grille à afficher.
+ */
+void affiche(msg_grid_t grid) {
+  int x, y;
+  for (y = 0; y < grid.hauteur; y++) {
+    for (x = 0; x < grid.largeur; x++) {
+      // On récupère le caractère associé à la valeure de la case
+      char c;
+      switch (get_grille(grid, x, y)) {
+      case 0:
+        c = '_';
+        break;
+      case 1:
+        c = '|';
+        break;
+      case 2:
+        c = '#';
+        break;
+      case 3:
+        c = '.';
+        break;
+      case 4:
+        c = 'x';
+        break;
+      case 5:
+        c = '0';
+        break;
+      case 6:
+        c = '1';
+        break;
+      case 7:
+        c = '2';
+        break;
+      case 8:
+        c = '3';
+        break;
+      }
+
+      // On affiche la case, avec un espace entre chaque case.
+      mvaddch(y + 1, 2 * x + 1, c);
+    }
+  }
+  // On rafraichit la fenêtre
+  refresh();
+}
+
 int main(int argc, char const *argv[]) {
   // NOTE: Le port devra être passé en argument
   const int port = 8081;
@@ -67,25 +127,19 @@ int main(int argc, char const *argv[]) {
     if (recv_msg_game_grid(&grid, mc))
       exit(EXIT_FAILURE); // En cas d'échec on exit, pour l'instant.
 
-    // TODELETE: Test ncurses: START
+    // Affichage du contenu de chaque case
+    puts("\033[31m client... Affichage de la grille... \033[0m");
+    affichetmpgrid(grid);
 
-    // On écrit à l'endroit où le curseur logique est positionné
-    // On affiche le numéro de message
-    printw("Numéro de message: %d\n", grid.num);
-    // On affiche les données de la grid
-    printw("Données de la grid reçues:\n\t largeur: %d \n\t hauteur: "
-           "%d \n\t player_id: %d \n\t team_id: %d\n",
-           grid.largeur, grid.hauteur, grid.player_id, grid.team_id);
-    // Rafraîchit la fenêtre courante afin de voir le message apparaître
-    refresh();
-    // Clear la fenêtre
-    // clear();
-
+    affiche(grid);
     // Attend que l'utilisateur appuie sur une touche
     getch();
+
     // Ferme la fenêtre
     endwin();
-    // TODELETE: Test ncurses: END
+
+    // Clear la fenêtre
+    // clear();
 
     // TODO: Recv/send msg avec le serveur
   }
@@ -333,14 +387,14 @@ int recv_msg_game_data(msg_game_data_t *game_data, int sock_client) {
  */
 int recv_msg_game_grid(msg_grid_t *grid, multicast_client_t mc) {
   // FIXME: magic number, trouver comment récupérer la hauteur et la largeur
-  int len = sizeof(uint8_t) * (6 + 20 * 20);
+  // IDEA: On peut transmettre cette info dans les msg TCP précédents
+  int len = sizeof(uint8_t) * (6 + HEIGHT * WIDTH);
   uint8_t *msg = malloc(len);
   socklen_t len_adr = sizeof(mc.adr);
 
-  puts("\033[35m Réception de la grid...\033[0m"); // TODELETE: debug
-
   // Réception des données
   int r = recvfrom(mc.sock, msg, len, 0, (struct sockaddr *)&mc.adr, &len_adr);
+
   //  Gestions des erreurs
   if (!r || r < 0) {
     perror("client.c: recv_grid: recvfrom");
@@ -349,6 +403,11 @@ int recv_msg_game_grid(msg_grid_t *grid, multicast_client_t mc) {
 
   // On récupère les données de la grid
   *grid = mg_game_grid(msg);
+
+  // Affichage du contenu de chaque case
+  puts("\033[31m recv_msg_game_grid... Affichage de la grille... \033[0m");
+
+  affichetmpgrid(*grid);
 
   // On libère la mémoire
   free(msg);

@@ -58,7 +58,6 @@ typedef struct {
   int hauteur;     // La hauteur de la grille.
   int largeur;     // La largeur de la grille.
   uint8_t *grille; // La grille.
-
 } msg_grid_t;
 
 // Structure représentant la grille temporaire
@@ -102,5 +101,7 @@ msg_grid_t mg_game_grid(uint8_t *message);
 msg_grid_tmp_t mg_grid_tmp(uint8_t *message);
 msg_end_game_t mg_end_game(uint16_t message);
 msg_tchat_t mg_tchat(uint8_t *message);
+
+void affichetmpgrid(msg_grid_t grid);
 
 #endif

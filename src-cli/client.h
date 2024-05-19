@@ -3,6 +3,7 @@
 
 /* ********** Includes ********** */
 #include "../lib/message.h"
+#include "../src-srv/rules.h"
 #include "../src-srv/server.h"
 #include <arpa/inet.h>
 #include <ncurses.h>

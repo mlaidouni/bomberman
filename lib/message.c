@@ -2,6 +2,16 @@
 #include <arpa/inet.h>
 #include <stdio.h>
 
+void affichetmpgrid(msg_grid_t grid) {
+  for (int y = 0; y < grid.hauteur; y++) {
+    for (int x = 0; x < grid.largeur; x++) {
+      // On affiche la valeur de chaque case
+      printf("%d ", grid.grille[x + y * grid.largeur]);
+    }
+    printf("\n");
+  }
+}
+
 /* ************************ Fonctions d'envoie ************************ */
 
 /**
@@ -408,8 +418,8 @@ msg_grid_t mg_game_grid(uint8_t *message) {
   params.largeur = dimension & 0xFF;
 
   // On alloue de la mémoire pour la grille
-  params.grille =
-      malloc(params.hauteur * params.largeur * sizeof(*params.grille));
+  int len = params.hauteur * params.largeur * sizeof(uint8_t);
+  params.grille = malloc(len);
   if (params.grille == NULL) {
     perror("malloc");
     exit(EXIT_FAILURE); // FIXME: Gérer proprement l'erreur
@@ -417,6 +427,9 @@ msg_grid_t mg_game_grid(uint8_t *message) {
 
   // On copie la grille
   memcpy(params.grille, message + 6, params.hauteur * params.largeur);
+
+  puts("\033[31m msg: \033[0m");
+  affichetmpgrid(params);
 
   return params;
 }

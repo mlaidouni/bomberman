@@ -48,7 +48,7 @@ typedef struct board {
   list *bombs;
 } board;
 
-int init_board(board board, TYPE type);
+int init_board(board *board, TYPE type);
 int action_player(board board, int player, ACTION action);
 int explode_bombs(board boardc);
 int winner(board board);

@@ -1,18 +1,18 @@
 #include "rules.h"
-
 #include <assert.h>
 #include <stdlib.h>
 
-int init_board(board board, TYPE type) {
-  board.type = type;
-  for (int i = 0; i < WIDTH * HEIGHT; i++) {
-    board.grid[i] = EMPTY_TILE;
-  }
-  board.players[0] = (player){0, ALIVE, {0, 0}};
-  board.players[1] = (player){0, ALIVE, {WIDTH - 1, HEIGHT - 1}};
-  board.players[2] = (player){1, ALIVE, {0, HEIGHT - 1}};
-  board.players[3] = (player){1, ALIVE, {WIDTH - 1, 0}};
-  board.bombs = init_list();
+int init_board(board *board, TYPE type) {
+  board->type = type;
+  for (int i = 0; i < WIDTH * HEIGHT; i++)
+    board->grid[i] = EMPTY_TILE;
+
+  board->players[0] = (player){0, ALIVE, {0, 0}};
+  board->players[1] = (player){0, ALIVE, {WIDTH - 1, HEIGHT - 1}};
+  board->players[2] = (player){1, ALIVE, {0, HEIGHT - 1}};
+  board->players[3] = (player){1, ALIVE, {WIDTH - 1, 0}};
+  board->bombs = init_list();
+
   return 0;
 }
 
@@ -168,10 +168,9 @@ int explode_bombs(board board) {
   return 1;
 }
 
-/*
-        Renvoie -1 si la partie n'est pas terminée
-        Renvoie le numéro de l'équipe gagnante sinon
-*/
+/* Renvoie -1 si la partie n'est pas terminée
+ * Renvoie le numéro de l'équipe gagnante sinon
+ */
 int winner(board board) {
   int nb_alive = 0;
   int last_team = -1;
