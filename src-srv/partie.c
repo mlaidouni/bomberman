@@ -54,7 +54,18 @@ int start_game(partie_t *partie) {
     /* ******** Reception action d'un joueur et actualisation grille ******** */
 
     uint32_t msg;
-    recvfrom(partie->sock_mdiff, &msg, sizeof(msg), 0, NULL, NULL);
+    int r = recvfrom(partie->sock_mdiff, &msg, sizeof(msg), 0, NULL, NULL);
+    if (r < 0) {
+      perror("partie.c: start_game(): recvfrom()");
+      return -1;
+    }
+    if (r == 0) {
+      fprintf(stderr, "partie.c: start_game(): recvfrom(): socket fermée\n");
+      return -1;
+    }
+
+    printf("\033[31mpartie.c: start_game(): Message reçu: %d\033[0m\n", msg);
+
     msg_game_t mg = mg_game(msg);
 
     action_player(board, mg.player_id, mg.action);
