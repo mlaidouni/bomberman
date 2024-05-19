@@ -415,6 +415,30 @@ int recv_msg_game_grid(msg_grid_t *grid, multicast_client_t mc) {
   return 0;
 }
 
+int recv_msg_grid_tmp(msg_grid_tmp_t *grid, multicast_client_t mc) {
+
+  int len = sizeof(uint8_t) * 5;
+  uint8_t *msg = malloc(len);
+  socklen_t len_adr = sizeof(mc.adr);
+
+  // Réception des données
+  int r = recvfrom(mc.sock, msg, len, 0, (struct sockaddr *)&mc.adr, &len_adr);
+
+  //  Gestions des erreurs
+  if (!r || r < 0) {
+    perror("client.c: recv_grid: recvfrom");
+    return -1;
+  }
+
+  // On récupère les données de la grid
+  *grid = mg_grid_tmp(msg);
+
+  // On libère la mémoire
+  free(msg);
+
+  return 0;
+}
+
 /* ********** Fonctions utilitaires ********** */
 
 /**

@@ -464,8 +464,13 @@ msg_grid_tmp_t mg_grid_tmp(uint8_t *message) {
   memcpy(&nb_cases, message + 4, 1);
   params.nb_cases = ntohs(nb_cases);
 
-  // On copie les cases
-  memcpy(params.grille, message + 5, 3 * params.nb_cases);
+  // On recvfrom les cases
+  params.grille = malloc(3 * params.nb_cases * sizeof(uint8_t));
+  if (params.grille == NULL) {
+    perror("malloc");
+    exit(EXIT_FAILURE);
+  }
+  recvfrom(0, params.grille, 3 * params.nb_cases, 0, NULL, NULL);
 
   return params;
 }
