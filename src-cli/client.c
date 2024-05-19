@@ -1,8 +1,8 @@
 
 
-#include <poll.h>
 #include "client.h"
 #include "../lib/constants.h"
+#include <poll.h>
 
 void affiche_data_partie(msg_game_data_t *game_data, char *adr_mdiff) {
   printf(
@@ -160,7 +160,6 @@ int main(int argc, char const *argv[]) {
 
   /* ********** Gestion des messages de la partie... ********** */
 
-
   struct pollfd fds[1];
   fds[0].fd = mc.sock;
   fds[0].events = POLLIN;
@@ -168,8 +167,8 @@ int main(int argc, char const *argv[]) {
   // On reçoit la grid de jeu
   msg_grid_t grid;
 
-      if (recv_msg_game_grid(&grid, mc))
-        exit(EXIT_FAILURE);
+  if (recv_msg_game_grid(&grid, mc))
+    exit(EXIT_FAILURE);
 
   // On initialise ncurses
   init_ncurses();
@@ -187,7 +186,7 @@ int main(int argc, char const *argv[]) {
       exit(EXIT_FAILURE);
     }
 
-    if(fds[0].revents & POLLIN) {
+    if (fds[0].revents & POLLIN) {
       if (recv_msg_game_grid(&grid, mc))
         exit(EXIT_FAILURE); // En cas d'échec on exit, pour l'instant.
 
@@ -204,6 +203,7 @@ int main(int argc, char const *argv[]) {
       break;
       endwin();
     }
+
     msg_game_t params = {grid.game_type, player.player_id, player.team, num, a};
     uint32_t message = ms_game(params);
     sendto(sock_client, &message, sizeof(message), 0,
@@ -218,7 +218,7 @@ int main(int argc, char const *argv[]) {
   }
 
   // Ferme la fenêtre
-    endwin();
+  endwin();
   // Fermeture de la socket TCP du client: à la fin de la partie seulement
   close(sock_client);
   return 0;
