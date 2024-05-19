@@ -122,6 +122,7 @@ int main(int argc, char const *argv[]) {
   init_ncurses();
 
   while (1) {
+
     // On reçoit la grid de jeu
     msg_grid_t grid;
     if (recv_msg_game_grid(&grid, mc))
@@ -132,6 +133,7 @@ int main(int argc, char const *argv[]) {
       exit(EXIT_FAILURE);
 
     affiche(grid);
+
     // Attend que l'utilisateur appuie sur une touche
     getch();
 
