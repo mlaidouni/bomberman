@@ -4,8 +4,18 @@
 
 int init_board(board *board, TYPE type) {
   board->type = type;
-  for (int i = 0; i < WIDTH * HEIGHT; i++)
-    board->grid[i] = EMPTY_TILE;
+
+  // On crée une board par défaut avec des murs destructibles et indescructibles
+  for (int i = 0; i < WIDTH * HEIGHT; i++) {
+    if (i % WIDTH == 0 || i % WIDTH == WIDTH - 1 || i / WIDTH == 0 ||
+        i / WIDTH == HEIGHT - 1) {
+      board->grid[i] = DEST_WALL_TILE;
+    } else if (i % 2 == 0 && i / WIDTH % 2 == 0) {
+      board->grid[i] = INDEST_WALL_TILE;
+    } else {
+      board->grid[i] = EMPTY_TILE;
+    }
+  }
 
   board->players[0] = (player){0, ALIVE, {0, 0}};
   board->players[1] = (player){0, ALIVE, {WIDTH - 1, HEIGHT - 1}};
