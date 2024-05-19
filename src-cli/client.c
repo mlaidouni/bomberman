@@ -407,8 +407,6 @@ int recv_msg_game_grid(msg_grid_t *grid, multicast_client_t mc) {
   // Affichage du contenu de chaque case
   puts("\033[31m recv_msg_game_grid... Affichage de la grille... \033[0m");
 
-  affichetmpgrid(*grid);
-
   // On libère la mémoire
   free(msg);
 

@@ -27,10 +27,6 @@ int start_game(partie_t *partie) {
     // FIX: magical number
     size_t message_size = grid.hauteur * grid.largeur * sizeof(uint8_t) + 6;
 
-    // Affichage du contenu de chaque case
-    puts("\033[31m while... Affichage de la grille... \033[0m");
-    affichetmpgrid(grid);
-
     if (sendto(partie->sock_mdiff, message, message_size, 0,
                (struct sockaddr *)&partie->g_adr, sizeof(partie->g_adr)) < 0) {
       perror("partie.c: start_game(): sendto()");
