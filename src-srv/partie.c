@@ -1,6 +1,7 @@
 #include "partie.h"
 
 #include "../lib/constants.h"
+#include <unistd.h>
 
 /**
  * Lance et gère une partie.
@@ -14,15 +15,15 @@ int start_game(partie_t *partie) {
   board board = {0};
   init_board(&board, partie->type);
 
-  clock_t last_clock = clock();
-  clock_t current_clock = last_clock;
+  long last_clock = 0;
+  long current_clock = 0;
   // Tant que la partie n'est pas terminée
   while (partie->end) {
     
     /* ********** Envoie de la grille complète ********** */
 
     printf("partie.c: start_game(): Condition value: %ld\n", (current_clock - last_clock) / CLOCKS_PER_SEC);
-    if((current_clock - last_clock) / CLOCKS_PER_SEC >= 1) {
+    if((current_clock - last_clock) / (1000000) >= 1) {
       last_clock = current_clock;
 
     // On initialise la structure msg_grid_t avec la grille de jeu
@@ -61,7 +62,7 @@ int start_game(partie_t *partie) {
     // ...
 
     usleep(1000 * FREQ);
-    current_clock = clock();
+    current_clock += 1000 * FREQ;
   }
 
   return 0;
