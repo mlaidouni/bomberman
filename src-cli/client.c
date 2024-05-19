@@ -78,32 +78,28 @@ ACT action_command() {
   int c;
   int prev_c = ERR;
   // We consume all similar consecutive key presses
-  // getch returns the first key press in the queue
-  while ((c = getch()) != ERR) {
-    // printf("Key pressed: %d\n", c); // TODELETE: debug
+  while ((c = getch()) !=
+         ERR) { // getch returns the first key press in the queue
     if (prev_c != ERR && prev_c != c) {
       ungetch(c); // put 'c' back in the queue
       break;
     }
     prev_c = c;
   }
-
-  printf("Key pressed: %d\n", prev_c); // TODELETE: debug
-
   ACT a;
   switch (prev_c) {
   case ERR:
     break;
-  case 260:
+  case KEY_LEFT:
     a = A_LEFT;
     break;
-  case 261:
+  case KEY_RIGHT:
     a = A_RIGHT;
     break;
-  case 259:
+  case KEY_UP:
     a = A_UP;
     break;
-  case 258:
+  case KEY_DOWN:
     a = A_DOWN;
     break;
   case KEY_B2:
@@ -208,7 +204,6 @@ int main(int argc, char const *argv[]) {
       endwin();
     }
 
-    // printf("Action: %d\n", a); // TODELETE: debug
     msg_game_t params = {grid.game_type, player.player_id, player.team, num, a};
     uint32_t message = ms_game(params);
     sendto(sock_client, &message, sizeof(message), 0,
