@@ -58,7 +58,6 @@ typedef struct {
   int hauteur;     // La hauteur de la grille.
   int largeur;     // La largeur de la grille.
   uint8_t *grille; // La grille.
-
 } msg_grid_t;
 
 // Structure représentant la grille temporaire

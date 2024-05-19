@@ -416,7 +416,7 @@ msg_grid_t mg_game_grid(uint8_t *message) {
   }
 
   // On copie la grille
-  memcpy(params.grille, message + 6, len);
+  memcpy(params.grille, message + 6, params.hauteur * params.largeur);
 
   return params;
 }
