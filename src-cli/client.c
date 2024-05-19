@@ -11,6 +11,38 @@ void affiche_data_partie(msg_game_data_t *game_data, char *adr_mdiff) {
       game_data->team_id);
 }
 
+int get_grille(msg_grid_t grid, int x, int y) {
+  return (int)grid.grille[y * grid.largeur + x];
+}
+
+void affiche(msg_grid_t grid) {
+  int x, y;
+  for (y = 0; y < grid.hauteur; y++) {
+    for (x = 0; x < grid.largeur; x++) {
+      char c;
+      switch (get_grille(grid, x, y)) {
+      case 0:
+        c = '?';
+        break;
+      case 1:
+        c = '|';
+        break;
+      case 2:
+        c = '-';
+        break;
+      case 3:
+        c = '*';
+        break;
+      case 4:
+        c = 'X';
+        break;
+      }
+      mvaddch(y + 1, x + 1, c);
+    }
+  }
+  refresh();
+}
+
 int main(int argc, char const *argv[]) {
   // NOTE: Le port devra être passé en argument
   const int port = 8081;
@@ -67,25 +99,15 @@ int main(int argc, char const *argv[]) {
     if (recv_msg_game_grid(&grid, mc))
       exit(EXIT_FAILURE); // En cas d'échec on exit, pour l'instant.
 
-    // TODELETE: Test ncurses: START
-
-    // On écrit à l'endroit où le curseur logique est positionné
-    // On affiche le numéro de message
-    printw("Numéro de message: %d\n", grid.num);
-    // On affiche les données de la grid
-    printw("Données de la grid reçues:\n\t largeur: %d \n\t hauteur: "
-           "%d \n\t player_id: %d \n\t team_id: %d\n",
-           grid.largeur, grid.hauteur, grid.player_id, grid.team_id);
-    // Rafraîchit la fenêtre courante afin de voir le message apparaître
-    refresh();
+    affiche(grid);
     // Clear la fenêtre
     // clear();
 
     // Attend que l'utilisateur appuie sur une touche
     getch();
+
     // Ferme la fenêtre
     endwin();
-    // TODELETE: Test ncurses: END
 
     // TODO: Recv/send msg avec le serveur
   }
@@ -333,7 +355,7 @@ int recv_msg_game_data(msg_game_data_t *game_data, int sock_client) {
  */
 int recv_msg_game_grid(msg_grid_t *grid, multicast_client_t mc) {
   // FIXME: magic number, trouver comment récupérer la hauteur et la largeur
-  int len = sizeof(uint8_t) * (6 + 20 * 20);
+  int len = sizeof(uint8_t) * (6 + HEIGHT * WIDTH);
   uint8_t *msg = malloc(len);
   socklen_t len_adr = sizeof(mc.adr);
 
