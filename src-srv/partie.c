@@ -70,6 +70,16 @@ msg_grid_t init_msg_grid(partie_t *partie, board board) {
   grid.grille = malloc(len_grille);
   memcpy(grid.grille, board.grid, len_grille);
 
+  for (int i = 0; i < partie->nb_joueurs; i++) {
+    // On récupère la position du joueur
+    pos p = board.players[i].pos;
+    // On récupère l'identifiant du joueur
+    int id = partie->joueurs[i].id;
+
+    // On met à jour la grille avec la position du joueur
+    grid.grille[p.x + p.y * WIDTH] = id + 5;
+  }
+
   return grid;
 }
 

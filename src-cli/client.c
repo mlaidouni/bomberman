@@ -19,6 +19,7 @@ void affiche_data_partie(msg_game_data_t *game_data, char *adr_mdiff) {
  * @return La valeur de la case.
  */
 int get_grille(msg_grid_t grid, int x, int y) {
+
   return (int)grid.grille[y * grid.largeur + x];
 }
 
@@ -47,6 +48,18 @@ void affiche(msg_grid_t grid) {
         break;
       case 4:
         c = 'x';
+        break;
+      case 5:
+        c = '0';
+        break;
+      case 6:
+        c = '1';
+        break;
+      case 7:
+        c = '2';
+        break;
+      case 8:
+        c = '3';
         break;
       }
 
@@ -115,23 +128,14 @@ int main(int argc, char const *argv[]) {
       exit(EXIT_FAILURE); // En cas d'échec on exit, pour l'instant.
 
     affiche(grid);
-
-    while (1) {
-      // On attend que l'utilisateur appuie sur une touche
-      int c = getch();
-      // On quitte si l'utilisateur appuie sur 'q'
-      if (c == 'q')
-        break;
-    }
-
-    // Clear la fenêtre
-    // clear();
-
     // Attend que l'utilisateur appuie sur une touche
     getch();
 
     // Ferme la fenêtre
     endwin();
+
+    // Clear la fenêtre
+    // clear();
 
     // TODO: Recv/send msg avec le serveur
   }
