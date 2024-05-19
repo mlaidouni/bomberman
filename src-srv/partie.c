@@ -82,12 +82,17 @@ int start_game(partie_t *partie) {
 msg_grid_t init_msg_grid(partie_t *partie, board board) {
   msg_grid_t grid;
   memset(&grid, 0, sizeof(msg_grid_t));
+  // On récupère les dimensions de la grille depuis la structure board
   grid.hauteur = HEIGHT;
   grid.largeur = WIDTH;
+
+  // On initialise la grille
   int len_grille = grid.hauteur * grid.largeur * sizeof(uint8_t);
-  grid.grille = malloc(len_grille);
+  grid.grille = malloc(len_grille); // FIXME: TO FREE
+  // On copie les données de la board dans la grille
   memcpy(grid.grille, board.grid, len_grille);
 
+  // On dispose les joueurs sur la grille
   for (int i = 0; i < partie->nb_joueurs; i++) {
     // On récupère la position du joueur
     pos p = board.players[i].pos;
@@ -180,6 +185,10 @@ int create_partie(client_t client, msg_join_ready_t params) {
   j.client = client;
   j.id = partie.nb_joueurs;
 
+  // Si aucun joueur n'est en attente, on crée un tableau de joueurs
+  if (partie.nb_joueurs == 0)
+    partie.joueurs = malloc(sizeof(joueur_t));
+
   // On ajoute le joueur à la partie
   partie.joueurs[partie.nb_joueurs] = j;
 
@@ -226,6 +235,10 @@ int add_joueur(partie_t *partie, client_t client) {
   joueur_t j = {0};
   j.client = client;
   j.id = partie->nb_joueurs;
+
+  // On réalloue la mémoire pour le tableau de joueurs
+  partie->joueurs =
+      realloc(partie->joueurs, (partie->nb_joueurs + 1) * sizeof(joueur_t));
 
   // On ajoute le joueur à la partie
   partie->joueurs[partie->nb_joueurs] = j;
@@ -281,4 +294,18 @@ void generate_multicast_ports(int *port_mdiff, int *port_udp) {
   // On génère les ports
   *port_mdiff = 5000 + srv.parties.nb_parties;
   *port_udp = 7000 + srv.parties.nb_parties;
+}
+
+/**
+ * Libère la mémoire allouée pour une partie.
+ * @param partie La partie à libérer.
+ */
+void free_partie(partie_t *partie) {
+  // On libère la mémoire des joueurs
+  free(partie->joueurs);
+  // On ferme la socket
+  close(partie->sock_mdiff);
+
+  // On libère la mémoire de la partie
+  free(partie);
 }
