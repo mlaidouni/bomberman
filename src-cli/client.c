@@ -129,8 +129,8 @@ int main(int argc, char const *argv[]) {
       exit(EXIT_FAILURE); // En cas d'échec on exit, pour l'instant.
 
     // On reçoit la grid de jeu
-    if (recv_msg_grid_tmp(&grid, mc))
-      exit(EXIT_FAILURE);
+    // if (recv_msg_grid_tmp(&grid, mc))
+    // exit(EXIT_FAILURE);
 
     affiche(grid);
 
