@@ -41,7 +41,7 @@ void affiche(msg_grid_t grid) {
         c = '|';
         break;
       case 2:
-        c = '-';
+        c = '#';
         break;
       case 3:
         c = '.';
@@ -119,7 +119,7 @@ int main(int argc, char const *argv[]) {
   /* ********** Gestion des messages de la partie... ********** */
 
   // On initialise ncurses
-  // init_ncurses();
+  init_ncurses();
 
   while (1) {
     // On reçoit la grid de jeu
@@ -131,7 +131,7 @@ int main(int argc, char const *argv[]) {
     puts("\033[31m client... Affichage de la grille... \033[0m");
     affichetmpgrid(grid);
 
-    // affiche(grid);
+    affiche(grid);
     // Attend que l'utilisateur appuie sur une touche
     getch();
 
