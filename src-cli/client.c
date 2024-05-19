@@ -127,10 +127,6 @@ int main(int argc, char const *argv[]) {
     if (recv_msg_game_grid(&grid, mc))
       exit(EXIT_FAILURE); // En cas d'échec on exit, pour l'instant.
 
-    // Affichage du contenu de chaque case
-    puts("\033[31m client... Affichage de la grille... \033[0m");
-    affichetmpgrid(grid);
-
     affiche(grid);
     // Attend que l'utilisateur appuie sur une touche
     getch();
@@ -143,6 +139,7 @@ int main(int argc, char const *argv[]) {
 
     // TODO: Recv/send msg avec le serveur
   }
+
   // Fermeture de la socket TCP du client: à la fin de la partie seulement
   close(sock_client);
   return 0;
@@ -403,11 +400,6 @@ int recv_msg_game_grid(msg_grid_t *grid, multicast_client_t mc) {
 
   // On récupère les données de la grid
   *grid = mg_game_grid(msg);
-
-  // Affichage du contenu de chaque case
-  puts("\033[31m recv_msg_game_grid... Affichage de la grille... \033[0m");
-
-  affichetmpgrid(*grid);
 
   // On libère la mémoire
   free(msg);
