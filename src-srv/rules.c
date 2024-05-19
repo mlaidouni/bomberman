@@ -1,18 +1,27 @@
 #include "rules.h"
-
 #include <assert.h>
 #include <stdlib.h>
 
-int init_board(board board, TYPE type) {
-  board.type = type;
+int init_board(board *board, TYPE type) {
+  board->type = type;
   for (int i = 0; i < WIDTH * HEIGHT; i++) {
-    board.grid[i] = EMPTY_TILE;
+    board->grid[i] = EMPTY_TILE;
   }
-  board.players[0] = (player){0, ALIVE, {0, 0}};
-  board.players[1] = (player){0, ALIVE, {WIDTH - 1, HEIGHT - 1}};
-  board.players[2] = (player){1, ALIVE, {0, HEIGHT - 1}};
-  board.players[3] = (player){1, ALIVE, {WIDTH - 1, 0}};
-  board.bombs = init_list();
+  board->players[0] = (player){0, ALIVE, {0, 0}};
+  board->players[1] = (player){0, ALIVE, {WIDTH - 1, HEIGHT - 1}};
+  board->players[2] = (player){1, ALIVE, {0, HEIGHT - 1}};
+  board->players[3] = (player){1, ALIVE, {WIDTH - 1, 0}};
+  board->bombs = init_list();
+
+  // TODELETE: (debug) On remplit les 4 coins de la grid avec le nombre 4
+  // On remplit les 4 coins de la grid avec le nombre 4
+  board->grid[0] = 4;
+  board->grid[(WIDTH - 1)] = 4;
+  board->grid[(HEIGHT - 1) * WIDTH] = 4;
+  board->grid[(WIDTH - 1) + (HEIGHT - 1) * WIDTH] = 4;
+
+  // TODELETE: END
+
   return 0;
 }
 
