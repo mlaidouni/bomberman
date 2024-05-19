@@ -19,14 +19,18 @@ int start_game(partie_t *partie) {
 
     // On initialise la structure msg_grid_t avec la grille de jeu
     msg_grid_t grid = init_msg_grid(partie, board);
+
     // On convertit la structure en message
     uint8_t *message = ms_game_grid(grid);
+
     // Envoi du message en multidiffusion à tous les joueurs
     size_t message_size = grid.hauteur * grid.largeur * sizeof(uint8_t) + 6;
+
     if (sendto(partie->sock_mdiff, message, message_size, 0,
                (struct sockaddr *)&partie->g_adr, sizeof(partie->g_adr)) < 0) {
       perror("partie.c: start_game(): sendto()");
       close(partie->sock_mdiff);
+
       // On libère la mémoire
       free(grid.grille);
       free(message);
