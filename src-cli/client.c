@@ -129,9 +129,9 @@ int main(int argc, char const *argv[]) {
 
     // Affichage du contenu de chaque case
     puts("\033[34m client... Affichage de la grille... \033[0m");
-    for (int i = 0; i < HEIGHT; i++) {
-      for (int j = 0; j < WIDTH; j++) {
-        printf("%d ", grid.grille[i + j * HEIGHT]);
+    for (int x = 0; x < WIDTH; x++) {
+      for (int y = 0; y < HEIGHT; y++) {
+        printf("%d ", grid.grille[x + y * WIDTH]);
       }
       printf("\n");
     }
@@ -410,9 +410,9 @@ int recv_msg_game_grid(msg_grid_t *grid, multicast_client_t mc) {
 
   // Affichage du contenu de chaque case
   puts("\033[34m recv_msg_game_grid... Affichage de la grille... \033[0m");
-  for (int i = 0; i < HEIGHT; i++) {
-    for (int j = 0; j < WIDTH; j++) {
-      printf("%d ", grid->grille[i * WIDTH + j]);
+  for (int x = 0; x < WIDTH; x++) {
+    for (int y = 0; y < HEIGHT; y++) {
+      printf("%d ", grid->grille[x + y * WIDTH]);
     }
     printf("\n");
   }

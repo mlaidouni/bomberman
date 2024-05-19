@@ -29,9 +29,9 @@ int start_game(partie_t *partie) {
 
     // Affichage du contenu de chaque case
     puts("\033[34m while... Affichage de la grille... \033[0m");
-    for (int i = 0; i < HEIGHT; i++) {
-      for (int j = 0; j < WIDTH; j++) {
-        printf("%d ", grid.grille[j + i * WIDTH]);
+    for (int x = 0; x < WIDTH; x++) {
+      for (int y = 0; y < HEIGHT; y++) {
+        printf("%d ", grid.grille[x + y * WIDTH]);
       }
       printf("\n");
     }
@@ -89,8 +89,8 @@ msg_grid_t init_msg_grid(partie_t *partie, board board) {
   //   grid.grille[p.x + p.y * WIDTH] = id + 5;
   // }
 
-  // for (int i = 0; i < HEIGHT; i++) {
-  //   for (int j = 0; j < WIDTH; j++) {
+  // for (int x = 0; x < WIDTH; x++) {
+  //   for (int y = 0; y < HEIGHT; y++) {
   //     // On met  la valeur de la case à i
   //     grid.grille[j + i * WIDTH] = i;
   //   }
