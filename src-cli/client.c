@@ -1,4 +1,8 @@
+
+
+#include <poll.h>
 #include "client.h"
+#include "../lib/constants.h"
 
 void affiche_data_partie(msg_game_data_t *game_data, char *adr_mdiff) {
   printf(
@@ -156,21 +160,43 @@ int main(int argc, char const *argv[]) {
 
   /* ********** Gestion des messages de la partie... ********** */
 
+
+  struct pollfd fds[1];
+  fds[0].fd = mc.sock;
+  fds[0].events = POLLIN;
+
+  // On reçoit la grid de jeu
+  msg_grid_t grid;
+
+      if (recv_msg_game_grid(&grid, mc))
+        exit(EXIT_FAILURE);
+
   // On initialise ncurses
   init_ncurses();
+
+  affiche(grid);
+
   int num = 0;
   while (1) {
+    // On attend un message de la partie
+    int r = poll(fds, 1, FREQ * 10);
 
-    // On reçoit la grid de jeu
-    msg_grid_t grid;
-    if (recv_msg_game_grid(&grid, mc))
-      exit(EXIT_FAILURE); // En cas d'échec on exit, pour l'instant.
+    // Gestion des erreurs
+    if (r == -1) {
+      perror("client.c: main: poll()");
+      exit(EXIT_FAILURE);
+    }
 
-    // On reçoit la grid de jeu
-    // if (recv_msg_grid_tmp(&grid, mc))
-    // exit(EXIT_FAILURE);
+    if(fds[0].revents & POLLIN) {
+      if (recv_msg_game_grid(&grid, mc))
+        exit(EXIT_FAILURE); // En cas d'échec on exit, pour l'instant.
 
-    affiche(grid);
+      // On reçoit la grid de jeu
+      // if (recv_msg_grid_tmp(&grid, mc))
+      // exit(EXIT_FAILURE);
+
+      affiche(grid);
+    }
 
     ACT a = action_command();
     if (a == A_QUIT) {
@@ -190,6 +216,9 @@ int main(int argc, char const *argv[]) {
 
     // TODO: Recv/send msg avec le serveur
   }
+
+  // Ferme la fenêtre
+    endwin();
   // Fermeture de la socket TCP du client: à la fin de la partie seulement
   close(sock_client);
   return 0;
@@ -330,7 +359,7 @@ void init_ncurses() {
   // Required in order to get events from keyboard
   keypad(stdscr, TRUE);
   // Make getch non-blocking
-  // nodelay(stdscr, TRUE);
+  nodelay(stdscr, TRUE);
   /* Don't echo() while we do getch (we will manually print characters when
    * relevant) */
   noecho();

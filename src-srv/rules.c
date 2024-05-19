@@ -24,10 +24,10 @@ uint8_t labyrinth[20][20] = {
     {0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0},
     {0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0},
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0}};
-
 int init_board(board *board, TYPE type) {
   board->type = type;
 
+  memcpy(board->grid, labyrinth, sizeof(labyrinth) * sizeof(uint8_t));
   // On crée une board par défaut avec des murs destructibles et indescructibles
   memcpy(board->grid, labyrinth, sizeof(labyrinth) * sizeof(uint8_t));
 

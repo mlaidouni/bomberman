@@ -1,5 +1,8 @@
 #include "partie.h"
 
+#include "../lib/constants.h"
+#include <unistd.h>
+
 /**
  * Lance et gère une partie.
  * @param partie La partie à lancer.
@@ -12,10 +15,16 @@ int start_game(partie_t *partie) {
   board board = {0};
   init_board(&board, partie->type);
 
+  long last_clock = 0;
+  long current_clock = 0;
   // Tant que la partie n'est pas terminée
   while (partie->end) {
-
+    
     /* ********** Envoie de la grille complète ********** */
+
+    printf("partie.c: start_game(): Condition value: %ld\n", (current_clock - last_clock) / CLOCKS_PER_SEC);
+    if((current_clock - last_clock) / (1000000) >= 1) {
+      last_clock = current_clock;
 
     // On initialise la structure msg_grid_t avec la grille de jeu
     msg_grid_t grid = init_msg_grid(partie, board);
@@ -35,8 +44,25 @@ int start_game(partie_t *partie) {
       free(grid.grille);
       free(message);
       return -1;
+    } else {
+      printf("partie.c: start_game(): Message envoyé en multidiffusion\n");
     }
+  }
 
+    //break; // TODELETE: (debug) On arrête la boucle après un envoi
+
+    /* ********** Reception des messages de joueurs ********** */
+
+    // TODO: Le jeu
+    // ...
+
+    /* ********** Gestion de la fin de la partie ********** */
+
+    // TODO: Penser à gérer la fermeture des sockets des clients
+    // ...
+
+    usleep(1000 * FREQ);
+    current_clock += 1000 * FREQ;
     /* ******** Reception action d'un joueur et actualisation grille ******** */
 
     uint32_t msg;
