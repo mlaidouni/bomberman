@@ -10,7 +10,7 @@ int start_game(partie_t *partie) {
 
   // On initialise la grille de jeu
   board board = {0};
-  init_board(board, partie->type);
+  init_board(&board, partie->type);
 
   // Tant que la partie n'est pas terminée
   while (partie->end) {
@@ -23,9 +23,23 @@ int start_game(partie_t *partie) {
     // On convertit la structure en message
     uint8_t *message = ms_game_grid(grid);
 
+    // Affichage du contenu de chaque case
+    puts("\033[34m while... Affichage de la grille... \033[0m");
+    for (int i = 0; i < HEIGHT; i++) {
+      for (int j = 0; j < WIDTH; j++) {
+        printf("%d ", grid.grille[j + i * WIDTH]);
+      }
+      printf("\n");
+    }
+
     // Envoi du message en multidiffusion à tous les joueurs
-    if (sendto(partie->sock_mdiff, message, sizeof(message), 0,
-               (struct sockaddr *)&partie->g_adr, sizeof(partie->g_adr)) < 0) {
+    size_t message_size = grid.hauteur * grid.largeur * sizeof(uint8_t);
+    int r = sendto(partie->sock_mdiff, message, message_size, 0,
+                   (struct sockaddr *)&partie->g_adr, sizeof(partie->g_adr));
+
+    printf("partie.c: start_game(): sendto() : %d\n", r); // TODELETE: (debug)
+
+    if (r < 0) {
       perror("partie.c: start_game(): sendto()");
       close(partie->sock_mdiff);
       // On libère la mémoire

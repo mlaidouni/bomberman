@@ -408,15 +408,15 @@ msg_grid_t mg_game_grid(uint8_t *message) {
   params.largeur = dimension & 0xFF;
 
   // On alloue de la mémoire pour la grille
-  params.grille =
-      malloc(params.hauteur * params.largeur * sizeof(*params.grille));
+  int len = params.hauteur * params.largeur * sizeof(uint8_t);
+  params.grille = malloc(len);
   if (params.grille == NULL) {
     perror("malloc");
     exit(EXIT_FAILURE); // FIXME: Gérer proprement l'erreur
   }
 
   // On copie la grille
-  memcpy(params.grille, message + 6, params.hauteur * params.largeur);
+  memcpy(params.grille, message + 6, len);
 
   return params;
 }
