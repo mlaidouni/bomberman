@@ -1,6 +1,8 @@
 
 
 #include "client.h"
+#include "../lib/constants.h"
+#include <poll.h>
 
 void affiche_data_partie(msg_game_data_t *game_data, char *adr_mdiff) {
   printf(
@@ -70,6 +72,48 @@ void affiche(msg_grid_t grid) {
     }
   }
   refresh();
+}
+
+ACT action_command() {
+  int c;
+  int prev_c = ERR;
+  // We consume all similar consecutive key presses
+  // getch returns the first key press in the queue
+  while ((c = getch()) != ERR) {
+    // printf("Key pressed: %d\n", c); // TODELETE: debug
+    if (prev_c != ERR && prev_c != c) {
+      ungetch(c); // put 'c' back in the queue
+      break;
+    }
+    prev_c = c;
+  }
+
+  printf("Key pressed: %d\n", prev_c); // TODELETE: debug
+
+  ACT a;
+  switch (prev_c) {
+  case ERR:
+    break;
+  case 260:
+    a = A_LEFT;
+    break;
+  case 261:
+    a = A_RIGHT;
+    break;
+  case 259:
+    a = A_UP;
+    break;
+  case 258:
+    a = A_DOWN;
+    break;
+  case KEY_B2:
+    a = A_BOMB;
+    break;
+  case 'q':
+    a = A_QUIT;
+    break;
+  }
+  return a;
 }
 
 int main(int argc, char const *argv[]) {
@@ -183,49 +227,6 @@ int main(int argc, char const *argv[]) {
   // Fermeture de la socket TCP du client: à la fin de la partie seulement
   close(sock_client);
   return 0;
-}
-
-ACT action_command() {
-  int c;
-  int prev_c = ERR;
-  // We consume all similar consecutive key presses
-  // getch returns the first key press in the queue
-  while ((c = getch()) != ERR) {
-    // printf("Key pressed: %d\n", c); // TODELETE: debug
-    if (prev_c != ERR && prev_c != c) {
-      ungetch(c); // put 'c' back in the queue
-      break;
-    }
-    prev_c = c;
-  }
-
-  // printf("Key pressed: %d\n", prev_c); // TODELETE: debug
-
-  ACT a;
-  switch (prev_c) {
-  case ERR:
-    break;
-  case 260:
-    a = A_LEFT;
-    break;
-  case 261:
-    a = A_RIGHT;
-    break;
-  case 259:
-    a = A_UP;
-    break;
-  case 258:
-    a = A_DOWN;
-    break;
-  case KEY_B2:
-    a = A_BOMB;
-    break;
-  case 'q':
-    a = A_QUIT;
-    break;
-  }
-
-  return a;
 }
 
 /* ********** Fonctions client ********** */

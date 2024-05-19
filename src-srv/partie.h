@@ -5,23 +5,8 @@
 
 /* ********** Includes ********** */
 
-#include "../lib/constants.h"
-#include "list.h"
 #include "rules.h"
 #include "server.h"
-#include <poll.h>
-#include <stdlib.h>
-#include <unistd.h>
-
-/* ********** Structures ********** */
-
-// Structure pour les parties.
-typedef struct {
-  struct pollfd socks[1]; // Les sockets des joueurs à surveiller.
-  list *move[4];           // Les messages de mouvements des joueurs.
-  list *bomb[4];
-
-} mp_t;
 
 /* ********** Fonctions parties ********** */
 

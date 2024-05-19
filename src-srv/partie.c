@@ -1,5 +1,8 @@
 #include "partie.h"
 
+#include "../lib/constants.h"
+#include <unistd.h>
+
 /**
  * Lance et gère une partie.
  * @param partie La partie à lancer.
@@ -12,94 +15,60 @@ int start_game(partie_t *partie) {
   board board = {0};
   init_board(&board, partie->type);
 
-  /* ********** Configuration de la surveillance des descripteurs ********** */
-
-  // On initialise les stock de messages
-  mp_t mp = {0};
-
-  init_mp(&mp, partie->sock_mdiff);
-
-  /* ********** Configuration des compteurs de temps ********** */
-
   unsigned long last_clock = 0;
   unsigned long current_clock = 1000000;
-
   // Tant que la partie n'est pas terminée
   while (partie->end) {
 
-    /**
-     * socks: l'ensemble des sockets à surveiller
-     * partie->nb_joueurs + 1: le nombre de sockets à surveiller
-     * timeout = FREQ: le temps d'attente en millisecondes
-     */
-    // On bloque ici jusqu'à ce qu'une socket soit prête
-    int r = poll(mp.socks, partie->nb_joueurs + 1, 1);
-    // Gestion des erreurs
-    if (r < 0) {
-      perror("partie.c: start_game(): poll()");
-      return -1;
+    /* ********** Envoie de la grille complète ********** */
+
+    printf("partie.c: start_game(): Condition value: %ld\n",
+           (current_clock - last_clock) / CLOCKS_PER_SEC);
+    if ((current_clock - last_clock) / (1000000) >= 1) {
+      last_clock = current_clock;
+
+      // On initialise la structure msg_grid_t avec la grille de jeu
+      msg_grid_t grid = init_msg_grid(partie, board);
+
+      // On convertit la structure en message
+      uint8_t *message = ms_game_grid(grid);
+
+      // Envoi du message en multidiffusion à tous les joueurs
+      size_t message_size = grid.hauteur * grid.largeur * sizeof(uint8_t) + 6;
+
+      if (sendto(partie->sock_mdiff, message, message_size, 0,
+                 (struct sockaddr *)&partie->g_adr,
+                 sizeof(partie->g_adr)) < 0) {
+        perror("partie.c: start_game(): sendto()");
+        close(partie->sock_mdiff);
+
+        // On libère la mémoire
+        free(grid.grille);
+        free(message);
+        return -1;
+      } else {
+        printf("partie.c: start_game(): Message envoyé en multidiffusion\n");
+      }
     }
 
     /* ******** Reception action d'un joueur et actualisation grille ******** */
 
-    // Si on a recu un message sur la socket de multidiffusion
-    if (partie->sock_mdiff & POLLIN) {
-
-      msg_game_t mg;
-      // On reçoit le message de jeu
-      r = recv_msg_game(&mg, partie->sock_mdiff);
-      // Gestion des erreurs
-      if (r < 0) {
-        perror("partie.c: start_game(): recv_msg_game()");
-        return -1;
-      }
-
-      // On affiche l'id du joueur et l'action effectuée
-      printf("partie.c: start_game(): Joueur %d, action %d\n", mg.player_id,
-             mg.action);
-
-      // On met à jour mp
-      update_mp(&mp, &mg);
-
-      // On actualise la grille de jeu
-      action_player(board, mg.player_id, mg.action);
+    uint32_t msg;
+    int r = recvfrom(partie->sock_mdiff, &msg, sizeof(msg), 0, NULL, NULL);
+    if (r < 0) {
+      perror("partie.c: start_game(): recvfrom()");
+      return -1;
+    }
+    if (r == 0) {
+      fprintf(stderr, "partie.c: start_game(): recvfrom(): socket fermée\n");
+      return -1;
     }
 
-    /* ********** Envoie de la grille complète ********** */
+    printf("\033[31mpartie.c: start_game(): Message reçu: %d\033[0m\n", msg);
 
-    if (partie->sock_mdiff & POLLOUT) {
-      // Si une seconde s'est écoulée, on envoie la grille en multidiffusion
-      if ((current_clock - last_clock) / (1000000) >= 1) {
-        last_clock = current_clock;
+    msg_game_t mg = mg_game(msg);
 
-        // On initialise la structure msg_grid_t avec la grille de jeu
-        msg_grid_t grid = init_msg_grid(partie, board);
-
-        // On convertit la structure en message
-        uint8_t *message = ms_game_grid(grid);
-
-        // Envoi du message en multidiffusion à tous les joueurs
-        size_t message_size = grid.hauteur * grid.largeur * sizeof(uint8_t) + 6;
-
-        if (sendto(partie->sock_mdiff, message, message_size, 0,
-                   (struct sockaddr *)&partie->g_adr,
-                   sizeof(partie->g_adr)) < 0) {
-          perror("partie.c: start_game(): sendto()");
-          close(partie->sock_mdiff);
-
-          // On libère la mémoire
-          free(grid.grille);
-          free(message);
-          return -1;
-        } else {
-          printf("partie.c: start_game(): Message envoyé en multidiffusion\n");
-        }
-      }
-      // Sinon, on envoie la grille temporaire
-      else {
-        // ...
-      }
-    }
+    action_player(board, mg.player_id, mg.action);
 
     /* ********** Gestion de la fin de la partie ********** */
 
@@ -109,72 +78,6 @@ int start_game(partie_t *partie) {
     usleep(1000 * FREQ);
     current_clock += 1000 * FREQ;
   }
-
-  return 0;
-}
-
-void init_mp(mp_t *mp, int sock_mdiff) {
-  memset(mp->socks, 0, sizeof(mp->socks));
-  struct pollfd socks[1] = {0};
-  // La socket mdiff de la partie sera toujours identifiée par l'indice 0
-  mp->socks[0].fd = sock_mdiff;
-  // On la surveille en lecture
-  mp->socks[0].events = POLLIN;
-
-  // On initialise les listes de messages
-  for (int i = 0; i < 4; i++) {
-    mp->move[i] = init_list();
-    mp->bomb[i] = init_list();
-  }
-}
-
-void update_mp(mp_t *mp, msg_game_t *mg) {
-
-  // On récupère l'id du joueur
-  int player_id = mg->player_id;
-
-  // On récupère le type d'action effectuée
-  int action = mg->action;
-
-  // Si l'action est une annulation, on modifie les listes bomb ou move
-  if (action == 5) {
-    // ...
-  }
-  // Si l'action effectuée est un déplacement, on travaille sur la list bomb
-  else if (action == 4) {
-    // ...
-  }
-  // Sinon, on travaille sur la liste move
-  else {
-    // ...
-  }
-}
-
-/**
- * Recoit un message de jeu.
- * @param mg La structure msg_game_t à remplir.
- * @param sock_mdiff La socket de multidiffusion.
- * @return 0 si tout s'est bien passé, -1 sinon.
- */
-int recv_msg_game(msg_game_t *mg, int sock_mdiff) {
-  uint32_t msg = malloc(sizeof(uint32_t));
-  int r = recvfrom(sock_mdiff, &msg, sizeof(msg), 0, NULL, NULL);
-
-  // Gestion des erreurs
-  if (r < 0) {
-    perror("partie.c: start_game(): recvfrom()");
-    return -1;
-  }
-  if (r == 0) {
-    fprintf(stderr, "partie.c: start_game(): recvfrom(): socket fermée\n");
-    return -1;
-  }
-
-  // On convertit le message en structure msg_game_t
-  *mg = mg_game(msg);
-
-  // On libère la mémoire
-  free(msg);
 
   return 0;
 }
@@ -246,8 +149,8 @@ int init_partie(msg_join_ready_t params, client_t client) {
  * Crée une partie et l'ajoute à la liste des parties du serveur.
  * @param client Le client qui a demandé la partie.
  * @param params Les paramètres de la partie.
- * @return L'id de la partie créée (ie un nombre >= 0). un nombre negatif si
- * il y a une erreur
+ * @return L'id de la partie créée (ie un nombre >= 0). un nombre negatif si il
+ * y a une erreur
  */
 int create_partie(client_t client, msg_join_ready_t params) {
   // Création de la structure partie
@@ -376,8 +279,7 @@ void generate_multicast_adr(char *adr, size_t size) {
   memset(adr, 0, size);
 
   // On génère une adresse multicast
-  // FIX: Check la limite qu'on peut atteindre, i.e :2:10000: est-elle valide
-  // ?
+  // FIX: Check la limite qu'on peut atteindre, i.e :2:10000: est-elle valide ?
   sprintf(adr, "ff12::1:2:%d", srv.parties.nb_parties);
 }
 

@@ -2,14 +2,12 @@
 #define CLIENT_H_
 
 /* ********** Includes ********** */
-#include "../lib/constants.h"
 #include "../lib/message.h"
 #include "../src-srv/rules.h"
 #include "../src-srv/server.h"
 #include <arpa/inet.h>
 #include <ncurses.h>
 #include <net/if.h>
-#include <poll.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -39,8 +37,6 @@ int connect_to_server(int port);
 int abonnement_mdiff(multicast_client_t *mc, char *adr_mdiff, int port_mdiff);
 int action(int sock_client, int game_type, int player_id, int team_id, int num,
            int action);
-
-ACT action_command();
 
 /* ********** Fonctions client ncurses ********** */
 
