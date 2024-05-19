@@ -17,12 +17,19 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#define TEXT_SIZE 255
+
 // Structure multicast
 struct multicast_client_t {
   int sock;                // La socket
   struct sockaddr_in6 adr; // L'adresse
   struct ipv6_mreq grp;    // La structure pour la multidiffusion.
 } typedef multicast_client_t;
+
+typedef struct player_client {
+  int team;
+  int player_id;
+} player_client;
 
 /* ********** Fonctions client ********** */
 

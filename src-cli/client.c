@@ -67,8 +67,45 @@ void affiche(msg_grid_t grid) {
       mvaddch(y + 1, 2 * x + 1, c);
     }
   }
-  // On rafraichit la fenêtre
   refresh();
+}
+
+ACT action_command() {
+  int c;
+  int prev_c = ERR;
+  // We consume all similar consecutive key presses
+  while ((c = getch()) !=
+         ERR) { // getch returns the first key press in the queue
+    if (prev_c != ERR && prev_c != c) {
+      ungetch(c); // put 'c' back in the queue
+      break;
+    }
+    prev_c = c;
+  }
+  ACT a;
+  switch (prev_c) {
+  case ERR:
+    break;
+  case KEY_LEFT:
+    a = A_LEFT;
+    break;
+  case KEY_RIGHT:
+    a = A_RIGHT;
+    break;
+  case KEY_UP:
+    a = A_UP;
+    break;
+  case KEY_DOWN:
+    a = A_DOWN;
+    break;
+  case KEY_B2:
+    a = A_BOMB;
+    break;
+  case 'q':
+    a = A_QUIT;
+    break;
+  }
+  return a;
 }
 
 int main(int argc, char const *argv[]) {
@@ -101,6 +138,7 @@ int main(int argc, char const *argv[]) {
   if (recv_msg_game_data(&game_data, sock_client))
     exit(EXIT_FAILURE); // En cas d'échec on exit, pour l'instant.
 
+  player_client player = {game_data.player_id, game_data.team_id};
   // On convertit l'adresse de uin8_t* à char*
   char adr_mdiff[INET6_ADDRSTRLEN];
   inet_ntop(AF_INET6, game_data.adr_mdiff, adr_mdiff, INET6_ADDRSTRLEN);
@@ -120,7 +158,7 @@ int main(int argc, char const *argv[]) {
 
   // On initialise ncurses
   init_ncurses();
-
+  int num = 0;
   while (1) {
 
     // On reçoit la grid de jeu
@@ -134,11 +172,18 @@ int main(int argc, char const *argv[]) {
 
     affiche(grid);
 
-    // Attend que l'utilisateur appuie sur une touche
-    getch();
+    ACT a = action_command();
+    if (a == A_QUIT) {
+      // Ferme la fenêtre
+      break;
+      endwin();
+    }
+    msg_game_t params = {grid.game_type, player.player_id, player.team, num, a};
+    uint32_t message = ms_game(params);
+    sendto(sock_client, &message, sizeof(message), 0,
+           (struct sockaddr *)&mc.adr, sizeof(mc.adr));
 
-    // Ferme la fenêtre
-    endwin();
+    num++;
 
     // Clear la fenêtre
     // clear();
@@ -405,9 +450,6 @@ int recv_msg_game_grid(msg_grid_t *grid, multicast_client_t mc) {
 
   // On récupère les données de la grid
   *grid = mg_game_grid(msg);
-
-  // Affichage du contenu de chaque case
-  puts("\033[31m recv_msg_game_grid... Affichage de la grille... \033[0m");
 
   // On libère la mémoire
   free(msg);
