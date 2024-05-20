@@ -117,26 +117,27 @@ int main(int argc, char **args) {
         else {
           // recv 2 octets
           uint16_t header;
-          header = ntohs(header);
           int bytes = recv(sock_client, &header, 2, 0);
 
-          msg_join_ready_t params = mg_ready(header);
-          printf("server.c: main(): codereq: %d\n", params.game_type);
-          // if (codereq == 13 || codereq == 14) {
-          // poll_tchat(sock_client, header);
-          //} else if (codereq == 4 || codereq == 5) {
-          int partie_index = poll_ready(sock_client, header);
+          header = ntohs(header);
+          int codereq = header >> 3;
+          // msg_join_ready_t params = mg_ready(header);
+          printf("server.c: main(): codereq: %d\n", codereq);
+          if (codereq == 13 || codereq == 14) {
+            poll_tchat(sock_client, header);
+          } else if (codereq == 3 || codereq == 4) {
+            int partie_index = poll_ready(sock_client, header);
 
-          // On vérifie si la partie est prête à être lancée
-          if (is_partie_ready(partie_index)) {
-            // TODO: Gestion des différentes parties (threads, ...)
-            printf("server.c: main(): poll socks: partie %d prête à être "
-                   "lancée\n",
-                   partie_index);
-            // TODO: On lance la partie
-            start_game(&srv.parties.parties[partie_index]);
+            // On vérifie si la partie est prête à être lancée
+            if (is_partie_ready(partie_index)) {
+              // TODO: Gestion des différentes parties (threads, ...)
+              printf("server.c: main(): poll socks: partie %d prête à être "
+                     "lancée\n",
+                     partie_index);
+              // TODO: On lance la partie
+              start_game(&srv.parties.parties[partie_index]);
+            }
           }
-          //}
         }
       }
     }
@@ -220,8 +221,8 @@ int create_TCP_connection(int port) {
  * @return 0 si tout s'est bien passé, -1 sinon.
  */
 int accept_client(client_t *client) {
-  /* Le serveur accepte une connexion et crée la socket de communication avec le
-   * client */
+  /* Le serveur accepte une connexion et crée la socket de communication avec
+   * le client */
   memset(&client->adr, 0, sizeof(client->adr));
   client->size = sizeof(client->adr);
 
@@ -335,7 +336,8 @@ int deconnect_client(int sock_client) {
 }
 
 /**
- * Vérifie si une partie est prête à être lancée, i.e si elle a 4 joueurs prêts.
+ * Vérifie si une partie est prête à être lancée, i.e si elle a 4 joueurs
+ * prêts.
  * @param partie_index L'index de la partie à vérifier.
  * @return 1 si la partie est prête, 0 sinon.
  */
@@ -443,7 +445,8 @@ int poll_join(int sock_client, int sock_index) {
 }
 
 /**
- * Gère les messages 'ready' des clients, en mettant à jour le statut du joueur.
+ * Gère les messages 'ready' des clients, en mettant à jour le statut du
+ * joueur.
  * @param sock_client La socket du client.
  * @return L'index de la partie dans la liste des parties si tout s'est bien
  * passé, -1 si le recv a échoué, -2 sinon.

@@ -53,11 +53,11 @@ int start_game(partie_t *partie) {
 
     /* ******** Reception action d'un joueur et actualisation grille ******** */
 
-    uint32_t msg;
-    recvfrom(partie->sock_mdiff, &msg, sizeof(msg), 0, NULL, NULL);
-    msg_game_t mg = mg_game(msg);
+    // uint32_t msg;
+    // recvfrom(partie->sock_mdiff, &msg, sizeof(msg), 0, NULL, NULL);
+    // msg_game_t mg = mg_game(msg);
 
-    action_player(board, mg.player_id, mg.action);
+    // action_player(board, mg.player_id, mg.action);
 
     /* ********** Gestion de la fin de la partie ********** */
 

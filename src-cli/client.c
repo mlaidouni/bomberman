@@ -136,7 +136,7 @@ int main(int argc, char const *argv[]) {
   int game_type;
   printf("Entrer 0 pour jouer à 4 joueurs, 1 pour jouer en équipes: ");
   scanf("%d", &game_type);
-  if (join_game(sock_client, game_type))
+  if (join_game(sock_client, game_type + 1))
     exit(EXIT_FAILURE); // En cas d'échec on exit, pour l'instant.
 
   /* ********** Gestion de la configuration de la partie ********** */
@@ -159,7 +159,7 @@ int main(int argc, char const *argv[]) {
     exit(EXIT_FAILURE); // En cas d'échec on exit, pour l'instant.
 
   // On s'annonce prêt à jouer au serveur
-  if (ready(sock_client, game_type, game_data.player_id, 0))
+  if (ready(sock_client, game_type + 3, game_data.player_id, 0))
     printf("game_type: %d, player_id: %d, team_id: %d\n", game_type,
            game_data.player_id, game_data.team_id);
 
