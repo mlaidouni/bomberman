@@ -51,7 +51,7 @@ int start_game(partie_t *partie) {
   } else {
 
       /*
-        Diffusion de la grille de jeu temporaire
+       * Diffusion de la grille de jeu temporaire
       */
 
   }
