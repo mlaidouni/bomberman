@@ -457,7 +457,7 @@ int poll_join(int sock_client, int sock_index) {
  */
 int poll_ready(int sock_client, uint16_t header) {
   // On reçoit le message
-  uint16_t message = header;
+  //uint16_t message = header;
 
   // Sinon, on décode le message
   /* TODO: Utiliser ça pour récupérer le joueur avec partie.joueurs[params.id]

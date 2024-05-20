@@ -180,7 +180,7 @@ int main(int argc, char const *argv[]) {
   /* ********** Gestion du choix de partie ********** */
 
   // On demande au joueur le type de partie qu'il veut rejoindre
-  int game_type = atoi(argv[1]); // TODELETE (debug)
+  int game_type;
   printf("Entrer 0 pour jouer à 4 joueurs, 1 pour jouer en équipes: \n");
   if (argc == 2)
     game_type = atoi(argv[1]);
@@ -515,8 +515,9 @@ int join_game(int sock_client, int game_type) {
   // Envoi du message
   int bytes = send_message(sock_client, &message, sizeof(message), "join_game");
   // Gestion des erreurs (en partie gérée par send_message())
-  if (bytes == -1)
+  if (bytes == -1) {
     return -1;
+  }
 
     return 0;
 }
