@@ -212,23 +212,32 @@ int main(int argc, char const *argv[]) {
       endwin();
 
       char buffer[100];
+      memset(buffer, 0, 100);
+
       printf("Enter a message: ");
       scanf("%s", buffer);
+      if (buffer[0] != 'b') {
 
-      msg_tchat_t params = {0, player.player_id, player.team, strlen(buffer),
-                            buffer};
+        msg_tchat_t params = {0, player.player_id, player.team, strlen(buffer),
+                              buffer};
+        uint8_t *message = ms_tchat(params);
+        send(sock_client, message, sizeof(uint8_t) * 5 + strlen(buffer), 0);
 
-      uint8_t *message = ms_tchat(params);
-      sendto(sock_client, message, sizeof(message), 0,
-             (struct sockaddr *)&mc.adr, sizeof(mc.adr));
+        memset(buffer, 0, 100);
+        uint8_t *mess;
+        recv(sock_client, mess, sizeof(uint8_t) * 5 + 100, 0);
+        msg_tchat_t msg = mg_tchat(mess);
+        // print en jaune
+        printf("\033[33mjoueur %d: %s\033[0m\n", msg.player_id, msg.data);
+        memset(buffer, 0, 100);
+      }
     }
 
-    msg_game_t params = {grid.game_type, player.player_id, player.team, num, a};
-    uint32_t message = ms_game(params);
-    sendto(sock_client, &message, sizeof(message), 0,
-           (struct sockaddr *)&mc.adr, sizeof(mc.adr));
+    /*msg_game_t params = {grid.game_type, player.player_id, player.team, num,
+    a}; uint32_t message = ms_game(params); sendto(sock_client, &message,
+    sizeof(message), 0, (struct sockaddr *)&mc.adr, sizeof(mc.adr));
 
-    num++;
+    num++;*/
 
     // Clear la fenêtre
     // clear();
