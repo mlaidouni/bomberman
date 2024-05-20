@@ -35,6 +35,7 @@ int update_mp(mp_t *mp, msg_game_t *mg);
 
 msg_grid_t init_msg_grid(partie_t *partie, board board);
 int recv_msg_game(msg_game_t *mg, int sock_mdiff);
+int send_game_grid(partie_t *partie, board board);
 
 /* ********** Fonctions de création & gestion de partie ********** */
 

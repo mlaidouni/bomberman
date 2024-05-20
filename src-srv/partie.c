@@ -28,6 +28,11 @@ int start_game(partie_t *partie) {
   struct timeval last_clock, start_clock, end_clock;
   last_clock.tv_sec = 0;
   gettimeofday(&start_clock, NULL);
+
+  // On envoie la grille complète une première fois
+  if (send_game_grid(partie, board) < 0)
+    return -1;
+
   // Tant que la partie n'est pas terminée
   while (partie->end) {
 
@@ -46,6 +51,9 @@ int start_game(partie_t *partie) {
 
     // Si on a recu un message sur la socket de multidiffusion
     if (partie->sock_mdiff & POLLIN) {
+
+      puts("\033[32mpartie.c: start_game(): Message reçu en "
+           "multidiffusion\033[0m");
 
       // On reçoit le message de jeu
       msg_game_t mg;
@@ -72,28 +80,9 @@ int start_game(partie_t *partie) {
     if ((start_clock.tv_sec - last_clock.tv_sec) >= 1) {
       last_clock = start_clock;
 
-      // On initialise la structure msg_grid_t avec la grille de jeu
-      msg_grid_t grid = init_msg_grid(partie, board);
-
-      // On convertit la structure en message
-      uint8_t *msg = ms_game_grid(grid);
-
-      // Envoi du message en multidiffusion à tous les joueurs
-      // FIX: magical number
-      size_t msgsz = grid.hauteur * grid.largeur * sizeof(uint8_t) + 6;
-
-      if (sendto(partie->sock_mdiff, msg, msgsz, 0,
-                 (struct sockaddr *)&partie->g_adr,
-                 sizeof(partie->g_adr)) < 0) {
-        perror("partie.c: start_game(): sendto()");
-        close(partie->sock_mdiff);
-        // On libère la mémoire
-        free(grid.grille);
-        free(msg);
+      if (send_game_grid(partie, board) < 0)
         return -1;
-      } else {
-        printf("partie.c: start_game(): Message envoyé en multidiffusion\n");
-      }
+
     } else {
 
       /*
@@ -268,6 +257,37 @@ int recv_msg_game(msg_game_t *mg, int sock_mdiff) {
 
   // On libère la mémoire
   free(msg);
+
+  return 0;
+}
+
+/**
+ * Envoie la grille de jeu en multidiffusion.
+ * @param partie La partie en cours.
+ * @param board La grille de jeu.
+ * @return 0 si tout s'est bien passé, -1 sinon.
+ */
+int send_game_grid(partie_t *partie, board board) {
+  // On initialise la structure msg_grid_t avec la grille de jeu
+  msg_grid_t grid = init_msg_grid(partie, board);
+
+  // On convertit la structure en message
+  uint8_t *msg = ms_game_grid(grid);
+
+  // Envoi du message en multidiffusion à tous les joueurs
+  // FIX: magical number
+  size_t msgsz = grid.hauteur * grid.largeur * sizeof(uint8_t) + 6;
+
+  if (sendto(partie->sock_mdiff, msg, msgsz, 0,
+             (struct sockaddr *)&partie->g_adr, sizeof(partie->g_adr)) < 0) {
+    perror("partie.c: start_game(): sendto()");
+    close(partie->sock_mdiff);
+    // On libère la mémoire
+    free(grid.grille);
+    free(msg);
+    return -1;
+  } else
+    printf("partie.c: start_game(): Message envoyé en multidiffusion\n");
 
   return 0;
 }
