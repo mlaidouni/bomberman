@@ -32,6 +32,10 @@ int get_grille(msg_grid_t grid, int x, int y) {
  * @param grid La grille à afficher.
  */
 void affiche(msg_grid_t grid) {
+  start_color();                        // Active les couleurs
+  init_pair(1, COLOR_RED, COLOR_BLACK); // Définit la paire de couleurs 1 pour
+                                        // être du texte rouge sur un fond noir
+
   int x, y;
   for (y = 0; y < grid.hauteur; y++) {
     for (x = 0; x < grid.largeur; x++) {
