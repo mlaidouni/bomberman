@@ -334,6 +334,10 @@ int create_partie(client_t client, msg_join_ready_t params) {
   j.client = client;
   j.id = partie.nb_joueurs;
 
+  // Si aucun joueur n'est en attente, on crée un tableau de joueurs
+  if (partie.nb_joueurs == 0)
+    partie.joueurs = malloc(sizeof(joueur_t));
+
   // On ajoute le joueur à la partie
   partie.joueurs[partie.nb_joueurs] = j;
 
@@ -380,6 +384,10 @@ int add_joueur(partie_t *partie, client_t client) {
   joueur_t j = {0};
   j.client = client;
   j.id = partie->nb_joueurs;
+
+  // On réalloue la mémoire pour le tableau de joueurs
+  partie->joueurs =
+      realloc(partie->joueurs, (partie->nb_joueurs + 1) * sizeof(joueur_t));
 
   // On ajoute le joueur à la partie
   partie->joueurs[partie->nb_joueurs] = j;
