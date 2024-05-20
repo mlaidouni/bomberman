@@ -40,35 +40,52 @@ void affiche(msg_grid_t grid) {
       switch (get_grille(grid, x, y)) {
       case 0:
         c = '_';
+
+        mvaddch(y + 1, 2 * x + 1, c);
         break;
       case 1:
         c = '|';
+
+        mvaddch(y + 1, 2 * x + 1, c);
         break;
       case 2:
         c = '#';
+
+        mvaddch(y + 1, 2 * x + 1, c);
         break;
       case 3:
-        c = '.';
+        attron(COLOR_PAIR(1)); // Commence à utiliser la paire de couleurs 1
+        c = 'X';
+        mvaddch(y + 1, 2 * x + 1, c);
+
+        attroff(COLOR_PAIR(1)); // Arrête d'utiliser la paire de couleurs 1
         break;
       case 4:
         c = '~';
+
+        mvaddch(y + 1, 2 * x + 1, c);
         break;
       case 5:
         c = '0';
+
+        mvaddch(y + 1, 2 * x + 1, c);
         break;
       case 6:
         c = '1';
+
+        mvaddch(y + 1, 2 * x + 1, c);
         break;
       case 7:
         c = '2';
+
+        mvaddch(y + 1, 2 * x + 1, c);
         break;
       case 8:
         c = '3';
+
+        mvaddch(y + 1, 2 * x + 1, c);
         break;
       }
-
-      // On affiche la case, avec un espace entre chaque case.
-      mvaddch(y + 1, 2 * x + 1, c);
     }
   }
   refresh();
@@ -159,11 +176,9 @@ int main(int argc, char const *argv[]) {
   /* ********** Gestion du choix de partie ********** */
 
   // On demande au joueur le type de partie qu'il veut rejoindre
-  int game_type; // TODELETE (debug)
+  int game_type = atoi(argv[1]); // TODELETE (debug)
   printf("Entrer 0 pour jouer à 4 joueurs, 1 pour jouer en équipes: \n");
-  if(argc == 2){
-    game_type = atoi(argv[1]);
-  } else {scanf("%d", &game_type);}
+  // scanf("%d", &game_type);
   if (join_game(sock_client, game_type + 1))
     exit(EXIT_FAILURE); // En cas d'échec on exit, pour l'instant.
 
