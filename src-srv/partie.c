@@ -1,6 +1,7 @@
 #include "partie.h"
 
 #include "../lib/constants.h"
+#include <sys/time.h>
 #include <unistd.h>
 
 /**
@@ -15,16 +16,16 @@ int start_game(partie_t *partie) {
   board board = {0};
   init_board(&board, partie->type);
 
-  unsigned long last_clock = 0;
-  unsigned long current_clock = 1000000;
+ struct timeval last_clock, start_clock, end_clock;
+  last_clock.tv_sec = 0;
+  gettimeofday(&start_clock, NULL);
   // Tant que la partie n'est pas terminée
   while (partie->end) {
     
     /* ********** Envoie de la grille complète ********** */
 
-    printf("partie.c: start_game(): Condition value: %ld\n", (current_clock - last_clock) / CLOCKS_PER_SEC);
-    if((current_clock - last_clock) / (1000000) >= 1) {
-      last_clock = current_clock;
+    if((start_clock.tv_sec - last_clock.tv_sec) >= 1) {
+      last_clock = start_clock;
 
     // On initialise la structure msg_grid_t avec la grille de jeu
     msg_grid_t grid = init_msg_grid(partie, board);
@@ -67,8 +68,12 @@ int start_game(partie_t *partie) {
     // TODO: Penser à gérer la fermeture des sockets des clients
     // ...
 
-    usleep(1000 * FREQ);
-    current_clock += 1000 * FREQ;
+    // On usleep le temps d'atteindre FREQ * 1000 microsecondes on fait une difference
+    // entre le temps actuel et le temps de debut de la boucle
+
+    gettimeofday(&end_clock, NULL);
+    usleep(FREQ * 1000 - (end_clock.tv_usec - start_clock.tv_usec));
+    gettimeofday(&start_clock, NULL);
   }
 
   return 0;
