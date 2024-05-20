@@ -51,7 +51,7 @@ void affiche(msg_grid_t grid) {
         c = '.';
         break;
       case 4:
-        c = 'x';
+        c = '~';
         break;
       case 5:
         c = '0';
@@ -79,7 +79,7 @@ void affiche_term(msg_grid_t grid) {
   for (y = 0; y < grid.hauteur; y++) {
     for (x = 0; x < grid.largeur; x++) {
 
-      printf("\033[33m%d\033[0m", get_grille(grid, x, y));
+      printf("\033[33m%d \033[0m", get_grille(grid, x, y));
     }
     printf("\n");
   }

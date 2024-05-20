@@ -68,7 +68,9 @@ int start_game(partie_t *partie) {
     update_mp(&mp, &mg);
 
     // On actualise la grille de jeu
-    action_player(board, mg.player_id, mg.action);
+    action_player(&board, mg.player_id, mg.action);
+
+    explode_bombs(&board);
 
     /* ********** Envoie de la grille complète ********** */
 
@@ -205,7 +207,7 @@ int update_mp(mp_t *mp, msg_game_t *mg) {
 
     // Pour chaque message de la liste, on affiche son numéro et l'action
     // effectuée
-    for (list_elem *n = move->out; n != NULL; n = n->next) {
+    for (list_elem *n = move->in; n != NULL; n = n->next) {
       msg_game_t *m = n->curr;
       printf("partie.c: update_mp(): \n\tJoueur n°%d \n\tMessage n°%d "
              "\n\taction %d\n",

@@ -49,8 +49,8 @@ typedef struct board {
 } board;
 
 int init_board(board *board, TYPE type);
-int action_player(board board, int player, ACT action);
-int explode_bombs(board boardc);
+int action_player(board *board, int player, ACT action);
+int explode_bombs(board *board);
 int winner(board board);
 
 #endif

@@ -44,16 +44,17 @@ int valid_pos(board board, pos p) {
   return p.x >= 0 && p.x < WIDTH && p.y >= 0 && p.y < HEIGHT;
 }
 
-int action_player(board board, int player, ACT action) {
+int action_player(board *board, int player, ACT action) {
   // Rappel: x <= BOMB_TILE signifie x est EMPTY_TILE ou x est BOMB_TILE
 
   assert(player >= 0 && player < NB_PLAYERS);
 
-  pos p = board.players[player].pos;
+  pos p = board->players[player].pos;
   switch (action) {
   case A_NORTH:
     if (p.y > 0) {
-      if (board.grid[p.x + (p.y - 1) * WIDTH] == BOMB_TILE || board.grid[p.x + (p.y - 1) * WIDTH] == EMPTY_TILE){
+      if (board->grid[p.x + (p.y - 1) * WIDTH] == BOMB_TILE ||
+          board->grid[p.x + (p.y - 1) * WIDTH] == EMPTY_TILE) {
         p.y--;
         break;
       }
@@ -61,7 +62,8 @@ int action_player(board board, int player, ACT action) {
     return -1;
   case A_SOUTH:
     if (p.y < HEIGHT - 1) {
-      if (board.grid[p.x + (p.y + 1) * WIDTH] == BOMB_TILE || board.grid[p.x + (p.y + 1) * WIDTH] == EMPTY_TILE){
+      if (board->grid[p.x + (p.y + 1) * WIDTH] == BOMB_TILE ||
+          board->grid[p.x + (p.y + 1) * WIDTH] == EMPTY_TILE) {
         p.y++;
         break;
       }
@@ -69,7 +71,8 @@ int action_player(board board, int player, ACT action) {
     return -1;
   case A_EAST:
     if (p.x > 0) {
-      if (board.grid[(p.x - 1) + p.y * WIDTH] == BOMB_TILE || board.grid[(p.x - 1) + p.y * WIDTH] == EMPTY_TILE){
+      if (board->grid[(p.x - 1) + p.y * WIDTH] == BOMB_TILE ||
+          board->grid[(p.x - 1) + p.y * WIDTH] == EMPTY_TILE) {
         p.x--;
         break;
       }
@@ -77,25 +80,26 @@ int action_player(board board, int player, ACT action) {
     return -1;
   case A_WEST:
     if (p.x < WIDTH - 1) {
-      if (board.grid[(p.x + 1) + p.y * WIDTH] == BOMB_TILE || board.grid[(p.x + 1) + p.y * WIDTH] == EMPTY_TILE){
+      if (board->grid[(p.x + 1) + p.y * WIDTH] == BOMB_TILE ||
+          board->grid[(p.x + 1) + p.y * WIDTH] == EMPTY_TILE) {
         p.x++;
         break;
       }
     }
     return -1;
   case A_BOMB:
-    if (valid_pos(board, p) && board.grid[p.x + p.y * WIDTH] == EMPTY_TILE) {
-      board.grid[p.x + p.y * WIDTH] = 'B';
+    if (valid_pos(*board, p) && board->grid[p.x + p.y * WIDTH] == EMPTY_TILE) {
+      board->grid[p.x + p.y * WIDTH] = 'B';
       bomb *b = malloc(sizeof(BOMB_TILE));
       *b = (bomb){p, clock()};
-      add_head(board.bombs, b);
+      add_head(board->bombs, b);
     } else
       return -1;
     break;
   default:
     return -1;
   }
-  board.players[player].pos = p;
+  board->players[player].pos = p;
   return 0;
 }
 
@@ -177,13 +181,13 @@ int explode_pos(board board, pos bomb_pos) {
  * Faire exploser toutes les bombes qui ont été posées il y a plus de 3 secondes
  * Renvoie 1 si toutes les bombes ont explosé, 0 sinon
  */
-int explode_bombs(board board) {
-  list_elem *n = board.bombs->out;
-  while ((n = board.bombs->out) != NULL) {
+int explode_bombs(board *board) {
+  list_elem *n = board->bombs->out;
+  while ((n = board->bombs->out) != NULL) {
     bomb *b = n->curr;
     if ((clock() - b->timer) / CLOCKS_PER_SEC >= 3) {
-      remove_tail(board.bombs);
-      explode_pos(board, b->pos);
+      remove_tail(board->bombs);
+      explode_pos(*board, b->pos);
       free(b);
     } else {
       return 0;
