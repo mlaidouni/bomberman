@@ -160,7 +160,8 @@ int main(int argc, char const *argv[]) {
 
   // On s'annonce prêt à jouer au serveur
   if (ready(sock_client, game_type, game_data.player_id, 0))
-    exit(EXIT_FAILURE); // En cas d'échec on exit, pour l'instant.
+    printf("game_type: %d, player_id: %d, team_id: %d\n", game_type,
+           game_data.player_id, game_data.team_id);
 
   /* ********** Gestion des messages de la partie... ********** */
 

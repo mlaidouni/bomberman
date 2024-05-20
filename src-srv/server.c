@@ -115,26 +115,28 @@ int main(int argc, char **args) {
         /* TODO: (plus tard on devra regarder les 2 premiers octets pour savoir
          * si c'est ready ou tchat) */
         else {
-          // On gère le message 'ready'
-          int partie_index = poll_ready(sock_client);
+          // recv 2 octets
+          uint16_t header;
+          header = ntohs(header);
+          int bytes = recv(sock_client, &header, 2, 0);
 
-          // Gestion des erreurs
-          if (partie_index == -1)
-            // Si recv échoue (renvoie -1 ou 0), on passe à la socket suivante.
-            break;
-          else if (partie_index == -2)
-            // Si init_partie ou send_game_data échoue, on exit (pour l'instant)
-            exit(EXIT_FAILURE);
+          msg_join_ready_t params = mg_ready(header);
+          printf("server.c: main(): codereq: %d\n", params.game_type);
+          // if (codereq == 13 || codereq == 14) {
+          // poll_tchat(sock_client, header);
+          //} else if (codereq == 4 || codereq == 5) {
+          int partie_index = poll_ready(sock_client, header);
 
           // On vérifie si la partie est prête à être lancée
           if (is_partie_ready(partie_index)) {
             // TODO: Gestion des différentes parties (threads, ...)
-            printf(
-                "server.c: main(): poll socks: partie %d prête à être lancée\n",
-                partie_index);
+            printf("server.c: main(): poll socks: partie %d prête à être "
+                   "lancée\n",
+                   partie_index);
             // TODO: On lance la partie
             start_game(&srv.parties.parties[partie_index]);
           }
+          //}
         }
       }
     }
@@ -446,26 +448,9 @@ int poll_join(int sock_client, int sock_index) {
  * @return L'index de la partie dans la liste des parties si tout s'est bien
  * passé, -1 si le recv a échoué, -2 sinon.
  */
-int poll_ready(int sock_client) {
+int poll_ready(int sock_client, uint16_t header) {
   // On reçoit le message
-  uint16_t message;
-  // FIXME: boucler sur le recv pour être sûr de tout recevoir
-  int bytes = recv(sock_client, &message, sizeof(message), 0);
-
-  // Gestion des erreurs
-  if (bytes < 0) {
-    // On déconnecte le client
-    deconnect_client(sock_client);
-    perror("server.c: poll_ready: recv()");
-    return -1; // Si ça se passe mal, on ira a la socket suivante
-  }
-  // Si le client s'est déconnecté
-  if (!bytes) {
-    puts("server.c: poll_ready: client déconnecté !");
-    // On déconnecte le client
-    deconnect_client(sock_client);
-    return -1; // Si ça se passe mal, on ira a la socket suivante
-  }
+  uint16_t message = header;
 
   // Sinon, on décode le message
   /* TODO: Utiliser ça pour récupérer le joueur avec partie.joueurs[params.id]
@@ -500,12 +485,18 @@ int poll_ready(int sock_client) {
   return partie_index;
 }
 
-int poll_tchat(int sock_client) {
+int poll_tchat(int sock_client, uint16_t header) {
   uint8_t *message;
-  int r = 0;
-  while (r < 3) {
-    r += recv(sock_client, message + r, 3 - r, 0);
+  message = malloc(3);
+  message[0] = header >> 8;
+  message[1] = header;
+
+  int r = recv(sock_client, message + 2, 1, 0);
+  if (r < 0) {
+    perror("server.c: poll_tchat: recv()");
+    return -1;
   }
+
   int len = message[2];
   r = 0;
   while (r < len) {
