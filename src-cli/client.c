@@ -165,9 +165,11 @@ int main(int argc, char const *argv[]) {
 
   /* ********** Gestion des messages de la partie... ********** */
 
-  struct pollfd fds[1];
+  struct pollfd fds[2];
   fds[0].fd = mc.sock;
   fds[0].events = POLLIN;
+  fds[1].fd = sock_client;
+  fds[1].events = POLLIN;
 
   // On reçoit la grid de jeu
   msg_grid_t grid;
@@ -183,7 +185,7 @@ int main(int argc, char const *argv[]) {
   int num = 0;
   while (1) {
     // On attend un message de la partie
-    int r = poll(fds, 1, FREQ * 10);
+    int r = poll(fds, 2, FREQ * 10);
 
     // Gestion des erreurs
     if (r == -1) {
@@ -192,6 +194,7 @@ int main(int argc, char const *argv[]) {
     }
 
     if (fds[0].revents & POLLIN) {
+
       if (recv_msg_game_grid(&grid, mc))
         exit(EXIT_FAILURE); // En cas d'échec on exit, pour l'instant.
 
@@ -200,6 +203,27 @@ int main(int argc, char const *argv[]) {
       // exit(EXIT_FAILURE);
       init_ncurses();
       affiche(grid);
+    }
+    char buffer[100];
+
+    if (fds[1].revents & POLLIN) {
+      puts("Message reçu");
+
+      memset(buffer, 0, 100);
+      uint8_t *mess = malloc(sizeof(uint8_t) * 5 + 100);
+      int r = recv(sock_client, mess, sizeof(uint8_t) * 5 + 100, 0);
+      if (r == -1) {
+        perror("client.c: main: recv()");
+        exit(EXIT_FAILURE);
+      }
+
+      printf("Message reçu: %d\n", r);
+      printf("Message reçu: %s\n", mess);
+
+      msg_tchat_t msg = mg_tchat(mess);
+      // print en jaune
+      fprintf(stdin, "\033[33mjoueur %d: %s\033[0m\n", msg.player_id, msg.data);
+      memset(buffer, 0, 100);
     }
 
     ACT a = action_command();
@@ -211,25 +235,24 @@ int main(int argc, char const *argv[]) {
     if (a == A_TCHAT) {
       endwin();
 
-      char buffer[100];
       memset(buffer, 0, 100);
 
       printf("Enter a message: ");
       scanf("%s", buffer);
       if (buffer[0] != 'b') {
 
-        msg_tchat_t params = {0, player.player_id, player.team, strlen(buffer),
-                              buffer};
+        msg_tchat_t params = {game_type + 13, player.player_id, player.team,
+                              strlen(buffer), buffer};
         uint8_t *message = ms_tchat(params);
-        send(sock_client, message, sizeof(uint8_t) * 5 + strlen(buffer), 0);
+        int r =
+            send(sock_client, message, sizeof(uint8_t) * 5 + strlen(buffer), 0);
 
-        memset(buffer, 0, 100);
-        uint8_t *mess;
-        recv(sock_client, mess, sizeof(uint8_t) * 5 + 100, 0);
-        msg_tchat_t msg = mg_tchat(mess);
-        // print en jaune
-        printf("\033[33mjoueur %d: %s\033[0m\n", msg.player_id, msg.data);
-        memset(buffer, 0, 100);
+        if (r == -1) {
+          perror("client.c: main: send()");
+          exit(EXIT_FAILURE);
+        }
+
+        printf("Envoyé: %d", r);
       }
     }
 

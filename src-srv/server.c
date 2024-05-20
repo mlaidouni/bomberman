@@ -134,7 +134,7 @@ int main(int argc, char **args) {
               printf("server.c: main(): poll socks: partie %d prête à être "
                      "lancée\n",
                      partie_index);
-              // TODO: On lance la partie
+              // TODO: On lance la partie 
               start_game(&srv.parties.parties[partie_index]);
             }
           }
@@ -489,6 +489,8 @@ int poll_ready(int sock_client, uint16_t header) {
 }
 
 int poll_tchat(int sock_client, uint16_t header) {
+  printf("\033[31m alooooo \033[0m\n");
+
   uint8_t *message;
   message = malloc(3);
   message[0] = header >> 8;
@@ -500,12 +502,16 @@ int poll_tchat(int sock_client, uint16_t header) {
     return -1;
   }
 
+  printf("\033[31m server.c: poll_tchat: message reçu: %d \033[0m\n", r);
+
   int len = message[2];
   r = 0;
   while (r < len) {
     r += recv(sock_client, message + 2 + r, len - r, 0);
   }
+
   printf("server.c: poll_tchat: message reçu: %s\n", message + 3);
+
   partie_t *partie = &srv.parties.parties[get_partie(sock_client)];
   for (int i = 0; i < partie->nb_joueurs; i++) {
     send(partie->joueurs[i].client.sock, message, 3 + len, 0);
