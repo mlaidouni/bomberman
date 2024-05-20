@@ -115,17 +115,21 @@ int main(int argc, char **args) {
         /* TODO: (plus tard on devra regarder les 2 premiers octets pour savoir
          * si c'est ready ou tchat) */
         else {
-          // recv 2 octets
+          // On récupère le header du message
           uint16_t header;
-          int bytes = recv(sock_client, &header, 2, 0);
+          int codereq = poll_ready_tchat(sock_client, &header);
 
-          header = ntohs(header);
-          int codereq = header >> 3;
-          // msg_join_ready_t params = mg_ready(header);
-          printf("server.c: main(): codereq: %d\n", codereq);
-          if (codereq == 13 || codereq == 14) {
+          // Gestion des erreurs
+          if (codereq < 0)
+            // Si recv échoue (renvoie -1 ou 0), on passe à la socket suivante.
+            break;
+
+          // Si c'est un message tchat
+          if (codereq == 13 || codereq == 14)
             poll_tchat(sock_client, header);
-          } else if (codereq == 3 || codereq == 4) {
+
+          // Si c'est un message readys
+          else if (codereq == 3 || codereq == 4) {
             int partie_index = poll_ready(sock_client, header);
 
             // On vérifie si la partie est prête à être lancée
@@ -134,7 +138,7 @@ int main(int argc, char **args) {
               printf("server.c: main(): poll socks: partie %d prête à être "
                      "lancée\n",
                      partie_index);
-              // TODO: On lance la partie 
+              // TODO: On lance la partie
               start_game(&srv.parties.parties[partie_index]);
             }
           }
@@ -517,6 +521,44 @@ int poll_tchat(int sock_client, uint16_t header) {
     send(partie->joueurs[i].client.sock, message, 3 + len, 0);
   }
   return 0;
+}
+
+/**
+ * Récupère le header d'un message 'tchat' ou 'ready'.
+ * @param sock_client La socket du client.
+ * @param message Le message reçu.
+ * @return Le codereq du message reçu si tout s'est bien passé, -1 sinon.
+ */
+int poll_ready_tchat(int sock_client, uint16_t *message) {
+  // On stock le message reçu dans un buffer
+  uint16_t header;
+  // FIXME: boucler sur le recv pour être sûr de tout recevoir
+  int bytes = recv(sock_client, &header, sizeof(header), 0);
+
+  // Gestion des erreurs
+  if (bytes < 0) {
+    // On déconnecte le client
+    deconnect_client(sock_client);
+    perror("server.c: poll_ready_tchat: recv()");
+    return -1; // Si ça se passe mal, on ira a la socket suivante
+  }
+  // Si le client s'est déconnecté
+  if (!bytes) {
+    puts("server.c: poll_ready_tchat: client déconnecté !");
+    // On déconnecte le client
+    deconnect_client(sock_client);
+    return -1; // Si ça se passe mal, on ira a la socket suivante
+  }
+
+  // On stock le message reçu pour le transmettre au serveur
+  memcpy(message, &header, sizeof(header));
+
+  // On récupère la valeur du codereq
+  header = ntohs(header);
+  int codereq = header >> 3;
+  printf("\033[37m server.c: poll_ready_tchat: codereq: %d\033[0m\n", codereq);
+
+  return codereq;
 }
 
 /* ********** Fonctions utilitaires ********** */

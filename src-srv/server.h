@@ -84,6 +84,7 @@ int poll_accept();
 int poll_join(int sock_client, int sock_index);
 int poll_ready(int sock_client, uint16_t header);
 int poll_tchat(int sock_client, uint16_t header);
+int poll_ready_tchat(int sock_client, uint16_t *message);
 
 /* ********** Fonctions utilitaires ********** */
 void init_msg_game_data(partie_t partie, msg_game_data_t *game_data);
