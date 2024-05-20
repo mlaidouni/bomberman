@@ -159,9 +159,11 @@ int main(int argc, char const *argv[]) {
   /* ********** Gestion du choix de partie ********** */
 
   // On demande au joueur le type de partie qu'il veut rejoindre
-  int game_type = atoi(argv[1]); // TODELETE (debug)
+  int game_type; // TODELETE (debug)
   printf("Entrer 0 pour jouer à 4 joueurs, 1 pour jouer en équipes: \n");
-  // scanf("%d", &game_type);
+  if(argc == 2){
+    game_type = atoi(argv[1]);
+  } else {scanf("%d", &game_type);}
   if (join_game(sock_client, game_type + 1))
     exit(EXIT_FAILURE); // En cas d'échec on exit, pour l'instant.
 

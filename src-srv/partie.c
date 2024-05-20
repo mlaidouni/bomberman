@@ -53,13 +53,15 @@ int start_game(partie_t *partie) {
 
     // On reçoit le message de jeu
     msg_game_t mg;
-    r = recv_msg_game(&mg, mp.partie->sock_mdiff);
-    // Gestion des erreurs
-    if (r < 0) {
-      perror("partie.c: start_game(): recv_msg_game()");
-      return -1;
+    if(r != 0) {
+      r = recv_msg_game(&mg, mp.partie->sock_mdiff);
+    
+      // Gestion des erreurs
+      if (r < 0) {
+        perror("partie.c: start_game(): recv_msg_game()");
+        return -1;
+      }
     }
-
     printf(
         "\033[36m -> partie.c: start_game(): Message reçu: %d %d %d\033[0m\n",
         mg.player_id, mg.action, mg.num);
@@ -70,12 +72,17 @@ int start_game(partie_t *partie) {
     // On actualise la grille de jeu
     action_player(&board, mg.player_id, mg.action);
 
+   // Liberer les listes de move et bomb du joueur
+// Les deux lignes suivantes buguent
+    mp.move[mg.player_id] = init_list();
+    mp.bomb[mg.player_id] = init_list();
+
     explode_bombs(&board);
 
     /* ********** Envoie de la grille complète ********** */
 
     // Si une seconde s'est écoulée, on envoie la grille en multidiffusion
-    if ((start_clock.tv_sec - last_clock.tv_sec) >= 1) {
+    if ((start_clock.tv_sec - last_clock.tv_sec) >= 1 || 1) { // FIXME: enlever le || 1
       last_clock = start_clock;
 
       if (send_game_grid(partie, board) < 0)
@@ -177,7 +184,7 @@ int update_mp(mp_t *mp, msg_game_t *mg) {
   // list *bomb = mp->bomb[player_id];
 
   // Si l'action est une annulation, on modifie les listes bomb ou move
-  if (action == 5) {
+  if (action == A_NONE) {
     puts("\033[32m-> partie.c: update_mp(): Annulation...\033[0m");
     msg_game_t *last_move = get_last_msg(mp->move[player_id]);
     msg_game_t *last_bomb = get_last_msg(mp->bomb[player_id]);
@@ -189,15 +196,15 @@ int update_mp(mp_t *mp, msg_game_t *mg) {
     free(msg);
   }
   // Si l'action effectuée n'est pas un déplacement, on modifie la list bomb
-  else if (action == 4) {
+  else if (action == A_BOMB) {
     puts("\033[32m-> partie.c: update_mp(): Bombe...\033[0m");
     add_head(mp->bomb[player_id], msg);
-  } else if (action == 100) { // FIXME: Remettre à 6
+  } else if (action == A_QUIT) { // FIXME: Remettre à 6
     puts("\033[32m-> partie.c: update_mp(): Msg...\033[0m");
     add_head(mp->bomb[player_id], msg);
   }
   // Sinon, on travaille sur la liste move
-  else if (0 <= action && action <= 3) {
+  else if (A_NORTH <= action && action <= A_WEST) {
 
     // On récupère la liste de mouvements du joueur
     // list *move = mp->move[player_id];
@@ -207,12 +214,12 @@ int update_mp(mp_t *mp, msg_game_t *mg) {
 
     // Pour chaque message de la liste, on affiche son numéro et l'action
     // effectuée
-    for (list_elem *n = move->in; n != NULL; n = n->next) {
+    /*for (list_elem *n = move->in; n != NULL; n = n->next) {
       msg_game_t *m = n->curr;
       printf("partie.c: update_mp(): \n\tJoueur n°%d \n\tMessage n°%d "
              "\n\taction %d\n",
              m->player_id, m->num, m->action);
-    }
+    }*/
 
   } else {
     printf("\033[31m partie.c: update_mp(): Action invalide\033[0m\n");
@@ -265,7 +272,7 @@ msg_grid_t init_msg_grid(partie_t *partie, board board) {
  */
 int recv_msg_game(msg_game_t *mg, int sock_mdiff) {
   uint32_t *msg = malloc(sizeof(uint32_t));
-  int r = recvfrom(sock_mdiff, msg, sizeof(msg), 0, NULL, NULL);
+  int r = recvfrom(sock_mdiff, msg, sizeof(uint32_t), 0, NULL, NULL);
 
   // Gestion des erreurs
   if (r < 0) {

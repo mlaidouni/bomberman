@@ -16,6 +16,7 @@ list *init_list();
 void free_list(list *list);
 
 int add_head(list *list, void *b);
+int length(list *list);
 int remove_tail(list *list);
 int remove_head(list *list);
 int remove_elem(list *list, void *b);

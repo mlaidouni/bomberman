@@ -5,12 +5,14 @@
 
 list *init_list() {
   list *l = malloc(sizeof(list));
+  l->in = NULL;
+  l->out = NULL;
   return l;
 }
 
 void free_list_elem(list_elem *e) {
   if (e != NULL) {
-    free(e);
+    //free(e);
   }
 }
 
@@ -27,8 +29,18 @@ void free_list(list *l) {
   free(l);
 }
 
+int length(list *list) {
+  int len = 0;
+  list_elem *curr_elem = list->in;
+  while (curr_elem != NULL) {
+    len++;
+    curr_elem = curr_elem->next;
+  }
+  return len;
+}
+
 int add_head(list *list, void *b) {
-  list_elem *new_list_elem = malloc(sizeof(list));
+  list_elem *new_list_elem = malloc(sizeof(list_elem));
   new_list_elem->curr = b;
   new_list_elem->prev = NULL;
   if (list->in == NULL) {
@@ -70,6 +82,9 @@ int remove_tail(list *list) {
       list->out = prev;
       return 0;
     }
+    free(list->out);
+    list->in = NULL;
+    list->out = NULL;
     return 1;
   }
   return 2;
@@ -88,6 +103,10 @@ int remove_elem(list *list, void *b) {
     exit(101);
   }
   list_elem *curr_elem = list->in;
+  if (list->in == NULL) {
+    return -1;
+  }
+  
   do {
     if (curr_elem->curr == b) {
       if (curr_elem->prev != NULL) {

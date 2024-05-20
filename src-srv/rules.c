@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 uint8_t labyrinth[20][20] = {
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -27,7 +28,6 @@ uint8_t labyrinth[20][20] = {
 int init_board(board *board, TYPE type) {
   board->type = type;
 
-  memcpy(board->grid, labyrinth, sizeof(labyrinth) * sizeof(uint8_t));
   // On crée une board par défaut avec des murs destructibles et indescructibles
   memcpy(board->grid, labyrinth, sizeof(labyrinth) * sizeof(uint8_t));
 
@@ -89,10 +89,13 @@ int action_player(board *board, int player, ACT action) {
     return -1;
   case A_BOMB:
     if (valid_pos(*board, p) && board->grid[p.x + p.y * WIDTH] == EMPTY_TILE) {
-      board->grid[p.x + p.y * WIDTH] = 'B';
-      bomb *b = malloc(sizeof(BOMB_TILE));
-      *b = (bomb){p, clock()};
+      //printf("Bomb placed at %d %d\n", p.x, p.y);
+      board->grid[p.x + p.y * WIDTH] = BOMB_TILE;
+      bomb *b = malloc(sizeof(bomb));
+      b->pos = p;
+      gettimeofday(&(b->timer), NULL);
       add_head(board->bombs, b);
+      //printf("Bombes dans la liste: %d\n", length(board->bombs));
     } else
       return -1;
     break;
@@ -115,30 +118,30 @@ bomb *get_bomb_pos_list(board board, pos p) {
   return NULL;
 }
 
-int explode_pos(board board, pos bomb_pos);
+int explode_pos(board *board, pos bomb_pos);
 
 /*
  * Endommager la position donnée
  */
-int damage_pos(board board, pos p) {
-  if (!valid_pos(board, p)) {
+int damage_pos(board *board, pos p) {
+  if (!valid_pos(*board, p)) {
     return -1;
   }
-  if (board.grid[p.x + p.y * WIDTH] == BOMB_TILE) {
-    remove_elem(board.bombs, get_bomb_pos_list(board, p));
+  if (board->grid[p.x + p.y * WIDTH] == BOMB_TILE) {
+    remove_elem(board->bombs, get_bomb_pos_list(*board, p));
     explode_pos(board, p);
     return 0;
   }
-  if (board.grid[p.x + p.y * WIDTH] == DEST_WALL_TILE) {
-    board.grid[p.x + p.y * WIDTH] = EMPTY_TILE;
+  if (board->grid[p.x + p.y * WIDTH] == DEST_WALL_TILE) {
+    board->grid[p.x + p.y * WIDTH] = EMPTY_TILE;
     return 1;
   }
-  if (board.grid[p.x + p.y * WIDTH] == INDEST_WALL_TILE) {
+  if (board->grid[p.x + p.y * WIDTH] == INDEST_WALL_TILE) {
     return 2;
   }
   for (int i = 0; i < NB_PLAYERS; i++) {
-    if (board.players[i].pos.x == p.x && board.players[i].pos.y == p.y) {
-      board.players[i].status = DEAD;
+    if (board->players[i].pos.x == p.x && board->players[i].pos.y == p.y) {
+      board->players[i].status = DEAD;
     }
   }
   return 0;
@@ -147,11 +150,13 @@ int damage_pos(board board, pos p) {
 /*
  * Commencer une explosion à la position donnée
  */
-int explode_pos(board board, pos bomb_pos) {
-  if (!valid_pos(board, bomb_pos) ||
-      board.grid[bomb_pos.x + bomb_pos.y * WIDTH] != BOMB_TILE)
-    return -1;
-  board.grid[bomb_pos.x + bomb_pos.y * WIDTH] = EMPTY_TILE;
+int explode_pos(board *board, pos bomb_pos) {
+  if (!valid_pos(*board, bomb_pos) ||
+      board->grid[bomb_pos.x + bomb_pos.y * WIDTH] != BOMB_TILE) {
+        printf("soucis----------------------------\n");
+        return -1;
+      }
+  board->grid[bomb_pos.x + bomb_pos.y * WIDTH] = EMPTY_TILE;
 
   if (!damage_pos(board, (pos){bomb_pos.x - 1, bomb_pos.y})) {
     damage_pos(board, (pos){bomb_pos.x - 2, bomb_pos.y});
@@ -182,13 +187,19 @@ int explode_pos(board board, pos bomb_pos) {
  * Renvoie 1 si toutes les bombes ont explosé, 0 sinon
  */
 int explode_bombs(board *board) {
+  //printf("appel a explode bombs\n");
   list_elem *n = board->bombs->out;
   while ((n = board->bombs->out) != NULL) {
+    printf("bomb while yeah\n");
     bomb *b = n->curr;
-    if ((clock() - b->timer) / CLOCKS_PER_SEC >= 3) {
-      remove_tail(board->bombs);
-      explode_pos(*board, b->pos);
-      free(b);
+    struct timeval now;
+    gettimeofday(&now, NULL);
+    if ((now.tv_sec - (b->timer).tv_sec) >= 3) {
+      int err;
+      if((err = remove_tail(board->bombs))) printf("remove_tail failed: %d\n", err);
+      explode_pos(board, b->pos);
+      printf("Bomb exploded at %d %d\n", b->pos.x, b->pos.y);
+      //free(b);
     } else {
       return 0;
     }
