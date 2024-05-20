@@ -109,9 +109,10 @@ int main(int argc, char const *argv[]) {
 
   // affiche_data_partie(&game_data, adr_mdiff); // TODELETE: debug
 
-  // Abonnement à l'adresse de multicast
+  /* Configuration de l'envoie et réception UDP (abonnement à l'adresse de
+   * multicast + adresse d'envoie de messages) */
   multicast_client_t mc;
-  if (abonnement_mdiff(&mc, adr_mdiff, game_data.port_mdiff))
+  if (config_udp(&mc, adr_mdiff, game_data))
     exit(EXIT_FAILURE); // En cas d'échec on exit, pour l'instant.
 
   // On s'annonce prêt à jouer au serveur
@@ -164,23 +165,15 @@ int main(int argc, char const *argv[]) {
       endwin();
     }
 
-    printf("Action: %d\n", a); // TODELETE: debug
     msg_game_t params = {grid.game_type, player.player_id, player.team, num, a};
     uint32_t message = ms_game(params);
 
-    printf("\033[37m-> message: %d\n\033[0m", message);       // TODELETE: debug
-    printf("\033[35m-> size: %ld\n\033[0m", sizeof(message)); // TODELETE: debug
-
     r = sendto(mc.sock, &message, sizeof(message), 0,
-               (struct sockaddr *)&mc.adr, sizeof(mc.adr));
+               (struct sockaddr *)&mc.s_adr, sizeof(mc.s_adr));
     if (r == -1) {
       perror("client.c: main: sendto()");
       exit(EXIT_FAILURE);
     }
-
-    printf("\033[32m-> envoyé: %d\n\033[0m", r); // TODELETE: debug
-    // FIXME JE ME SUIS ARRETE ICI. LE SENDTO RENVOIE RIEN. VOIR SI C PAS UN PB
-    // DE MALLOC DASN MS_GAME_T
 
     num++;
 
@@ -275,23 +268,25 @@ int connect_to_server(int port) {
 }
 
 /**
- * Abonne un client à un groupe multicast.*
- * @param mc Structure contenant les informations de connexion du client.
- * @param adr_mdiff L'adresse du groupe multicast.
- * @param port_mdiff Le port du groupe multicast.
- * @return 0 si l'abonnement a réussi, -1 sinon.
+ * Configure la socket UDP pour la communication multicast.
+ * @param mc La structure multicast.
+ * @param adr_mdiff L'adresse de multidiffusion.
+ * @param game_data Les données de la partie.
+ * @return 0 si tout s'est bien passé, -1 sinon.
  */
-int abonnement_mdiff(multicast_client_t *mc, char *adr_mdiff, int port_mdiff) {
+int config_udp(multicast_client_t *mc, char *adr_mdiff,
+               msg_game_data_t game_data) {
   // Variables d'erreur
   int r;
 
-  // Initialisation de l'adresse
-  memset(&mc->adr, 0, sizeof(mc->adr));
+  // Initialisation des adresses
+  memset(&mc->r_adr, 0, sizeof(mc->r_adr));
+  memset(&mc->s_adr, 0, sizeof(mc->s_adr));
 
   // Déclarer la socket
   mc->sock = socket(PF_INET6, SOCK_DGRAM, 0);
   if (mc->sock == -1) {
-    perror("client.c: abonnement_mdiff(): socket(): création socket failed");
+    perror("client.c: config_udp(): socket(): création socket failed");
     return -1;
   }
 
@@ -299,20 +294,26 @@ int abonnement_mdiff(multicast_client_t *mc, char *adr_mdiff, int port_mdiff) {
   int o = 1;
   r = setsockopt(mc->sock, SOL_SOCKET, SO_REUSEADDR, &o, sizeof(o));
   if (r < 0) {
-    perror("client.c: abonnement_mdiff(): setsockopt(): REUSEADDR échoué");
+    perror("client.c: config_udp(): setsockopt(): REUSEADDR échoué");
     return -1;
   }
 
   // Initialisation de l'adresse de réception
-  memset(&mc->adr, 0, sizeof(mc->adr));
-  mc->adr.sin6_family = AF_INET6;
-  mc->adr.sin6_addr = in6addr_any;
-  mc->adr.sin6_port = htons(port_mdiff);
+  memset(&mc->r_adr, 0, sizeof(mc->r_adr));
+  mc->r_adr.sin6_family = AF_INET6;
+  mc->r_adr.sin6_addr = in6addr_any;
+  mc->r_adr.sin6_port = htons(game_data.port_mdiff);
+
+  // Initialisation de l'adresse d'envoi
+  memset(&mc->s_adr, 0, sizeof(mc->s_adr));
+  mc->s_adr.sin6_family = AF_INET6;
+  mc->s_adr.sin6_port = htons(game_data.port_udp);
+  inet_pton(AF_INET6, adr_mdiff, &mc->s_adr.sin6_addr);
 
   // On lie la socket à l'adresse de réception (port multicast)
-  r = bind(mc->sock, (struct sockaddr *)&mc->adr, sizeof(struct sockaddr_in6));
+  r = bind(mc->sock, (struct sockaddr *)&mc->r_adr, sizeof(mc->r_adr));
   if (r < 0) {
-    perror("client.c: abonnement_mdiff(): bind(): bind socket au port failed");
+    perror("client.c: config_udp(): bind(): bind socket au port failed");
     close(mc->sock);
     return -1;
   }
@@ -327,7 +328,7 @@ int abonnement_mdiff(multicast_client_t *mc, char *adr_mdiff, int port_mdiff) {
   socklen_t len = sizeof(mc->grp);
   r = setsockopt(mc->sock, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mc->grp, len);
   if (r < 0) {
-    perror("client.c: abonnement_mdiff(): setsockopt: abonnement échoué");
+    perror("client.c: config_udp(): setsockopt: abonnement échoué");
     close(mc->sock);
     return -1;
   }
@@ -482,10 +483,11 @@ int recv_msg_game_grid(msg_grid_t *grid, multicast_client_t mc) {
   // IDEA: On peut transmettre cette info dans les msg TCP précédents
   int len = sizeof(uint8_t) * (6 + HEIGHT * WIDTH);
   uint8_t *msg = malloc(len);
-  socklen_t len_adr = sizeof(mc.adr);
+  socklen_t len_adr = sizeof(mc.r_adr);
 
   // Réception des données
-  int r = recvfrom(mc.sock, msg, len, 0, (struct sockaddr *)&mc.adr, &len_adr);
+  int r =
+      recvfrom(mc.sock, msg, len, 0, (struct sockaddr *)&mc.r_adr, &len_adr);
 
   //  Gestions des erreurs
   if (!r || r < 0) {
@@ -505,10 +507,11 @@ int recv_msg_game_grid(msg_grid_t *grid, multicast_client_t mc) {
 int recv_msg_grid_tmp(msg_grid_t *grid, multicast_client_t mc) {
   int len = sizeof(uint8_t) * 5 + (HEIGHT * WIDTH * 3);
   uint8_t *msg = malloc(len);
-  socklen_t len_adr = sizeof(mc.adr);
+  socklen_t len_adr = sizeof(mc.r_adr);
 
   // Réception des données
-  int r = recvfrom(mc.sock, msg, len, 0, (struct sockaddr *)&mc.adr, &len_adr);
+  int r =
+      recvfrom(mc.sock, msg, len, 0, (struct sockaddr *)&mc.r_adr, &len_adr);
 
   //  Gestions des erreurs
   if (!r || r < 0) {
