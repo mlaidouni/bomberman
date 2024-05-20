@@ -159,14 +159,17 @@ int update_mp(mp_t *mp, msg_game_t *mg) {
 
   // Si l'action est une annulation, on modifie les listes bomb ou move
   if (action == 5) {
+    puts("\033[32m-> partie.c: update_mp(): Annulation...\033[0m");
     // ...
   }
   // Si l'action effectuée n'est pas un déplacement, on modifie la list bomb
   else if (action == 4) {
+    puts("\033[32m-> partie.c: update_mp(): Bombe...\033[0m");
     // ...
   }
   // Sinon, on travaille sur la liste move
   else if (0 <= action && action <= 3) {
+    puts("\033[32m-> partie.c: update_mp(): Déplacement...\033[0m");
 
     // On récupère la liste de mouvements du joueur
     list *move = mp->move[player_id];
