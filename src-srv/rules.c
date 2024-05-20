@@ -54,7 +54,7 @@ int action_player(board board, int player, ACTION action) {
   switch (action) {
   case A_UP:
     if (p.y > 0) {
-      if (board.grid[p.x + (p.y - 1) * WIDTH] <= BOMB_TILE) {
+      if (board.grid[p.x + (p.y - 1) * WIDTH] == BOMB_TILE || board.grid[p.x + (p.y - 1) * WIDTH] == EMPTY_TILE){
         p.y--;
         break;
       }
@@ -62,7 +62,7 @@ int action_player(board board, int player, ACTION action) {
     return -1;
   case A_DOWN:
     if (p.y < HEIGHT - 1) {
-      if (board.grid[p.x + (p.y + 1) * WIDTH] <= BOMB_TILE) {
+      if (board.grid[p.x + (p.y + 1) * WIDTH] == BOMB_TILE || board.grid[p.x + (p.y + 1) * WIDTH] == EMPTY_TILE){
         p.y++;
         break;
       }
@@ -70,7 +70,7 @@ int action_player(board board, int player, ACTION action) {
     return -1;
   case A_LEFT:
     if (p.x > 0) {
-      if (board.grid[(p.x - 1) + p.y * WIDTH] <= BOMB_TILE) {
+      if (board.grid[(p.x - 1) + p.y * WIDTH] == BOMB_TILE || board.grid[(p.x - 1) + p.y * WIDTH] == EMPTY_TILE){
         p.x--;
         break;
       }
@@ -78,7 +78,7 @@ int action_player(board board, int player, ACTION action) {
     return -1;
   case A_RIGHT:
     if (p.x < WIDTH - 1) {
-      if (board.grid[(p.x + 1) + p.y * WIDTH] <= BOMB_TILE) {
+      if (board.grid[(p.x + 1) + p.y * WIDTH] == BOMB_TILE || board.grid[(p.x + 1) + p.y * WIDTH] == EMPTY_TILE){
         p.x++;
         break;
       }
