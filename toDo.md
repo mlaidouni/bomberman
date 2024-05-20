@@ -1,5 +1,36 @@
 # Todo
 
+@workspace Comment puis-je configurer correctement la communication entre le client et le serveur (#file:partie.c ) pour éviter le blocage lors de la réception des données côté serveur et côté client ?
+
+Le protocle de communication est le suivant:
+
+Une fois que tous les joueurs se sont déclarés prêts, le serveur (#file:server.c ) va lancer la fonction `start_game` de #file:partie.c .
+
+Le serveur (donc `start_game` dans `partie.c`) multidiffuse la grille initiale à tous les joueurs.
+
+À tout moment pendant la partie, le joueur envoie en UDP au serveur la prochaine action qu'il souhaite faire. Cela peut-être un déplacement ou un dépot de bombe.
+Le serveur actualise la grille du jeu en fonction des demandes d'action qu'il reçoit des joueurs. Si une demande est impossible (e.g se déplacer sur une case avec un mur ou sortir de la grille), le serveur l'ignore.
+
+On doit programmer une application en temps réel. Cela signifie que le serveur doit adopter un comportement adapté pour traiter les demandes du joueur. À chaque fois qu'il passe en revue les demandes qu'il a reçues d'un joueur, il ne prend en compte que la dernière demande de déplacement, ainsi qu'une seule demande de dépôt de bombe s'il y en a au moins une.
+
+Le client doit donc numéroter ses requêtes. Pour cela, on utilise la structure `msg_game_t` de #file:message.h . On l'encode en `uint32_t` avec `ms_game_t` pour pouvoir l'envoyer côté client, et on la décode en `msg_game_t` avec `mg_game_t` côté serveur.
+
+La fréquence `FREQ` de l'examen des requêtes des joueurs est donné au serveur dans #file:constants.h
+
+Le serveur multidiffuse aux joueurs de la partie:
+
+- toutes les secondes: la grille complète.
+- toutes les freq ms: le différentiel sur la grille entre le moment présent et la dernière multidiffusion. `FREQ` est donc un entier diviseur de 1000.
+
+Lorsqu'un joueur reçoit une actualisation de la grille, il doit:
+
+- rafraîchir son affichage du jeu
+- ne plus envoyer d'action au serveur s'il est éliminé. Il doit par contre pouvoir suivre la fin de la partie. Il peut aussi choisir de quitter la partie.
+
+La fonction côté serveur qui gère la partie est `start_game` dans #file:partie.c. Et côté client, c'est `main` dans #file:client.c
+
+---
+
 > [!CAUTION]
 >
 > - Gérer les free pour chaque malloc !

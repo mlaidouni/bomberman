@@ -23,13 +23,12 @@ uint8_t labyrinth[20][20] = {
     {0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 0},
     {0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0},
     {0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0}
-};
-    
-
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0}};
 int init_board(board *board, TYPE type) {
   board->type = type;
 
+  memcpy(board->grid, labyrinth, sizeof(labyrinth) * sizeof(uint8_t));
+  // On crée une board par défaut avec des murs destructibles et indescructibles
   memcpy(board->grid, labyrinth, sizeof(labyrinth) * sizeof(uint8_t));
 
   board->players[0] = (player){0, ALIVE, {0, 0}};
@@ -45,7 +44,7 @@ int valid_pos(board board, pos p) {
   return p.x >= 0 && p.x < WIDTH && p.y >= 0 && p.y < HEIGHT;
 }
 
-int action_player(board board, int player, ACTION action) {
+int action_player(board board, int player, ACT action) {
   // Rappel: x <= BOMB_TILE signifie x est EMPTY_TILE ou x est BOMB_TILE
 
   assert(player >= 0 && player < NB_PLAYERS);

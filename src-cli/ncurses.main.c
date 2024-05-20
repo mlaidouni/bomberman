@@ -82,7 +82,7 @@ void refresh_game(board *b, line *l) {
   refresh();              // Apply the changes to the terminal
 }
 
-ACTION control(line *l) {
+ACTION control() {
   int c;
   int prev_c = ERR;
   // We consume all similar consecutive key presses
@@ -112,14 +112,6 @@ ACTION control(line *l) {
     break;
   case '~':
     a = QUIT;
-    break;
-  case KEY_BACKSPACE:
-    if (l->cursor > 0)
-      l->cursor--;
-    break;
-  default:
-    if (prev_c >= ' ' && prev_c <= '~' && l->cursor < TEXT_SIZE)
-      l->data[(l->cursor)++] = prev_c;
     break;
   }
   return a;

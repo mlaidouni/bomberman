@@ -19,7 +19,7 @@
 typedef enum TYPE { SOLO, TEAM } TYPE;
 // typedef enum TILE { EMPTY_TILE, INDEST_WALL_TILE, DEST_WALL_TILE, BOMB_TILE }
 // TILE;
-typedef enum ACTION { A_UP, A_DOWN, A_LEFT, A_RIGHT, A_BOMB } ACTION;
+typedef enum ACT { A_UP, A_LEFT, A_DOWN, A_RIGHT, A_BOMB, A_QUIT } ACT;
 typedef enum PLAYER_STATUS { ALIVE, DEAD } PLAYER_STATUS;
 
 typedef struct pos {
@@ -49,7 +49,7 @@ typedef struct board {
 } board;
 
 int init_board(board *board, TYPE type);
-int action_player(board board, int player, ACTION action);
+int action_player(board board, int player, ACT action);
 int explode_bombs(board boardc);
 int winner(board board);
 
