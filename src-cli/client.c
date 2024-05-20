@@ -126,6 +126,8 @@ ACT action_command() {
   case 't':
     a = A_TCHAT;
     break;
+  default:
+    break;
   }
 
   return a;
@@ -219,14 +221,19 @@ int main(int argc, char const *argv[]) {
       if (recv_msg_game_grid(&grid, mc))
         exit(EXIT_FAILURE); // En cas d'échec on exit, pour l'instant.
 
+      
+
       // On reçoit la grid de jeu
       // if (recv_msg_grid_tmp(&grid, mc))
       // exit(EXIT_FAILURE);
+
+      // clear();
 
       // FIXME: ...
       init_ncurses();
       // On affiche la grid mise à jour
       affiche(grid);
+      refresh();
     }
 
     /* ********** Communication TCP ********** */
