@@ -268,11 +268,12 @@ int main(int argc, char const *argv[]) {
       }
     }
 
-    /*msg_game_t params = {grid.game_type, player.player_id, player.team, num,
-    a}; uint32_t message = ms_game(params); sendto(sock_client, &message,
-    sizeof(message), 0, (struct sockaddr *)&mc.adr, sizeof(mc.adr));
+    msg_game_t params = {grid.game_type, player.player_id, player.team, num, a};
+    uint32_t message = ms_game(params);
+    sendto(sock_client, &message, sizeof(message), 0,
+           (struct sockaddr *)&mc.s_adr, sizeof(mc.s_adr));
 
-    num++;*/
+    num++;
 
     // Clear la fenêtre
     // clear();

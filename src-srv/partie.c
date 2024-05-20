@@ -51,10 +51,6 @@ int start_game(partie_t *partie) {
 
     /* ******** Reception action d'un joueur et actualisation grille ******** */
 
-    // uint32_t msg;
-    // recvfrom(partie->sock_mdiff, &msg, sizeof(msg), 0, NULL, NULL);
-    // msg_game_t mg = mg_game(msg);
-
     // On reçoit le message de jeu
     msg_game_t mg;
     r = recv_msg_game(&mg, mp.partie->sock_mdiff);
@@ -191,6 +187,9 @@ int update_mp(mp_t *mp, msg_game_t *mg) {
   // Si l'action effectuée n'est pas un déplacement, on modifie la list bomb
   else if (action == 4) {
     puts("\033[32m-> partie.c: update_mp(): Bombe...\033[0m");
+    add_head(mp->bomb[player_id], msg);
+  } else if (action == 6) {
+    puts("\033[32m-> partie.c: update_mp(): Msg...\033[0m");
     add_head(mp->bomb[player_id], msg);
   }
   // Sinon, on travaille sur la liste move
