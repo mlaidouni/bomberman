@@ -38,16 +38,16 @@ void affiche(msg_grid_t grid) {
       // On récupère le caractère associé à la valeure de la case
       char c;
       switch (get_grille(grid, x, y)) {
-      case 0:
+      case EMPTY_TILE:
         c = '_';
         break;
-      case 1:
+      case DEST_WALL_TILE:
         c = '|';
         break;
-      case 2:
+      case INDEST_WALL_TILE:
         c = '#';
         break;
-      case 3:
+      case BOMB_TILE:
         c = '.';
         break;
       case 4:
@@ -161,9 +161,11 @@ int main(int argc, char const *argv[]) {
   // On demande au joueur le type de partie qu'il veut rejoindre
   int game_type; // TODELETE (debug)
   printf("Entrer 0 pour jouer à 4 joueurs, 1 pour jouer en équipes: \n");
-  if(argc == 2){
+  if (argc == 2)
     game_type = atoi(argv[1]);
-  } else {scanf("%d", &game_type);}
+  else
+    scanf("%d", &game_type);
+
   if (join_game(sock_client, game_type + 1))
     exit(EXIT_FAILURE); // En cas d'échec on exit, pour l'instant.
 
@@ -241,7 +243,6 @@ int main(int argc, char const *argv[]) {
 
       // clear();
 
-      // FIXME: ...
       init_ncurses();
       // On affiche la grid mise à jour
       affiche(grid);
@@ -451,33 +452,6 @@ int config_udp(multicast_client_t *mc, char *adr_mdiff,
   return 0;
 }
 
-// FIX: OBSOLETE: Envoie un message de type 'game' au serveur.
-int action(int sock_client, int game_type, int player_id, int team_id, int num,
-           int action) {
-
-  // FIX: OBSOLETE -> Utilise send_message, qui est en TCP
-  // Création de la structure du message
-  msg_game_t params;
-  params.game_type = game_type;
-  params.player_id = player_id;
-  params.team_id = team_id;
-  params.num = num;
-  params.action = action;
-
-  // Création du message
-  uint32_t message = ms_game(params);
-
-  // Envoi du message
-  int bytes = send_message(sock_client, &message, sizeof(message), "action");
-  // Gestion des erreurs (en partie gérée par send_message())
-  if (bytes == -1)
-    return -1;
-
-  // TODO: Gestion du nb d'octets envoyés (voir s'ils ont tous été envoyés)
-
-  return 0;
-}
-
 /* ********** Fonctions client ncurses ********** */
 
 // Initialise ncurses
@@ -523,9 +497,7 @@ int join_game(int sock_client, int game_type) {
   if (bytes == -1)
     return -1;
 
-  // TODO: Gestion du nb d'octets envoyés (voir s'ils ont tous été envoyés)
-
-  return 0;
+    return 0;
 }
 
 /**

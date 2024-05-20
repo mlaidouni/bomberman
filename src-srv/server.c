@@ -67,7 +67,7 @@ int main(int argc, char **args) {
   init_poll();
 
   while (1) {
-    affiche_parties(); // TODELETE: On affiche les parties
+    // affiche_parties(); // TODELETE: On affiche les parties
 
     /**
      * srv.socks: l'ensemble des sockets à surveiller
@@ -462,10 +462,7 @@ int poll_ready(int sock_client, uint16_t header) {
   // Sinon, on décode le message
   /* TODO: Utiliser ça pour récupérer le joueur avec partie.joueurs[params.id]
    * (quelques lignes plus loin) */
-  msg_join_ready_t params = mg_ready(message);
-
-  // TODELETE: Affichage pour éviter l'inutilisation de params
-  printf("server.c: poll_ready: type de partie: %d\n", params.game_type);
+  // msg_join_ready_t params = mg_ready(message);
 
   // On récupère la partie dans laquelle le joueur est
   int partie_index = get_partie(sock_client);

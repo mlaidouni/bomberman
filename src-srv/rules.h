@@ -1,20 +1,15 @@
 #ifndef RULES_H
 #define RULES_H
 
-#include <time.h>
 #include <sys/time.h>
+#include <time.h>
 
-#include "list.h"
 #include "../lib/constants.h"
+#include "list.h"
 #include <arpa/inet.h>
 
 #define WIDTH 20
 #define HEIGHT 20
-
-#define EMPTY_TILE 0
-#define INDEST_WALL_TILE 1
-#define DEST_WALL_TILE 2
-#define BOMB_TILE 3
 
 #define NB_PLAYERS 4
 
