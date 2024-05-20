@@ -74,6 +74,17 @@ void affiche(msg_grid_t grid) {
   refresh();
 }
 
+void affiche_term(msg_grid_t grid) {
+  int x, y;
+  for (y = 0; y < grid.hauteur; y++) {
+    for (x = 0; x < grid.largeur; x++) {
+
+      printf("\033[33m%d\033[0m", get_grille(grid, x, y));
+    }
+    printf("\n");
+  }
+}
+
 /**
  * Récupère l'action de l'utilisateur sur le clavier. (Fonction non bloquante)
  * @return L'action de l'utilisateur.
@@ -198,6 +209,7 @@ int main(int argc, char const *argv[]) {
   init_ncurses();
 
   // On affiche la grid
+  // affiche(grid);
   affiche(grid);
 
   // Compteur de messages
@@ -220,8 +232,6 @@ int main(int argc, char const *argv[]) {
       // Si on reçoit un message en multicast, on affiche la grid
       if (recv_msg_game_grid(&grid, mc))
         exit(EXIT_FAILURE); // En cas d'échec on exit, pour l'instant.
-
-      
 
       // On reçoit la grid de jeu
       // if (recv_msg_grid_tmp(&grid, mc))
@@ -247,7 +257,7 @@ int main(int argc, char const *argv[]) {
     else if (a == A_TCHAT) {
       // TODO: manage tchat....
       endwin();
-
+      affiche_term(grid);
       msg_game_t params = {0};
       params.game_type = grid.game_type;
       params.player_id = player.player_id;
@@ -278,9 +288,6 @@ int main(int argc, char const *argv[]) {
           exit(EXIT_FAILURE);
         }
 
-        printf("Message reçu: %d\n", r);
-        printf("Message reçu: %s\n", mess);
-
         msg_tchat_t msg = mg_tchat(mess);
         // print en jaune
         fprintf(stdin, "\033[33mjoueur %d: %s\033[0m\n", msg.player_id,
@@ -303,8 +310,6 @@ int main(int argc, char const *argv[]) {
           perror("client.c: main: send()");
           exit(EXIT_FAILURE);
         }
-
-        printf("Envoyé: %d", r);
       }
     } else if (a != A_NONE) {
 
@@ -569,7 +574,6 @@ int send_action(multicast_client_t *mc, msg_game_t params) {
     return -1;
   }
 
-  printf("\n\nEnvoyé: %d\n", bytes);
   return 0;
 }
 
