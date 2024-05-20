@@ -49,6 +49,10 @@ int action_player(board *board, int player, ACT action) {
 
   assert(player >= 0 && player < NB_PLAYERS);
 
+  if (board->players[player].status == DEAD) {
+    return -1;
+  }
+
   pos p = board->players[player].pos;
   switch (action) {
   case A_NORTH:
