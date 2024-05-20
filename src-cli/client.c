@@ -74,45 +74,60 @@ void affiche(msg_grid_t grid) {
   refresh();
 }
 
+/**
+ * Récupère l'action de l'utilisateur sur le clavier. (Fonction non bloquante)
+ * @return L'action de l'utilisateur.
+ */
 ACT action_command() {
+  // Touche actuellement pressée
   int c;
+  // Touche précédemment pressée
   int prev_c = ERR;
-  // We consume all similar consecutive key presses
-  while ((c = getch()) !=
-         ERR) { // getch returns the first key press in the queue
+
+  // Tant qu'une touche est pressée par l'utilisateur
+  while ((c = getch()) != ERR) {
+    // Si la touche est différente de la précédente
     if (prev_c != ERR && prev_c != c) {
-      ungetch(c); // put 'c' back in the queue
+      // On remet la touche actuelle dans la file d'attente
+      ungetch(c);
       break;
     }
+
+    // Sinon, on met à jour la touche précédente
     prev_c = c;
   }
-  ACT a;
+
+  // On convertit le caractère en action (A_NONE par défaut)
+  ACT a = A_NONE;
+
+  // printf("\033[33mTouche pressée: %d\033[0m\n", prev_c);
+
   switch (prev_c) {
   case ERR:
     break;
-  case KEY_LEFT:
-    a = A_LEFT;
+  case 260:
+    a = A_EAST;
     break;
-  case KEY_RIGHT:
-    a = A_RIGHT;
+  case 261:
+    a = A_WEST;
     break;
-  case KEY_UP:
-    a = A_UP;
+  case 259:
+    a = A_NORTH;
     break;
-  case KEY_DOWN:
-    a = A_DOWN;
+  case 258:
+    a = A_SOUTH;
     break;
-  case KEY_B2:
+  case 'b':
     a = A_BOMB;
     break;
   case 'q':
     a = A_QUIT;
     break;
-
   case 't':
     a = A_TCHAT;
     break;
   }
+
   return a;
 }
 
@@ -128,14 +143,12 @@ int main(int argc, char const *argv[]) {
   if (sock_client == -1)
     exit(EXIT_FAILURE);
 
-  // printf("Connected to server !\n"); // TODELETE: debug
-
   /* ********** Gestion du choix de partie ********** */
 
   // On demande au joueur le type de partie qu'il veut rejoindre
-  int game_type;
-  printf("Entrer 0 pour jouer à 4 joueurs, 1 pour jouer en équipes: ");
-  scanf("%d", &game_type);
+  int game_type = atoi(argv[1]); // TODELETE (debug)
+  printf("Entrer 0 pour jouer à 4 joueurs, 1 pour jouer en équipes: \n");
+  // scanf("%d", &game_type);
   if (join_game(sock_client, game_type + 1))
     exit(EXIT_FAILURE); // En cas d'échec on exit, pour l'instant.
 
@@ -146,12 +159,13 @@ int main(int argc, char const *argv[]) {
   if (recv_msg_game_data(&game_data, sock_client))
     exit(EXIT_FAILURE); // En cas d'échec on exit, pour l'instant.
 
-  player_client player = {game_data.player_id, game_data.team_id};
+  player_client player = {0};
+  player.player_id = game_data.player_id;
+  player.team = game_data.team_id;
+
   // On convertit l'adresse de uin8_t* à char*
   char adr_mdiff[INET6_ADDRSTRLEN];
   inet_ntop(AF_INET6, game_data.adr_mdiff, adr_mdiff, INET6_ADDRSTRLEN);
-
-  // affiche_data_partie(&game_data, adr_mdiff); // TODELETE: debug
 
   /* Configuration de l'envoie et réception UDP (abonnement à l'adresse de
    * multicast + adresse d'envoie de messages) */
@@ -166,24 +180,28 @@ int main(int argc, char const *argv[]) {
 
   /* ********** Gestion des messages de la partie... ********** */
 
+  // On surveille les sockets udp et tcp
   struct pollfd fds[2];
   fds[0].fd = mc.sock;
   fds[0].events = POLLIN;
   fds[1].fd = sock_client;
   fds[1].events = POLLIN;
 
-  // On reçoit la grid de jeu
+  // On reçoit la grid initiale de jeu
   msg_grid_t grid;
-
   if (recv_msg_game_grid(&grid, mc))
     exit(EXIT_FAILURE);
 
   // On initialise ncurses
   init_ncurses();
 
+  // On affiche la grid
   affiche(grid);
 
+  // Compteur de messages
   int num = 0;
+
+  // Boucle principale
   while (1) {
     // On attend un message de la partie
     int r = poll(fds, 2, FREQ * 10);
@@ -194,30 +212,42 @@ int main(int argc, char const *argv[]) {
       exit(EXIT_FAILURE);
     }
 
-    if (fds[0].revents & POLLIN) {
+    /* ********** Communication UDP ********** */
 
+    if (fds[0].revents & POLLIN) {
+      // Si on reçoit un message en multicast, on affiche la grid
       if (recv_msg_game_grid(&grid, mc))
         exit(EXIT_FAILURE); // En cas d'échec on exit, pour l'instant.
 
       // On reçoit la grid de jeu
       // if (recv_msg_grid_tmp(&grid, mc))
       // exit(EXIT_FAILURE);
+
+      // FIXME: ...
       init_ncurses();
+      // On affiche la grid mise à jour
       affiche(grid);
     }
+
+    /* ********** Communication TCP ********** */
+
     char buffer[100];
 
     ACT a = action_command();
-    if (a == A_QUIT) {
-      // Ferme la fenêtre
-      break;
-    }
 
-    if (a == A_TCHAT) {
+    if (a == A_QUIT)
+      break;
+    else if (a == A_TCHAT) {
+      // TODO: manage tchat....
       endwin();
 
-      msg_game_t params = {grid.game_type, player.player_id, player.team, num,
-                           a};
+      msg_game_t params = {0};
+      params.game_type = grid.game_type;
+      params.player_id = player.player_id;
+      params.team_id = player.team;
+      params.num = num;
+      params.action = a;
+
       uint32_t message = ms_game(params);
 
       r = sendto(mc.sock, &message, sizeof(message), 0,
@@ -226,6 +256,9 @@ int main(int argc, char const *argv[]) {
         perror("client.c: main: sendto()");
         exit(EXIT_FAILURE);
       }
+
+      // On incrémente le compteur de messages
+      num++;
 
       if (fds[1].revents & POLLIN) {
         puts("Message reçu");
@@ -251,7 +284,7 @@ int main(int argc, char const *argv[]) {
 
       printf("Enter a message: ");
       scanf("%s", buffer);
-      if (buffer[0] != 'b') {
+      if (buffer[0] != 'p') {
 
         msg_tchat_t params = {game_type + 13, player.player_id, player.team,
                               strlen(buffer), buffer};
@@ -266,19 +299,32 @@ int main(int argc, char const *argv[]) {
 
         printf("Envoyé: %d", r);
       }
+    } else if (a != A_NONE) {
+
+      // On affiche l'action
+      printw("Action: %d, player : %d\n", a, player.player_id);
+
+      msg_game_t params = {0};
+      params.game_type = grid.game_type;
+      params.player_id = player.player_id;
+      params.team_id = player.team;
+      params.num = num;
+      params.action = a;
+
+      //  On envoie l'action au serveur
+      int r = send_action(&mc, params);
+
+      if (r == -1) {
+        perror("client.c: main: send_action()");
+        exit(EXIT_FAILURE);
+      }
+
+      // On incrémente le compteur de messages
+      num++;
     }
-
-    msg_game_t params = {grid.game_type, player.player_id, player.team, num, a};
-    uint32_t message = ms_game(params);
-    sendto(sock_client, &message, sizeof(message), 0,
-           (struct sockaddr *)&mc.s_adr, sizeof(mc.s_adr));
-
-    num++;
 
     // Clear la fenêtre
     // clear();
-
-    // TODO: Recv/send msg avec le serveur
   }
 
   // Ferme la fenêtre
@@ -494,6 +540,29 @@ int ready(int sock_client, int game_type, int player_id, int team_id) {
 
   // TODO: Gestion du nb d'octets envoyés (voir s'ils ont tous été envoyés)
 
+  return 0;
+}
+
+/**
+ * Envoie un message de type 'game' au serveur.
+ * @param mc La structure multicast.
+ * @param params Les paramètres du message.
+ * @return 0 si tout s'est bien passé, -1 sinon.
+ */
+int send_action(multicast_client_t *mc, msg_game_t params) {
+  // Création du message
+  uint32_t message = ms_game(params);
+
+  // Envoi du message
+  int bytes = sendto(mc->sock, &message, sizeof(message), 0,
+                     (struct sockaddr *)&mc->s_adr, sizeof(mc->s_adr));
+  // Gestion des erreurs (en partie gérée par send_message())
+  if (bytes == -1) {
+    perror("client.c: send_action: send message failed");
+    return -1;
+  }
+
+  printf("\n\nEnvoyé: %d\n", bytes);
   return 0;
 }
 

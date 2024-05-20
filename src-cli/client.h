@@ -48,6 +48,7 @@ void init_ncurses();
 
 int join_game(int sock_client, int game_type);
 int ready(int sock_client, int game_type, int player_id, int team_id);
+int send_action(multicast_client_t *mc, msg_game_t params);
 
 /* ********** Fonctions de réception de messages ********** */
 
