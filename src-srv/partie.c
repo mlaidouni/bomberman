@@ -135,6 +135,16 @@ void init_mp(mp_t *mp, partie_t *partie) {
   }
 }
 
+msg_game_t *get_last_msg(list *list) {
+  list_elem *elem = list->out;
+  msg_game_t *msg = elem->curr;
+  do {
+    if( ((msg_game_t *)elem->curr)->num > msg->num)
+      msg = elem->curr;
+  } while ((elem = elem->prev) != NULL);
+  return msg;
+}
+
 /**
  * Met à jour la structure mp_t de la partie.
  * @param mp La structure à mettre à jour.
@@ -142,6 +152,9 @@ void init_mp(mp_t *mp, partie_t *partie) {
  * @return 0 si tout s'est bien passé, -1 sinon.
  */
 int update_mp(mp_t *mp, msg_game_t *mg) {
+    msg_game_t *msg = malloc(sizeof(msg_game_t));
+    *msg = *mg;
+
   puts("\033[31m-> partie.c: update_mp(): Mise à jour des messages de "
        "partie...\033[0m");
 
@@ -160,12 +173,19 @@ int update_mp(mp_t *mp, msg_game_t *mg) {
   // Si l'action est une annulation, on modifie les listes bomb ou move
   if (action == 5) {
     puts("\033[32m-> partie.c: update_mp(): Annulation...\033[0m");
-    // ...
+    msg_game_t *last_move = get_last_msg(mp->move[player_id]);
+    msg_game_t *last_bomb = get_last_msg(mp->bomb[player_id]);
+    if (last_move->num > last_bomb->num) {
+      remove_elem(mp->move[player_id], last_move);
+    } else {
+      remove_elem(mp->bomb[player_id], last_bomb);
+    }
+    free(msg);
   }
   // Si l'action effectuée n'est pas un déplacement, on modifie la list bomb
   else if (action == 4) {
     puts("\033[32m-> partie.c: update_mp(): Bombe...\033[0m");
-    // ...
+    mp->bomb[player_id] = add_head(mp->bomb[player_id], msg);
   }
   // Sinon, on travaille sur la liste move
   else if (0 <= action && action <= 3) {
@@ -174,8 +194,6 @@ int update_mp(mp_t *mp, msg_game_t *mg) {
     // On récupère la liste de mouvements du joueur
     // list *move = mp->move[player_id];
 
-    msg_game_t *msg = malloc(sizeof(msg_game_t));
-    *msg = *mg;
 
     // On ajoute le message à la liste des messages de mouvements
     add_head(move, msg);
