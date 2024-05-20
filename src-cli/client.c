@@ -1,4 +1,8 @@
+
+
+#include <poll.h>
 #include "client.h"
+#include "../lib/constants.h"
 
 void affiche_data_partie(msg_game_data_t *game_data, char *adr_mdiff) {
   printf(
@@ -118,31 +122,56 @@ int main(int argc, char const *argv[]) {
 
   /* ********** Gestion des messages de la partie... ********** */
 
+
+  struct pollfd fds[1];
+  fds[0].fd = mc.sock;
+  fds[0].events = POLLIN;
+
+  // On reçoit la grid de jeu
+  msg_grid_t grid;
+
+      if (recv_msg_game_grid(&grid, mc))
+        exit(EXIT_FAILURE);
+
   // On initialise ncurses
   init_ncurses();
 
+  affiche(grid);
+
   while (1) {
-    // On reçoit la grid de jeu
-    msg_grid_t grid;
-    if (recv_msg_game_grid(&grid, mc))
-      exit(EXIT_FAILURE); // En cas d'échec on exit, pour l'instant.
+    // On attend un message de la partie
+    int r = poll(fds, 1, FREQ * 10);
 
-    // Affichage du contenu de chaque case
-    puts("\033[31m client... Affichage de la grille... \033[0m");
-    affichetmpgrid(grid);
+    // Gestion des erreurs
+    if (r == -1) {
+      perror("client.c: main: poll()");
+      exit(EXIT_FAILURE);
+    }
 
-    affiche(grid);
+    if(fds[0].revents & POLLIN) {
+      if (recv_msg_game_grid(&grid, mc))
+        exit(EXIT_FAILURE); // En cas d'échec on exit, pour l'instant.
+
+      // On reçoit la grid de jeu
+      // if (recv_msg_grid_tmp(&grid, mc))
+      // exit(EXIT_FAILURE);
+
+      affiche(grid);
+    }
+
     // Attend que l'utilisateur appuie sur une touche
-    getch();
+    if(getch() == 'q')
+      break;
 
-    // Ferme la fenêtre
-    endwin();
 
     // Clear la fenêtre
     // clear();
 
     // TODO: Recv/send msg avec le serveur
   }
+
+  // Ferme la fenêtre
+    endwin();
   // Fermeture de la socket TCP du client: à la fin de la partie seulement
   close(sock_client);
   return 0;
@@ -283,7 +312,7 @@ void init_ncurses() {
   // Required in order to get events from keyboard
   keypad(stdscr, TRUE);
   // Make getch non-blocking
-  // nodelay(stdscr, TRUE);
+  nodelay(stdscr, TRUE);
   /* Don't echo() while we do getch (we will manually print characters when
    * relevant) */
   noecho();
@@ -404,10 +433,35 @@ int recv_msg_game_grid(msg_grid_t *grid, multicast_client_t mc) {
   // On récupère les données de la grid
   *grid = mg_game_grid(msg);
 
-  // Affichage du contenu de chaque case
-  puts("\033[31m recv_msg_game_grid... Affichage de la grille... \033[0m");
+  // On libère la mémoire
+  free(msg);
 
-  affichetmpgrid(*grid);
+  return 0;
+}
+
+int recv_msg_grid_tmp(msg_grid_t *grid, multicast_client_t mc) {
+  int len = sizeof(uint8_t) * 5 + (HEIGHT * WIDTH * 3);
+  uint8_t *msg = malloc(len);
+  socklen_t len_adr = sizeof(mc.adr);
+
+  // Réception des données
+  int r = recvfrom(mc.sock, msg, len, 0, (struct sockaddr *)&mc.adr, &len_adr);
+
+  //  Gestions des erreurs
+  if (!r || r < 0) {
+    perror("client.c: recv_grid: recvfrom");
+    return -1;
+  }
+
+  // On récupère les données de la grid
+  msg_grid_tmp_t grid_tmp = mg_grid_tmp(msg);
+
+  for (int i = 0; i < grid_tmp.nb_cases; i++) {
+    int x = grid_tmp.grille[i * 3];
+    int y = grid_tmp.grille[i * 3 + 1];
+    int val = grid_tmp.grille[i * 3 + 2];
+    grid->grille[y * grid->largeur + x] = val;
+  }
 
   // On libère la mémoire
   free(msg);

@@ -142,6 +142,13 @@ int main(int argc, char **args) {
     // Fin de la gestion des sockets clients...
   }
 
+  // On free toutes les ressources allouées côté server.c et partie.c
+  for (int i = 0; i < srv.parties.nb_parties; i++)
+    free_partie(&srv.parties.parties[i]);
+  free(srv.parties.parties);
+  free(srv.socks);
+  free(srv.clients);
+
   // On ferme la socket serveur
   close(srv.tcp_sock);
   return 0;

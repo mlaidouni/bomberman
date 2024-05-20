@@ -44,6 +44,7 @@ int ready(int sock_client, int game_type, int player_id, int team_id);
 
 int recv_msg_game_data(msg_game_data_t *game_data, int sock_client);
 int recv_msg_game_grid(msg_grid_t *grid, multicast_client_t mc);
+int recv_msg_grid_tmp(msg_grid_t *grid, multicast_client_t mc);
 
 /* ********** Fonctions utilitaires ********** */
 

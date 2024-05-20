@@ -2,16 +2,6 @@
 #include <arpa/inet.h>
 #include <stdio.h>
 
-void affichetmpgrid(msg_grid_t grid) {
-  for (int y = 0; y < grid.hauteur; y++) {
-    for (int x = 0; x < grid.largeur; x++) {
-      // On affiche la valeur de chaque case
-      printf("%d ", grid.grille[x + y * grid.largeur]);
-    }
-    printf("\n");
-  }
-}
-
 /* ************************ Fonctions d'envoie ************************ */
 
 /**
@@ -428,9 +418,6 @@ msg_grid_t mg_game_grid(uint8_t *message) {
   // On copie la grille
   memcpy(params.grille, message + 6, params.hauteur * params.largeur);
 
-  puts("\033[31m msg: \033[0m");
-  affichetmpgrid(params);
-
   return params;
 }
 
@@ -464,7 +451,13 @@ msg_grid_tmp_t mg_grid_tmp(uint8_t *message) {
   memcpy(&nb_cases, message + 4, 1);
   params.nb_cases = ntohs(nb_cases);
 
-  // On copie les cases
+  // Pour chaque case, Récupérer le 1er octet est la ligne, le 2e la colonne, le
+  // 3e le contenu
+  params.grille = malloc(3 * params.nb_cases);
+  if (params.grille == NULL) {
+    perror("malloc");
+    exit(EXIT_FAILURE); // FIXME: Gérer proprement l'erreur
+  }
   memcpy(params.grille, message + 5, 3 * params.nb_cases);
 
   return params;
