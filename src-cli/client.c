@@ -38,16 +38,16 @@ void affiche(msg_grid_t grid) {
       // On récupère le caractère associé à la valeure de la case
       char c;
       switch (get_grille(grid, x, y)) {
-      case 0:
+      case EMPTY_TILE:
         c = '_';
         break;
-      case 1:
+      case DEST_WALL_TILE:
         c = '|';
         break;
-      case 2:
+      case INDEST_WALL_TILE:
         c = '#';
         break;
-      case 3:
+      case BOMB_TILE:
         c = '.';
         break;
       case 4:

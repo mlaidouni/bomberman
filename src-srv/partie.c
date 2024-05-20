@@ -74,8 +74,8 @@ int start_game(partie_t *partie) {
 
    // Liberer les listes de move et bomb du joueur
 // Les deux lignes suivantes buguent
-    mp.move[mg.player_id] = init_list();
-    mp.bomb[mg.player_id] = init_list();
+    //mp.move[mg.player_id] = init_list();
+    //mp.bomb[mg.player_id] = init_list();
 
     explode_bombs(&board);
 
@@ -252,6 +252,8 @@ msg_grid_t init_msg_grid(partie_t *partie, board board) {
 
   // On dispose les joueurs sur la grille
   for (int i = 0; i < partie->nb_joueurs; i++) {
+    if(board.players[i].status == DEAD)
+      continue;
     // On récupère la position du joueur
     pos p = board.players[i].pos;
     // On récupère l'identifiant du joueur

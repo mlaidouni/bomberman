@@ -157,6 +157,7 @@ int explode_pos(board *board, pos bomb_pos) {
         return -1;
       }
   board->grid[bomb_pos.x + bomb_pos.y * WIDTH] = EMPTY_TILE;
+  damage_pos(board, bomb_pos);
 
   if (!damage_pos(board, (pos){bomb_pos.x - 1, bomb_pos.y})) {
     damage_pos(board, (pos){bomb_pos.x - 2, bomb_pos.y});

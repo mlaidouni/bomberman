@@ -11,11 +11,6 @@
 #define WIDTH 20
 #define HEIGHT 20
 
-#define EMPTY_TILE 0
-#define INDEST_WALL_TILE 1
-#define DEST_WALL_TILE 2
-#define BOMB_TILE 3
-
 #define NB_PLAYERS 4
 
 typedef enum TYPE { SOLO, TEAM } TYPE;
