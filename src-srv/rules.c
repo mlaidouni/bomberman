@@ -51,7 +51,7 @@ int action_player(board board, int player, ACT action) {
 
   pos p = board.players[player].pos;
   switch (action) {
-  case A_UP:
+  case A_NORTH:
     if (p.y > 0) {
       if (board.grid[p.x + (p.y - 1) * WIDTH] == BOMB_TILE || board.grid[p.x + (p.y - 1) * WIDTH] == EMPTY_TILE){
         p.y--;
@@ -59,7 +59,7 @@ int action_player(board board, int player, ACT action) {
       }
     }
     return -1;
-  case A_DOWN:
+  case A_SOUTH:
     if (p.y < HEIGHT - 1) {
       if (board.grid[p.x + (p.y + 1) * WIDTH] == BOMB_TILE || board.grid[p.x + (p.y + 1) * WIDTH] == EMPTY_TILE){
         p.y++;
@@ -67,7 +67,7 @@ int action_player(board board, int player, ACT action) {
       }
     }
     return -1;
-  case A_LEFT:
+  case A_EAST:
     if (p.x > 0) {
       if (board.grid[(p.x - 1) + p.y * WIDTH] == BOMB_TILE || board.grid[(p.x - 1) + p.y * WIDTH] == EMPTY_TILE){
         p.x--;
@@ -75,7 +75,7 @@ int action_player(board board, int player, ACT action) {
       }
     }
     return -1;
-  case A_RIGHT:
+  case A_WEST:
     if (p.x < WIDTH - 1) {
       if (board.grid[(p.x + 1) + p.y * WIDTH] == BOMB_TILE || board.grid[(p.x + 1) + p.y * WIDTH] == EMPTY_TILE){
         p.x++;
