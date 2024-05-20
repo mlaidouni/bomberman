@@ -45,4 +45,7 @@ int find_partie(int type);
 void generate_multicast_adr(char *adr, size_t size);
 void generate_multicast_ports(int *port_mdiff, int *port_udp);
 
+/* ********** Fonctions utilitaires ********** */
+void free_partie(partie_t *partie);
+
 #endif
