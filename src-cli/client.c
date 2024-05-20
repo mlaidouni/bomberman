@@ -108,6 +108,10 @@ ACT action_command() {
   case 'q':
     a = A_QUIT;
     break;
+
+  case 't':
+    a = A_TCHAT;
+    break;
   }
   return a;
 }
@@ -193,7 +197,7 @@ int main(int argc, char const *argv[]) {
       // On reçoit la grid de jeu
       // if (recv_msg_grid_tmp(&grid, mc))
       // exit(EXIT_FAILURE);
-
+      init_ncurses();
       affiche(grid);
     }
 
@@ -201,7 +205,21 @@ int main(int argc, char const *argv[]) {
     if (a == A_QUIT) {
       // Ferme la fenêtre
       break;
+    }
+
+    if (a == A_TCHAT) {
       endwin();
+
+      char buffer[100];
+      printf("Enter a message: ");
+      scanf("%s", buffer);
+
+      msg_tchat_t params = {0, player.player_id, player.team, strlen(buffer),
+                            buffer};
+
+      uint8_t *message = ms_tchat(params);
+      sendto(sock_client, message, sizeof(message), 0,
+             (struct sockaddr *)&mc.adr, sizeof(mc.adr));
     }
 
     msg_game_t params = {grid.game_type, player.player_id, player.team, num, a};

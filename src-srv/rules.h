@@ -19,7 +19,7 @@
 typedef enum TYPE { SOLO, TEAM } TYPE;
 // typedef enum TILE { EMPTY_TILE, INDEST_WALL_TILE, DEST_WALL_TILE, BOMB_TILE }
 // TILE;
-typedef enum ACT { A_UP, A_LEFT, A_DOWN, A_RIGHT, A_BOMB, A_QUIT } ACT;
+typedef enum ACT { A_UP, A_LEFT, A_DOWN, A_RIGHT, A_BOMB, A_QUIT, A_TCHAT } ACT;
 typedef enum PLAYER_STATUS { ALIVE, DEAD } PLAYER_STATUS;
 
 typedef struct pos {

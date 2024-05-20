@@ -88,8 +88,7 @@ uint8_t *ms_game_data(msg_game_data_t params);
 uint8_t *ms_game_grid(msg_grid_t params);
 uint8_t *ms_grid_tmp(msg_grid_tmp_t params);
 uint16_t ms_end_game(msg_end_game_t params);
-uint32_t ms_tchat_cli(msg_tchat_t params);
-uint32_t ms_tchat_srv(msg_tchat_t params);
+uint8_t *ms_tchat(msg_tchat_t params);
 
 /* ****** Fonctions de réception ****** */
 

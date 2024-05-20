@@ -500,6 +500,25 @@ int poll_ready(int sock_client) {
   return partie_index;
 }
 
+int poll_tchat(int sock_client) {
+  uint8_t *message;
+  int r = 0;
+  while (r < 3) {
+    r += recv(sock_client, message + r, 3 - r, 0);
+  }
+  int len = message[2];
+  r = 0;
+  while (r < len) {
+    r += recv(sock_client, message + 2 + r, len - r, 0);
+  }
+  printf("server.c: poll_tchat: message reçu: %s\n", message + 3);
+  partie_t *partie = &srv.parties.parties[get_partie(sock_client)];
+  for (int i = 0; i < partie->nb_joueurs; i++) {
+    send(partie->joueurs[i].client.sock, message, 3 + len, 0);
+  }
+  return 0;
+}
+
 /* ********** Fonctions utilitaires ********** */
 
 /**
