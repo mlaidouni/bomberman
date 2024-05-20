@@ -60,6 +60,10 @@ int start_game(partie_t *partie) {
       return -1;
     }
 
+    printf(
+        "\033[36m -> partie.c: start_game(): Message reçu: %d %d %d\033[0m\n",
+        mg.player_id, mg.action, mg.num);
+
     // On met à jour mp
     update_mp(&mp, &mg);
 
@@ -92,14 +96,12 @@ int start_game(partie_t *partie) {
     // On usleep le temps d'atteindre FREQ * 1000 microsecondes on fait une
     // difference entre le temps actuel et le temps de debut de la boucle
     gettimeofday(&end_clock, NULL);
-    int us;
-    int alo = FREQ * 1000 - (end_clock.tv_usec - start_clock.tv_usec);
-    if (0 <= alo && alo <= FREQ * 1000)
-      us = alo;
-    if (alo < 0)
+    int us = FREQ * 1000;
+    int target = FREQ * 1000 - (end_clock.tv_usec - start_clock.tv_usec);
+    if (0 <= target && target <= FREQ * 1000)
+      us = target;
+    else if (target < 0)
       us = 0;
-    else
-      us = FREQ * 1000;
 
     usleep(us);
     gettimeofday(&start_clock, NULL);
@@ -188,7 +190,7 @@ int update_mp(mp_t *mp, msg_game_t *mg) {
   else if (action == 4) {
     puts("\033[32m-> partie.c: update_mp(): Bombe...\033[0m");
     add_head(mp->bomb[player_id], msg);
-  } else if (action == 6) {
+  } else if (action == 100) { // FIXME: Remettre à 6
     puts("\033[32m-> partie.c: update_mp(): Msg...\033[0m");
     add_head(mp->bomb[player_id], msg);
   }
@@ -205,8 +207,9 @@ int update_mp(mp_t *mp, msg_game_t *mg) {
     // effectuée
     for (list_elem *n = move->out; n != NULL; n = n->next) {
       msg_game_t *m = n->curr;
-      printf("partie.c: update_mp(): Message %d, action %d\n", m->player_id,
-             m->action);
+      printf("partie.c: update_mp(): \n\tJoueur n°%d \n\tMessage n°%d "
+             "\n\taction %d\n",
+             m->player_id, m->num, m->action);
     }
 
   } else {
