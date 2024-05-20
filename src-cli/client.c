@@ -164,11 +164,23 @@ int main(int argc, char const *argv[]) {
       endwin();
     }
 
-    // printf("Action: %d\n", a); // TODELETE: debug
+    printf("Action: %d\n", a); // TODELETE: debug
     msg_game_t params = {grid.game_type, player.player_id, player.team, num, a};
     uint32_t message = ms_game(params);
-    sendto(sock_client, &message, sizeof(message), 0,
-           (struct sockaddr *)&mc.adr, sizeof(mc.adr));
+
+    printf("\033[37m-> message: %d\n\033[0m", message);       // TODELETE: debug
+    printf("\033[35m-> size: %ld\n\033[0m", sizeof(message)); // TODELETE: debug
+
+    r = sendto(mc.sock, &message, sizeof(message), 0,
+               (struct sockaddr *)&mc.adr, sizeof(mc.adr));
+    if (r == -1) {
+      perror("client.c: main: sendto()");
+      exit(EXIT_FAILURE);
+    }
+
+    printf("\033[32m-> envoyé: %d\n\033[0m", r); // TODELETE: debug
+    // FIXME JE ME SUIS ARRETE ICI. LE SENDTO RENVOIE RIEN. VOIR SI C PAS UN PB
+    // DE MALLOC DASN MS_GAME_T
 
     num++;
 

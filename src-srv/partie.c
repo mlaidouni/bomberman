@@ -29,7 +29,7 @@ int start_game(partie_t *partie) {
   last_clock.tv_sec = 0;
   gettimeofday(&start_clock, NULL);
 
-  // On envoie la grille complète une première fois
+  // On envoie la grille initiale à tous les joueurs
   if (send_game_grid(partie, board) < 0)
     return -1;
 
@@ -37,10 +37,10 @@ int start_game(partie_t *partie) {
   while (partie->end) {
 
     /* On surveille l'ensemble des sockets mp.socks, avec 1 socket (la socket
-     * mdiff de la partie), avec un timeout */
-
-    // On bloque ici jusqu'à ce que la socket mdiff soit prête
-    int r = poll(mp.socks, 1, 1);
+     * mdiff de la partie), avec un timeout. La fréquence de l'examen des
+     * requêtes est de FREQ ms.
+     * On bloque ici jusqu'à ce qu'une socket mdiff soit prête. */
+    int r = poll(mp.socks, 1, FREQ);
     // Gestion des erreurs
     if (r < 0) {
       perror("partie.c: start_game(): poll()");
@@ -76,6 +76,7 @@ int start_game(partie_t *partie) {
     }
 
     /* ********** Envoie de la grille complète ********** */
+
     // Si une seconde s'est écoulée, on envoie la grille en multidiffusion
     if ((start_clock.tv_sec - last_clock.tv_sec) >= 1) {
       last_clock = start_clock;
@@ -90,13 +91,6 @@ int start_game(partie_t *partie) {
        */
     }
 
-    // break; // TODELETE: (debug) On arrête la boucle après un envoi
-
-    /* ********** Reception des messages de joueurs ********** */
-
-    // TODO: Le jeu
-    // ...
-
     /* ********** Gestion de la fin de la partie ********** */
 
     // TODO: Penser à gérer la fermeture des sockets des clients
@@ -104,7 +98,6 @@ int start_game(partie_t *partie) {
 
     // On usleep le temps d'atteindre FREQ * 1000 microsecondes on fait une
     // difference entre le temps actuel et le temps de debut de la boucle
-
     gettimeofday(&end_clock, NULL);
     usleep(FREQ * 1000 - (end_clock.tv_usec - start_clock.tv_usec));
     gettimeofday(&start_clock, NULL);
@@ -149,6 +142,8 @@ void init_mp(mp_t *mp, partie_t *partie) {
  * @return 0 si tout s'est bien passé, -1 sinon.
  */
 int update_mp(mp_t *mp, msg_game_t *mg) {
+  puts("\033[31m-> partie.c: update_mp(): Mise à jour des messages de "
+       "partie...\033[0m");
 
   // On récupère l'id du joueur
   int player_id = mg->player_id;
@@ -157,6 +152,10 @@ int update_mp(mp_t *mp, msg_game_t *mg) {
   // On récupère le type d'action effectuée
   int action = mg->action;
   printf("partie.c: update_mp(): Action %d\n", action);
+
+  // On récupère la liste de mouvements et de bombes du joueur
+  list *move = mp->move[player_id];
+  // list *bomb = mp->bomb[player_id];
 
   // Si l'action est une annulation, on modifie les listes bomb ou move
   if (action == 5) {
@@ -178,17 +177,17 @@ int update_mp(mp_t *mp, msg_game_t *mg) {
     msg_game_t *msg = malloc(sizeof(msg_game_t));
     *msg = *mg;
 
-    // // On ajoute le message à la liste
-    // add_head(move, mg);
+    // On ajoute le message à la liste des messages de mouvements
+    add_head(move, msg);
 
-    // // On affiche la liste
-    // list_elem *tmp = move->out;
-    // while (tmp != NULL) {
-    //   msg_game_t *mg = (msg_game_t *)tmp->curr;
-    //   printf("partie.c: update_mp(): Joueur %d, action %d\n", mg->player_id,
-    //          mg->action);
-    //   tmp = tmp->next;
-    // }
+    // Pour chaque message de la liste, on affiche son numéro et l'action
+    // effectuée
+    for (list_elem *n = move->out; n != NULL; n = n->next) {
+      msg_game_t *m = n->curr;
+      printf("partie.c: update_mp(): Message %d, action %d\n", m->player_id,
+             m->action);
+    }
+
   } else {
     printf("\033[31m partie.c: update_mp(): Action invalide\033[0m\n");
     return -1;
@@ -239,8 +238,12 @@ msg_grid_t init_msg_grid(partie_t *partie, board board) {
  * @return 0 si tout s'est bien passé, -1 sinon.
  */
 int recv_msg_game(msg_game_t *mg, int sock_mdiff) {
+  puts("\033[31m-> partie.c: recv_msg_game(): Réception d'un message de "
+       "jeu...\033[0m");
   uint32_t *msg = malloc(sizeof(uint32_t));
   int r = recvfrom(sock_mdiff, msg, sizeof(msg), 0, NULL, NULL);
+
+  printf("partie.c: recv_msg_game(): Message reçu : %d\n", *msg);
 
   // Gestion des erreurs
   if (r < 0) {
