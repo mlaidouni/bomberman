@@ -1,11 +1,11 @@
 #ifndef RULES_H
 #define RULES_H
 
-#include <time.h>
 #include <sys/time.h>
+#include <time.h>
 
-#include "list.h"
 #include "../lib/constants.h"
+#include "list.h"
 #include <arpa/inet.h>
 
 #define WIDTH 20

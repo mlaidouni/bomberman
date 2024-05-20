@@ -32,6 +32,10 @@ int get_grille(msg_grid_t grid, int x, int y) {
  * @param grid La grille à afficher.
  */
 void affiche(msg_grid_t grid) {
+  start_color();                        // Active les couleurs
+  init_pair(1, COLOR_RED, COLOR_BLACK); // Définit la paire de couleurs 1 pour
+                                        // être du texte rouge sur un fond noir
+
   int x, y;
   for (y = 0; y < grid.hauteur; y++) {
     for (x = 0; x < grid.largeur; x++) {
@@ -40,35 +44,52 @@ void affiche(msg_grid_t grid) {
       switch (get_grille(grid, x, y)) {
       case EMPTY_TILE:
         c = '_';
+
+        mvaddch(y + 1, 2 * x + 1, c);
         break;
       case DEST_WALL_TILE:
         c = '|';
+
+        mvaddch(y + 1, 2 * x + 1, c);
         break;
       case INDEST_WALL_TILE:
         c = '#';
+
+        mvaddch(y + 1, 2 * x + 1, c);
         break;
       case BOMB_TILE:
-        c = '.';
+        attron(COLOR_PAIR(1)); // Commence à utiliser la paire de couleurs 1
+        c = 'X';
+        mvaddch(y + 1, 2 * x + 1, c);
+
+        attroff(COLOR_PAIR(1)); // Arrête d'utiliser la paire de couleurs 1
         break;
       case 4:
         c = '~';
+
+        mvaddch(y + 1, 2 * x + 1, c);
         break;
       case 5:
         c = '0';
+
+        mvaddch(y + 1, 2 * x + 1, c);
         break;
       case 6:
         c = '1';
+
+        mvaddch(y + 1, 2 * x + 1, c);
         break;
       case 7:
         c = '2';
+
+        mvaddch(y + 1, 2 * x + 1, c);
         break;
       case 8:
         c = '3';
+
+        mvaddch(y + 1, 2 * x + 1, c);
         break;
       }
-
-      // On affiche la case, avec un espace entre chaque case.
-      mvaddch(y + 1, 2 * x + 1, c);
     }
   }
   refresh();
@@ -159,11 +180,13 @@ int main(int argc, char const *argv[]) {
   /* ********** Gestion du choix de partie ********** */
 
   // On demande au joueur le type de partie qu'il veut rejoindre
-  int game_type; // TODELETE (debug)
+  int game_type = atoi(argv[1]); // TODELETE (debug)
   printf("Entrer 0 pour jouer à 4 joueurs, 1 pour jouer en équipes: \n");
-  if(argc == 2){
+  if (argc == 2)
     game_type = atoi(argv[1]);
-  } else {scanf("%d", &game_type);}
+  else
+    scanf("%d", &game_type);
+
   if (join_game(sock_client, game_type + 1))
     exit(EXIT_FAILURE); // En cas d'échec on exit, pour l'instant.
 
@@ -241,7 +264,6 @@ int main(int argc, char const *argv[]) {
 
       // clear();
 
-      // FIXME: ...
       init_ncurses();
       // On affiche la grid mise à jour
       affiche(grid);
@@ -451,33 +473,6 @@ int config_udp(multicast_client_t *mc, char *adr_mdiff,
   return 0;
 }
 
-// FIX: OBSOLETE: Envoie un message de type 'game' au serveur.
-int action(int sock_client, int game_type, int player_id, int team_id, int num,
-           int action) {
-
-  // FIX: OBSOLETE -> Utilise send_message, qui est en TCP
-  // Création de la structure du message
-  msg_game_t params;
-  params.game_type = game_type;
-  params.player_id = player_id;
-  params.team_id = team_id;
-  params.num = num;
-  params.action = action;
-
-  // Création du message
-  uint32_t message = ms_game(params);
-
-  // Envoi du message
-  int bytes = send_message(sock_client, &message, sizeof(message), "action");
-  // Gestion des erreurs (en partie gérée par send_message())
-  if (bytes == -1)
-    return -1;
-
-  // TODO: Gestion du nb d'octets envoyés (voir s'ils ont tous été envoyés)
-
-  return 0;
-}
-
 /* ********** Fonctions client ncurses ********** */
 
 // Initialise ncurses
@@ -523,9 +518,7 @@ int join_game(int sock_client, int game_type) {
   if (bytes == -1)
     return -1;
 
-  // TODO: Gestion du nb d'octets envoyés (voir s'ils ont tous été envoyés)
-
-  return 0;
+    return 0;
 }
 
 /**

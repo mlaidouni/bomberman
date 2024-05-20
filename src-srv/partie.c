@@ -53,9 +53,9 @@ int start_game(partie_t *partie) {
 
     // On reçoit le message de jeu
     msg_game_t mg;
-    if(r != 0) {
+    if (r != 0) {
       r = recv_msg_game(&mg, mp.partie->sock_mdiff);
-    
+
       // Gestion des erreurs
       if (r < 0) {
         perror("partie.c: start_game(): recv_msg_game()");
@@ -72,17 +72,17 @@ int start_game(partie_t *partie) {
     // On actualise la grille de jeu
     action_player(&board, mg.player_id, mg.action);
 
-   // Liberer les listes de move et bomb du joueur
-// Les deux lignes suivantes buguent
-    //mp.move[mg.player_id] = init_list();
-    //mp.bomb[mg.player_id] = init_list();
+    // Liberer les listes de move et bomb du joueur
+    // Les deux lignes suivantes buguent
+    // mp.move[mg.player_id] = init_list();
+    // mp.bomb[mg.player_id] = init_list();
 
     explode_bombs(&board);
 
     /* ********** Envoie de la grille complète ********** */
 
     // Si une seconde s'est écoulée, on envoie la grille en multidiffusion
-    if ((start_clock.tv_sec - last_clock.tv_sec) >= 1 || 1) { // FIXME: enlever le || 1
+    if ((start_clock.tv_sec - last_clock.tv_sec) >= 1 || 1) { // FIXME: enelever le || 1
       last_clock = start_clock;
 
       if (send_game_grid(partie, board) < 0)
@@ -199,7 +199,7 @@ int update_mp(mp_t *mp, msg_game_t *mg) {
   else if (action == A_BOMB) {
     puts("\033[32m-> partie.c: update_mp(): Bombe...\033[0m");
     add_head(mp->bomb[player_id], msg);
-  } else if (action == A_QUIT) { // FIXME: Remettre à 6
+  } else if (action == A_TCHAT) {
     puts("\033[32m-> partie.c: update_mp(): Msg...\033[0m");
     add_head(mp->bomb[player_id], msg);
   }
