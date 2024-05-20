@@ -99,9 +99,15 @@ int start_game(partie_t *partie) {
 
     /* ********** Gestion de la fin de la partie ********** */
 
-    // TODO: Penser à gérer la fermeture des sockets des clients
-    // ...
+   //Fin de partie
+   if(winner(board) != -1){
+     partie->end = 0;
+     printf("\033[31m -> partie.c: start_game(): Fin de la partie \033[0m\n");
 
+      // Fermeture des sockets
+      close(partie->sock_mdiff);
+      return 0;
+   }
     // On usleep le temps d'atteindre FREQ * 1000 microsecondes on fait une
     // difference entre le temps actuel et le temps de debut de la boucle
     gettimeofday(&end_clock, NULL);
