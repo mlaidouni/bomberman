@@ -165,17 +165,26 @@ int main(int argc, char const *argv[]) {
       endwin();
     }
 
-    msg_game_t params = {grid.game_type, player.player_id, player.team, num, a};
-    uint32_t message = ms_game(params);
+    // Envoie de l'action au serveur si c'est une flèche ou une bombe
+    if (a == A_LEFT || a == A_RIGHT || a == A_UP || a == A_DOWN ||
+        a == A_BOMB) {
 
-    r = sendto(mc.sock, &message, sizeof(message), 0,
-               (struct sockaddr *)&mc.s_adr, sizeof(mc.s_adr));
-    if (r == -1) {
-      perror("client.c: main: sendto()");
-      exit(EXIT_FAILURE);
+      // On affiche l'action
+      printf("\033[35m Action: %d\n\033[0m", a);
+
+      msg_game_t params = {grid.game_type, player.player_id, player.team, num,
+                           a};
+      uint32_t message = ms_game(params);
+
+      r = sendto(mc.sock, &message, sizeof(message), 0,
+                 (struct sockaddr *)&mc.s_adr, sizeof(mc.s_adr));
+      if (r == -1) {
+        perror("client.c: main: sendto()");
+        exit(EXIT_FAILURE);
+      }
+
+      num++;
     }
-
-    num++;
 
     // Clear la fenêtre
     // clear();
@@ -336,32 +345,34 @@ int config_udp(multicast_client_t *mc, char *adr_mdiff,
   return 0;
 }
 
-// FIX: OBSOLETE: Envoie un message de type 'game' au serveur.
-int action(int sock_client, int game_type, int player_id, int team_id, int num,
-           int action) {
+// // FIX: OBSOLETE: Envoie un message de type 'game' au serveur.
+// int action(int sock_client, int game_type, int player_id, int team_id, int
+// num,
+//            int action) {
 
-  // FIX: OBSOLETE -> Utilise send_message, qui est en TCP
-  // Création de la structure du message
-  msg_game_t params;
-  params.game_type = game_type;
-  params.player_id = player_id;
-  params.team_id = team_id;
-  params.num = num;
-  params.action = action;
+//   // FIX: OBSOLETE -> Utilise send_message, qui est en TCP
+//   // Création de la structure du message
+//   msg_game_t params;
+//   params.game_type = game_type;
+//   params.player_id = player_id;
+//   params.team_id = team_id;
+//   params.num = num;
+//   params.action = action;
 
-  // Création du message
-  uint32_t message = ms_game(params);
+//   // Création du message
+//   uint32_t message = ms_game(params);
 
-  // Envoi du message
-  int bytes = send_message(sock_client, &message, sizeof(message), "action");
-  // Gestion des erreurs (en partie gérée par send_message())
-  if (bytes == -1)
-    return -1;
+//   // Envoi du message
+//   int bytes = send_message(sock_client, &message, sizeof(message),
+//   "action");
+//   // Gestion des erreurs (en partie gérée par send_message())
+//   if (bytes == -1)
+//     return -1;
 
-  // TODO: Gestion du nb d'octets envoyés (voir s'ils ont tous été envoyés)
+//   // TODO: Gestion du nb d'octets envoyés (voir s'ils ont tous été envoyés)
 
-  return 0;
-}
+//   return 0;
+// }
 
 /* ********** Fonctions client ncurses ********** */
 

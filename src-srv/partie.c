@@ -61,6 +61,11 @@ int start_game(partie_t *partie) {
         return -1;
       }
 
+      // On affiche le message reçu
+      printf("\033[32m -> partie.c: start_game(): Message reçu: Joueur %d, "
+             "Action %d\033[0m\n",
+             mg.player_id, mg.action);
+
       // On met à jour mp
       update_mp(&mp, &mg);
 
