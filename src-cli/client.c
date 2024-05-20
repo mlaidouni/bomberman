@@ -206,26 +206,6 @@ int main(int argc, char const *argv[]) {
     }
     char buffer[100];
 
-    if (fds[1].revents & POLLIN) {
-      puts("Message reçu");
-
-      memset(buffer, 0, 100);
-      uint8_t *mess = malloc(sizeof(uint8_t) * 5 + 100);
-      int r = recv(sock_client, mess, sizeof(uint8_t) * 5 + 100, 0);
-      if (r == -1) {
-        perror("client.c: main: recv()");
-        exit(EXIT_FAILURE);
-      }
-
-      printf("Message reçu: %d\n", r);
-      printf("Message reçu: %s\n", mess);
-
-      msg_tchat_t msg = mg_tchat(mess);
-      // print en jaune
-      fprintf(stdin, "\033[33mjoueur %d: %s\033[0m\n", msg.player_id, msg.data);
-      memset(buffer, 0, 100);
-    }
-
     ACT a = action_command();
     if (a == A_QUIT) {
       // Ferme la fenêtre
@@ -235,6 +215,26 @@ int main(int argc, char const *argv[]) {
     if (a == A_TCHAT) {
       endwin();
 
+      if (fds[1].revents & POLLIN) {
+        puts("Message reçu");
+
+        memset(buffer, 0, 100);
+        uint8_t *mess = malloc(sizeof(uint8_t) * 5 + 100);
+        int r = recv(sock_client, mess, sizeof(uint8_t) * 5 + 100, 0);
+        if (r == -1) {
+          perror("client.c: main: recv()");
+          exit(EXIT_FAILURE);
+        }
+
+        printf("Message reçu: %d\n", r);
+        printf("Message reçu: %s\n", mess);
+
+        msg_tchat_t msg = mg_tchat(mess);
+        // print en jaune
+        fprintf(stdin, "\033[33mjoueur %d: %s\033[0m\n", msg.player_id,
+                msg.data);
+        memset(buffer, 0, 100);
+      }
       memset(buffer, 0, 100);
 
       printf("Enter a message: ");
