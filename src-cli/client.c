@@ -338,7 +338,6 @@ int main(int argc, char const *argv[]) {
     } else if (a != A_NONE) {
 
       // On affiche l'action
-      printw("Action: %d, player : %d\n", a, player.player_id);
 
       msg_game_t params = {0};
       params.game_type = grid.game_type;
@@ -519,7 +518,7 @@ int join_game(int sock_client, int game_type) {
     return -1;
   }
 
-    return 0;
+  return 0;
 }
 
 /**
