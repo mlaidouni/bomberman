@@ -32,6 +32,10 @@ int get_grille(msg_grid_t grid, int x, int y) {
  * @param grid La grille à afficher.
  */
 void affiche(msg_grid_t grid) {
+  start_color();                        // Active les couleurs
+  init_pair(1, COLOR_RED, COLOR_BLACK); // Définit la paire de couleurs 1 pour
+                                        // être du texte rouge sur un fond noir
+
   int x, y;
   for (y = 0; y < grid.hauteur; y++) {
     for (x = 0; x < grid.largeur; x++) {
@@ -40,35 +44,52 @@ void affiche(msg_grid_t grid) {
       switch (get_grille(grid, x, y)) {
       case EMPTY_TILE:
         c = '_';
+
+        mvaddch(y + 1, 2 * x + 1, c);
         break;
       case DEST_WALL_TILE:
         c = '|';
+
+        mvaddch(y + 1, 2 * x + 1, c);
         break;
       case INDEST_WALL_TILE:
         c = '#';
+
+        mvaddch(y + 1, 2 * x + 1, c);
         break;
       case BOMB_TILE:
-        c = '.';
+        attron(COLOR_PAIR(1)); // Commence à utiliser la paire de couleurs 1
+        c = 'X';
+        mvaddch(y + 1, 2 * x + 1, c);
+
+        attroff(COLOR_PAIR(1)); // Arrête d'utiliser la paire de couleurs 1
         break;
       case 4:
         c = '~';
+
+        mvaddch(y + 1, 2 * x + 1, c);
         break;
       case 5:
         c = '0';
+
+        mvaddch(y + 1, 2 * x + 1, c);
         break;
       case 6:
         c = '1';
+
+        mvaddch(y + 1, 2 * x + 1, c);
         break;
       case 7:
         c = '2';
+
+        mvaddch(y + 1, 2 * x + 1, c);
         break;
       case 8:
         c = '3';
+
+        mvaddch(y + 1, 2 * x + 1, c);
         break;
       }
-
-      // On affiche la case, avec un espace entre chaque case.
-      mvaddch(y + 1, 2 * x + 1, c);
     }
   }
   refresh();
@@ -159,7 +180,7 @@ int main(int argc, char const *argv[]) {
   /* ********** Gestion du choix de partie ********** */
 
   // On demande au joueur le type de partie qu'il veut rejoindre
-  int game_type; // TODELETE (debug)
+  int game_type = atoi(argv[1]); // TODELETE (debug)
   printf("Entrer 0 pour jouer à 4 joueurs, 1 pour jouer en équipes: \n");
   if (argc == 2)
     game_type = atoi(argv[1]);
