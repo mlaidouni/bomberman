@@ -47,6 +47,20 @@ int add_head(list *list, void *b) {
   return 0;
 }
 
+int remove_head(list *list) {
+  if (list->in != NULL) {
+    if (list->in->next != NULL) {
+      list_elem *next = list->in->next;
+      next->prev = NULL;
+      free(list->in);
+      list->in = next;
+      return 0;
+    }
+    return 1;
+  }
+  return 2;
+}
+
 int remove_tail(list *list) {
   if (list->out != NULL) {
     if (list->out->prev != NULL) {
